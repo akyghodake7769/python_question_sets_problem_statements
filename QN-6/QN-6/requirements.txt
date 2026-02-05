@@ -1,9 +1,1 @@
 numpy
-scipy
-contourpy
-cycler
-kiwisolver
-pyparsing
-six
-typing_extensions
-packaging
