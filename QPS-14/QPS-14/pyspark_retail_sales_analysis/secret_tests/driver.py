@@ -85,7 +85,7 @@ def test_student_code(solution_path):
         spec = importlib.util.spec_from_file_location("student_solution", solution_path)
         student_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(student_module)
-        analyzer = student_module.SalesAnalyzer(spark)
+        analyzer = student_module.RetailSalesAnalyzer(spark)
     except Exception as e:
         msg = f"❌ Failed to load solution.py: {e}"
         print(msg)
