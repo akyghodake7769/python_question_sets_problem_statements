@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col, expr, sum as spark_sum, desc
 
-class SalesAnalyzer:
+class RetailSalesAnalyzer:
     def __init__(self, spark: SparkSession):
         self.spark = spark
 
