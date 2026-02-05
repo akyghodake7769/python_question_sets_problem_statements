@@ -1,26 +1,2 @@
-attrs
-click
-colorama
-blinker
-Jinja2
-MarkupSafe
-Flask
-Werkzeug
-itsdangerous
-decorator
-overrides
-platformdirs
-psutil
-requests
-urllib3
-certifi
-idna
-charset-normalizer
-PyYAML
-jsonschema
-jsonschema-specifications
-fastjsonschema
-referencing
-rpds-py
-lark
-babel
+# No external dependencies required.
+# Uses Python Standard Library only.
