@@ -1,0 +1,30 @@
+🧪 Running Tests for: Gym Membership Usage Analytics
+
+✅ Visible Test Case 1 Passed: Create usage DataFrame from raw data
+✅ Visible Test Case 2 Passed: Compute total duration per member
+✅ Visible Test Case 3 Passed: Add calorie column to DataFrame
+✅ Visible Test Case 4 Passed: Filter sessions longer than threshold
+✅ Visible Test Case 5 Passed: Get top N sessions by calories
+
+🎯 SCORE: 12.5/12.5 (Visible) | Total: 20 (Visible: 12.5 + Hidden: 7.5)
+🧪 Running Tests for: Gym Membership Usage Analytics
+
+✅ Visible Test Case 1 Passed: Create usage DataFrame from raw data
+✅ Visible Test Case 2 Passed: Compute total duration per member
+✅ Visible Test Case 3 Passed: Add calorie column to DataFrame
+✅ Visible Test Case 4 Passed: Filter sessions longer than threshold
+✅ Visible Test Case 5 Passed: Get top N sessions by calories
+
+🎯 SCORE: 12.5/12.5 (Visible) | Total: 20 (Visible: 12.5 + Hidden: 7.5)
+🧪 Running Tests for: Gym Membership Usage Analytics
+
+✅ Visible Test Case 1 Passed: Create usage DataFrame from raw data
+✅ Visible Test Case 2 Passed: Compute total duration per member
+✅ Visible Test Case 3 Passed: Add calorie column to DataFrame
+✅ Visible Test Case 4 Passed: Filter sessions longer than threshold
+✅ Visible Test Case 5 Passed: Get top N sessions by calories
+🔒 Hidden Test Case 6 Passed: Remove duplicate logs
+🔒 Hidden Test Case 7 Passed: Handle zero duration session
+🔒 Hidden Test Case 8 Passed: Handle tie in top calorie-burning sessions
+
+🎯 SCORE: 12.5/12.5 (Visible) | Total: 20 (Visible: 12.5 + Hidden: 7.5)
