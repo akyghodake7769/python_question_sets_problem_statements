@@ -3,8 +3,9 @@ import pandas as pd
 class ClaimsAnalyzer:
 
     def create_claims_df(self, claim_data: list) -> pd.DataFrame:
-        return pd.DataFrame(claim_data, columns=["CustomerID", "Category", "Amount", "Status", "Date"])
-
+        #your_code_here
+        return df
+        
     def approval_rate_by_category(self, df: pd.DataFrame) -> pd.DataFrame:
         grouped = df.groupby("Category")
         total_claims = grouped.size().reset_index(name="Total")
@@ -15,28 +16,18 @@ class ClaimsAnalyzer:
         return result[["Category", "Approval Rate"]]
 
     def add_flag_high_amount(self, df: pd.DataFrame, threshold: float) -> pd.DataFrame:
-        result = df.copy()
-        result["IsHighValue"] = (result["Amount"] > threshold).astype(int)
+        #your_code_here
         return result
 
     def get_top_pending_claims(self, df: pd.DataFrame, n: int) -> pd.DataFrame:
-        pending = df[df["Status"] == "Pending"]
-        return pending.sort_values(by="Amount", ascending=False).head(n).reset_index(drop=True)
+        #your_code_here
+        return pending_df
 
     def claim_summary_by_status(self, df: pd.DataFrame) -> pd.DataFrame:
-        result = df.groupby("Status")["Amount"].agg(
-            TotalAmount="sum",
-            MinAmount="min",
-            MaxAmount="max",
-            AvgAmount="mean"
-        ).reset_index()
-        result["AvgAmount"] = result["AvgAmount"].round(2)
+        #your_code_here
         return result
 
     def clean_invalid_claims(self, df: pd.DataFrame) -> pd.DataFrame:
-        result = df[
-            (df["Status"].isin(["Approved", "Rejected", "Pending"])) &
-            (df["Amount"].notna()) &
-            (df["Amount"] > 0)
-        ]
-        return result.reset_index(drop=True)
+        #your_code_here
+        return result
+
