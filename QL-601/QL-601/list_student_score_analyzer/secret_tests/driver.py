@@ -13,7 +13,7 @@ def test_student_code(solution_path):
 
     # Initialize results log
     results = []
-    results.append("🧪 Running Tests for: StudentScoreAnalyzer\n")
+    results.append(" Running Tests for: StudentScoreAnalyzer\n")
 
     idx = 1
     passed_count = 0
@@ -114,3 +114,4 @@ def test_student_code(solution_path):
             f.write(line + "\n")
 
     return results
+
