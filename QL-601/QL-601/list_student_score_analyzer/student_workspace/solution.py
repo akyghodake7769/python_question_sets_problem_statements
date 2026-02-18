@@ -47,9 +47,7 @@ class ScoreManager:
             List of passing scores in descending order
         """
         passing = []
-        for score in self.scores:
-            if score >= 80:
-                passing.append(score)
-        passing.sort(reverse=True)
+        """Your code here"""
         return passing
+
 
