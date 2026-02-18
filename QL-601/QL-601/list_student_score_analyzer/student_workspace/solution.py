@@ -17,11 +17,7 @@ class ScoreManager:
             Dictionary with scores as keys and Pass/Fail as values
         """
         status_dict = {}
-        for score in self.scores:
-            if score >= 80:
-                status_dict[score] = "Pass"
-            else:
-                status_dict[score] = "Fail"
+        """Your code here"""
         return status_dict
 
     def find_highest_score(self):
@@ -31,7 +27,7 @@ class ScoreManager:
         Returns:
             Integer - the maximum score
         """
-        return max(self.scores)
+        """Your code here"""
 
     def calculate_average(self):
         """
@@ -40,7 +36,7 @@ class ScoreManager:
         Returns:
             Float - average rounded to 1 decimal place
         """
-        avg = sum(self.scores) / len(self.scores)
+        """Your code here"""
         return round(avg, 1)
 
     def get_passing_scores(self):
@@ -56,3 +52,4 @@ class ScoreManager:
                 passing.append(score)
         passing.sort(reverse=True)
         return passing
+
