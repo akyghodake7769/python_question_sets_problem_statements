@@ -1,53 +1,46 @@
 class ScoreManager:
-    """Manage and analyze student scores."""
+    """Manage student scores and provide analysis operations."""
 
     def __init__(self):
-        """Initialize with predefined score list."""
+        """Initialize the score list with sample data."""
         self.scores = [45, 78, 92, 55, 88, 67, 95, 52]
 
-    def create_status_dict(self):
+    def create_status_dict(self) -> dict:
         """
-        Create a dictionary mapping each score to its status.
-        
-        Logic:
-        - If score >= 80 → status = "Pass"
-        - If score < 80 → status = "Fail"
+        Create a dictionary mapping each score to its pass/fail status.
         
         Returns:
-            Dictionary with scores as keys and Pass/Fail as values
+            Dictionary with scores as keys and pass/fail status as values
+            Pass threshold: score >= 80
         """
-        status_dict = {}
         """Your code here"""
         return status_dict
 
-    def find_highest_score(self):
+    def find_highest_score(self) -> int:
         """
-        Find the highest score in the list.
+        Find and return the highest score.
         
         Returns:
-            Integer - the maximum score
+            Maximum score from the list
         """
         """Your code here"""
 
-    def calculate_average(self):
+    def calculate_average(self) -> float:
         """
-        Calculate the average score.
+        Calculate and return the average score.
         
         Returns:
-            Float - average rounded to 1 decimal place
+            Average score rounded to 1 decimal place
         """
         """Your code here"""
-        return round(avg, 1)
+        return round(average, 1)
 
-    def get_passing_scores(self):
+    def get_passing_scores(self) -> list:
         """
-        Get all passing scores (>= 80) sorted in descending order.
+        Get all passing scores sorted in descending order.
         
         Returns:
-            List of passing scores in descending order
+            List of scores >= 80 sorted in descending order
         """
-        passing = []
         """Your code here"""
-        return passing
-
-
+        return sorted(passing, reverse=True)
