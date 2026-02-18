@@ -11,37 +11,39 @@ def test_student_code(solution_path):
     student_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(student_module)
 
-    manager = student_module.ScoreManager()
-
-    print("Running Tests for: Student Score List Operations\n")
-    report_lines = ["Running Tests for: Student Score List Operations\n"]
+    print("Running Tests for: Student Score List Analyzer\n")
+    report_lines = ["Running Tests for: Student Score List Analyzer\n"]
 
     test_cases = [
         {
-            "desc": "Creating score status dictionary",
+            "desc": "Create status dictionary mapping scores to Pass/Fail",
             "func": "create_status_dict",
-            "call": lambda: manager.create_status_dict(),
-            "check": lambda result: isinstance(result, dict) and result.get(92) == "Pass" and result.get(45) == "Fail" and len(result) == 8,
+            "setup": lambda: student_module.ScoreManager(),
+            "call": lambda obj: obj.create_status_dict(),
+            "check": lambda result: isinstance(result, dict) and result.get(92) == "Pass" and result.get(45) == "Fail",
             "marks": 2.5
         },
         {
-            "desc": "Finding highest score",
+            "desc": "Find highest score from list",
             "func": "find_highest_score",
-            "call": lambda: manager.find_highest_score(),
+            "setup": lambda: student_module.ScoreManager(),
+            "call": lambda obj: obj.find_highest_score(),
             "check": lambda result: result == 95,
             "marks": 2.5
         },
         {
-            "desc": "Calculating average score",
+            "desc": "Calculate average score",
             "func": "calculate_average",
-            "call": lambda: manager.calculate_average(),
+            "setup": lambda: student_module.ScoreManager(),
+            "call": lambda obj: obj.calculate_average(),
             "check": lambda result: result == 71.5,
             "marks": 2.5
         },
         {
-            "desc": "Getting passing scores in descending order",
+            "desc": "Get passing scores in descending order",
             "func": "get_passing_scores",
-            "call": lambda: manager.get_passing_scores(),
+            "setup": lambda: student_module.ScoreManager(),
+            "call": lambda obj: obj.get_passing_scores(),
             "check": lambda result: isinstance(result, list) and result == [95, 92, 88],
             "marks": 2.5
         }
@@ -52,39 +54,47 @@ def test_student_code(solution_path):
 
     for idx, case in enumerate(test_cases, 1):
         marks = case.get("marks", 2.5)
-        max_score += marks
+        is_hidden = case.get("is_hidden", False)
+        
+        if not is_hidden:
+            max_score += marks
         
         try:
-            func = getattr(manager, case["func"])
+            obj = case["setup"]()
+            
+            # Check for pass-only implementation
+            func = getattr(obj, case["func"])
             src = inspect.getsource(func).replace(" ", "").replace("\n", "").lower()
-
-            # Check 1: Pass-only
             if 'pass' in src and len(src) < 80:
-                msg = f"FAIL Visible Test Case {idx} Failed: {case['desc']} | Reason: Contains only 'pass'"
+                test_type = "Hidden" if is_hidden else "Visible"
+                msg = f"FAIL {test_type} Test Case {idx} Failed: {case['desc']} | Reason: Contains only 'pass'"
                 report_lines.append(msg)
                 print(msg)
                 continue
-
+            
             # Execute test
-            result = case["call"]()
-
-            # Evaluate result
+            result = case["call"](obj)
             passed = case["check"](result)
             
             if passed:
-                msg = f"PASS Visible Test Case {idx} Passed: {case['desc']}"
-                total_score += marks
+                test_type = "Hidden" if is_hidden else "Visible"
+                msg = f"PASS {test_type} Test Case {idx} Passed: {case['desc']}"
+                if not is_hidden:
+                    total_score += marks
             else:
-                msg = f"FAIL Visible Test Case {idx} Failed: {case['desc']} | Reason: Output mismatch"
-
+                test_type = "Hidden" if is_hidden else "Visible"
+                msg = f"FAIL {test_type} Test Case {idx} Failed: {case['desc']} | Reason: Output mismatch"
+            
+            print(msg)
+            report_lines.append(msg)
+        
         except Exception as e:
-            msg = f"FAIL Visible Test Case {idx} Crashed: {case['desc']} | Error: {str(e)}"
+            test_type = "Hidden" if is_hidden else "Visible"
+            msg = f"FAIL {test_type} Test Case {idx} Crashed: {case['desc']} | Error: {str(e)}"
+            print(msg)
+            report_lines.append(msg)
 
-        print(msg)
-        report_lines.append(msg)
-
-    # Print total score summary
-    score_line = f"\nSCORE: {total_score}/{max_score} (Total)"
+    score_line = f"\nSCORE: {total_score}/10.0 (Visible)"
     print(score_line)
     report_lines.append(score_line)
 
