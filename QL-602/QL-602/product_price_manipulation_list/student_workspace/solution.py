@@ -14,8 +14,7 @@ class ProductManager:
         Output:
             - Print: "Total Revenue: {total}"
         """
-        total = sum(self.prices)
-        print(f"Total Revenue: {total}")
+       """Your code here"""
 
     def apply_discount(self):
         """
@@ -28,7 +27,7 @@ class ProductManager:
         Output:
             - Print: "Discounted Prices: {list}"
         """
-        discounted = [int(price * 0.9) for price in self.prices]
+        """Your code here"""
         print(f"Discounted Prices: {discounted}")
 
     def count_categories(self):
@@ -41,6 +40,6 @@ class ProductManager:
         Output:
             - Print: "Affordable Count: {count}, Premium Count: {count}"
         """
-        affordable_count = len([price for price in self.prices if price < 1000])
-        premium_count = len([price for price in self.prices if price >= 1000])
+        """Your code here"""
         print(f"Affordable Count: {affordable_count}, Premium Count: {premium_count}")
+
