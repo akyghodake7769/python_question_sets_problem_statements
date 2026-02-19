@@ -22,9 +22,7 @@ class StudentResultManager:
             - Print: "Student Averages: {dictionary with student_id: average}"
         """
         averages = {}
-        for student_id, scores in self.students.items():
-            avg = (scores["math"] + scores["science"] + scores["english"]) / 3
-            averages[student_id] = round(avg, 1)
+        """Your code here"""
         print(f"Student Averages: {averages}")
 
     def find_highest_average(self):
@@ -42,14 +40,7 @@ class StudentResultManager:
         highest_name = None
         
         for student_id, scores in self.students.items():
-            avg = (scores["math"] + scores["science"] + scores["english"]) / 3
-            avg = round(avg, 1)
-            if avg > highest_avg:
-                highest_avg = avg
-                highest_student_id = student_id
-                highest_name = scores["name"]
-        
-        if highest_student_id:
+            """Your code here"""
             print(f"Highest Average: {highest_name} ({highest_student_id}) - {highest_avg}")
 
     def calculate_subject_averages(self):
@@ -69,14 +60,11 @@ class StudentResultManager:
         num_students = len(self.students)
         
         for scores in self.students.values():
-            total_math += scores["math"]
-            total_science += scores["science"]
-            total_english += scores["english"]
+            """Your code here"""
         
         subject_averages = {
-            "math": round(total_math / num_students, 1),
-            "science": round(total_science / num_students, 1),
-            "english": round(total_english / num_students, 1)
+            """Your code here"""
         }
         
         print(f"Subject Averages: {subject_averages}")
+
