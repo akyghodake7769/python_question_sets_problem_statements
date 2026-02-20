@@ -3,7 +3,7 @@ class CourseManager:
 
     def __init__(self):
         """Initialize the course manager with an empty courses dictionary."""
-        self.courses = {}
+        """Your code here"""
 
     def add_course(self, course_id: str, title: str, capacity: int) -> None:
         """
@@ -17,12 +17,7 @@ class CourseManager:
         Returns:
             None
         """
-        self.courses[course_id] = {
-            "title": title,
-            "max": capacity,
-            "students": []
-        }
-
+        """Your code here"""
     def register_student(self, course_id: str, name: str) -> str:
         """
         Register a student to a course with capacity validation.
@@ -36,16 +31,11 @@ class CourseManager:
                  "Course Full" if at capacity
                  "Enrolled in [title]" if successful
         """
-        if course_id not in self.courses:
-            return "Invalid ID"
+        """Your  code  here"""
         
         course = self.courses[course_id]
         
-        if len(course["students"]) >= course["max"]:
-            return "Course Full"
-        
-        course["students"].append(name)
-        return f"Enrolled in {course['title']}"
+        """Your code here"""
 
     def get_available_seats(self, course_id: str) -> int:
         """
@@ -58,12 +48,7 @@ class CourseManager:
             int: Number of available seats if course exists
                  -1 if course doesn't exist
         """
-        if course_id not in self.courses:
-            return -1
-        
-        course = self.courses[course_id]
-        available = course["max"] - len(course["students"])
-        return available
+        """Your code here"""
 
     def remove_student(self, course_id: str, name: str) -> str:
         """
@@ -77,13 +62,9 @@ class CourseManager:
             str: "Removed [name] from [title]" if successful
                  "Registration not found" if course/student doesn't exist
         """
-        if course_id not in self.courses:
-            return "Registration not found"
+        """Your code here"""
         
         course = self.courses[course_id]
         
-        if name not in course["students"]:
-            return "Registration not found"
-        
-        course["students"].remove(name)
-        return f"Removed {name} from {course['title']}"
+        """Your code here"""
+
