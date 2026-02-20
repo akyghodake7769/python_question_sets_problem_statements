@@ -3,7 +3,7 @@ class RetailStore:
 
     def __init__(self):
         """Initialize the store with an empty inventory."""
-        self.inventory = {}
+        """Your code here"""
 
     def register_product(self, name: str, price: float, stock: int) -> str:
         """
@@ -17,8 +17,7 @@ class RetailStore:
         Returns:
             str: Confirmation message "Product [name] registered."
         """
-        self.inventory[name] = {"price": price, "stock": stock}
-        return f"Product {name} registered."
+        """Your code here"""
 
     def restock_item(self, name: str, quantity: int) -> str:
         """
@@ -31,13 +30,7 @@ class RetailStore:
         Returns:
             str: Status message with new stock level or "Product not found."
         """
-        if name in self.inventory:
-            self.inventory[name]["stock"] += quantity
-            new_stock = self.inventory[name]["stock"]
-            return f"Restocked {name}. Now: {new_stock}"
-        else:
-            return "Product not found."
-
+        """Your code here"""
     def complete_sale(self, name: str, quantity: int) -> str:
         """
         Process a sale transaction with stock validation.
@@ -49,18 +42,10 @@ class RetailStore:
         Returns:
             str: Bill string, insufficient stock message, or out of catalog message
         """
-        if name not in self.inventory:
-            return "Out of catalog."
-        
-        if self.inventory[name]["stock"] < quantity:
-            return "Insufficient stock."
+        """Your code here"""
         
         # Calculate total and deduct stock
-        price = self.inventory[name]["price"]
-        total = price * quantity
-        self.inventory[name]["stock"] -= quantity
-        
-        return f"Bill: ${total}"
+        """Your code here"""
 
     def inventory_report(self) -> float:
         """
@@ -69,8 +54,4 @@ class RetailStore:
         Returns:
             float: Sum of (price × stock) for all products
         """
-        total_value = 0
-        for product_data in self.inventory.values():
-            total_value += product_data["price"] * product_data["stock"]
-        
-        return total_value
+        """Your code here"""
