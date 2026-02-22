@@ -11,9 +11,7 @@ class WeatherTracker:
         Initialize the WeatherTracker.
         Create storage for temperature, precipitation, and wind speed data.
         """
-        self.temperatures = np.array([])
-        self.precipitation = np.array([])
-        self.wind_speed = np.array([])
+        """  YOUR CODE HERE """
 
     def add_temperature_data(self, temps: list) -> np.ndarray:
         """
@@ -25,8 +23,7 @@ class WeatherTracker:
         Returns:
             np.ndarray: The stored temperature array
         """
-        self.temperatures = np.array(temps)
-        return self.temperatures
+        """  YOUR CODE HERE """
 
     def calculate_average_temperature(self) -> float:
         """
@@ -35,9 +32,7 @@ class WeatherTracker:
         Returns:
             float: Average temperature (2 decimal places), or 0.0 if no data exists
         """
-        if len(self.temperatures) == 0:
-            return 0.0
-        return round(float(np.mean(self.temperatures)), 2)
+        """  YOUR CODE HERE """
 
     def get_days_above_temperature(self, threshold: float) -> np.ndarray:
         """
@@ -49,7 +44,7 @@ class WeatherTracker:
         Returns:
             np.ndarray: Array of temperatures greater than threshold
         """
-        return self.temperatures[self.temperatures > threshold]
+        """  YOUR CODE HERE """
 
     def get_weather_statistics(self) -> dict:
         """
@@ -60,17 +55,4 @@ class WeatherTracker:
                   All numeric values rounded to 2 decimals
                   Returns zeros if no data
         """
-        if len(self.temperatures) == 0:
-            return {
-                'min_temp': 0.0,
-                'max_temp': 0.0,
-                'avg_temp': 0.0,
-                'data_points': 0
-            }
-        
-        return {
-            'min_temp': round(float(np.min(self.temperatures)), 2),
-            'max_temp': round(float(np.max(self.temperatures)), 2),
-            'avg_temp': round(float(np.mean(self.temperatures)), 2),
-            'data_points': len(self.temperatures)
-        }
+        """  YOUR CODE HERE """
