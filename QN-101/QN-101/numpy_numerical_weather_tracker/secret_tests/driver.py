@@ -58,9 +58,9 @@ def test_student_code(solution_path):
             "desc": "Add temperature data",
             "func": "add_temperature_data",
             "setup": lambda: student_module.WeatherTracker(),
-            "call": lambda obj: (len(obj.add_temperature_data([25.5, 26.0, 24.8])), isinstance(obj.temperatures, np.ndarray)),
-            "check": lambda result: result[0] == 3 and result[1],
-            "expected_output": "Temperature array with 3 values",
+            "call": lambda obj: (obj.add_temperature_data([25.5, 26.0, 24.8]), obj.temperatures),
+            "check": lambda result: result[0] is not None and isinstance(result[1], np.ndarray) and len(result[1]) == 3,
+            "expected_output": "Method returns temperature array with 3 values and updates self.temperatures",
             "marks": 5
         },
         {
@@ -169,21 +169,21 @@ def test_student_code(solution_path):
 def _setup_temps(student_module):
     """Setup for calculate_average_temperature test."""
     tracker = student_module.WeatherTracker()
-    tracker.add_temperature_data([25.5, 26.0, 24.8])
+    tracker.temperatures = np.array([25.5, 26.0, 24.8])
     return tracker
 
 
 def _setup_temps_threshold(student_module):
     """Setup for get_days_above_temperature test."""
     tracker = student_module.WeatherTracker()
-    tracker.add_temperature_data([25.5, 26.0, 24.8, 27.2])
+    tracker.temperatures = np.array([25.5, 26.0, 24.8, 27.2])
     return tracker
 
 
 def _setup_stats(student_module):
     """Setup for get_weather_statistics test."""
     tracker = student_module.WeatherTracker()
-    tracker.add_temperature_data([25.5, 26.0, 24.8])
+    tracker.temperatures = np.array([25.5, 26.0, 24.8])
     return tracker
 
 
