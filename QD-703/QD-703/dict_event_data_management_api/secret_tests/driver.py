@@ -45,7 +45,7 @@ def test_student_code(solution_path):
 
     test_cases = [
         {
-            "desc": "Initialize EventManager with empty dictionary",
+            "desc": "Initialize empty event registry",
             "func": "initialize",
             "setup": lambda: student_module.EventManager(),
             "call": lambda obj: (isinstance(obj.events, dict), len(obj.events)),
@@ -54,39 +54,39 @@ def test_student_code(solution_path):
             "marks": 5
         },
         {
-            "desc": "Add event to manager",
+            "desc": "Successfully add a new event",
             "func": "add_event",
             "setup": lambda: student_module.EventManager(),
-            "call": lambda obj: (obj.add_event("event1", {"name": "Login", "type": "auth"}), obj.add_event("event2", {"name": "Error", "type": "error"}), len(obj.events)),
-            "check": lambda result: result[0] is True and result[1] is True and result[2] == 2,
-            "expected_output": "2 events added successfully (both return True)",
+            "call": lambda obj: (obj.add_event("event1", {"name": "Login", "type": "auth"}), obj.add_event("event2", {"name": "Error", "type": "error"})),
+            "check": lambda result: result[0] is True and result[1] is True,
+            "expected_output": "Both events added successfully (both return True)",
             "marks": 5
         },
         {
-            "desc": "Get event by ID",
-            "func": "get_event",
-            "setup": lambda: _setup_events(student_module),
-            "call": lambda obj: obj.get_event("event1"),
-            "check": lambda result: result.get("name") == "Login" and result.get("type") == "auth",
-            "expected_output": "Retrieved event with name='Login' and type='auth'",
+            "desc": "Retrieve the dictionary of all events",
+            "func": "fetch_all",
+            "setup": lambda: _setup_fetch_all(student_module),
+            "call": lambda obj: obj.fetch_all(),
+            "check": lambda result: isinstance(result, dict) and len(result) == 3 and "event1" in result,
+            "expected_output": "Dictionary with all 3 events returned",
             "marks": 5
         },
         {
-            "desc": "Filter events by type",
-            "func": "filter_events_by_type",
-            "setup": lambda: _setup_filter_events(student_module),
-            "call": lambda obj: sorted(obj.filter_events_by_type("auth")),
-            "check": lambda result: len(result) == 2 and "event1" in result and "event3" in result,
-            "expected_output": "2 events with type='auth': ['event1', 'event3']",
+            "desc": "Correctly update an existing event",
+            "func": "update_event",
+            "setup": lambda: _setup_update_event(student_module),
+            "call": lambda obj: (obj.update_event("event1", {"name": "Updated Login", "type": "auth"}), obj.events["event1"]),
+            "check": lambda result: result[0] is True and result[1].get("name") == "Updated Login",
+            "expected_output": "Event updated successfully with new data",
             "marks": 5
         },
         {
-            "desc": "Get event summary",
-            "func": "get_event_summary",
-            "setup": lambda: _setup_summary_events(student_module),
-            "call": lambda obj: obj.get_event_summary(),
-            "check": lambda result: result.get('total_events') == 3 and result.get('unique_types') == 2 and len(result.get('event_ids', [])) == 3,
-            "expected_output": "Dictionary with total_events=3, unique_types=2, event_ids has 3 entries",
+            "desc": "Correctly delete an event resource",
+            "func": "delete_event",
+            "setup": lambda: _setup_delete_event(student_module),
+            "call": lambda obj: (obj.delete_event("event1"), len(obj.events)),
+            "check": lambda result: result[0] is True and result[1] == 2,
+            "expected_output": "Event deleted successfully, events count reduced from 3 to 2",
             "marks": 5
         }
     ]
@@ -165,35 +165,34 @@ def test_student_code(solution_path):
         f.write("\n".join(report_lines) + "\n")
 
 
-def _setup_events(student_module):
-    """Setup for get_event test."""
-    manager = student_module.EventManager()
-    manager.events = {
-        "event1": {"name": "Login", "type": "auth"},
-        "event2": {"name": "Logout", "type": "auth"},
-        "event3": {"name": "Database Error", "type": "error"}
-    }
-    return manager
-
-
-def _setup_filter_events(student_module):
-    """Setup for filter_events_by_type test."""
-    manager = student_module.EventManager()
-    manager.events = {
-        "event1": {"name": "Login", "type": "auth"},
-        "event2": {"name": "Database Error", "type": "error"},
-        "event3": {"name": "2FA", "type": "auth"}
-    }
-    return manager
-
-
-def _setup_summary_events(student_module):
-    """Setup for get_event_summary test."""
+def _setup_fetch_all(student_module):
+    """Setup for fetch_all test."""
     manager = student_module.EventManager()
     manager.events = {
         "event1": {"name": "Login", "type": "auth"},
         "event2": {"name": "Error", "type": "error"},
-        "event3": {"name": "OAuth", "type": "auth"}
+        "event3": {"name": "Logout", "type": "auth"}
+    }
+    return manager
+
+
+def _setup_update_event(student_module):
+    """Setup for update_event test."""
+    manager = student_module.EventManager()
+    manager.events = {
+        "event1": {"name": "Login", "type": "auth"},
+        "event2": {"name": "Error", "type": "error"}
+    }
+    return manager
+
+
+def _setup_delete_event(student_module):
+    """Setup for delete_event test."""
+    manager = student_module.EventManager()
+    manager.events = {
+        "event1": {"name": "Login", "type": "auth"},
+        "event2": {"name": "Error", "type": "error"},
+        "event3": {"name": "Logout", "type": "auth"}
     }
     return manager
 
