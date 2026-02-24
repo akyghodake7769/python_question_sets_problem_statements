@@ -11,8 +11,7 @@ class EventManager:
         Returns:
             None
         """
-        self.events = {}
-
+        """ YOUR CODE HERE """
     def add_event(self, event_id: str, event_data: dict) -> bool:
         """
         Successfully add a new event.
@@ -24,10 +23,7 @@ class EventManager:
         Returns:
             bool: True if event added successfully, False if event_id already exists
         """
-        if event_id in self.events:
-            return False
-        self.events[event_id] = event_data
-        return True
+        """ YOUR CODE HERE """
 
     def fetch_all(self) -> dict:
         """
@@ -36,8 +32,8 @@ class EventManager:
         Returns:
             dict: Dictionary containing all events
         """
-        return self.events
-
+        """ YOUR CODE HERE """
+        
     def update_event(self, event_id: str, event_data: dict) -> bool:
         """
         Correctly update an existing event.
@@ -49,10 +45,7 @@ class EventManager:
         Returns:
             bool: True if event updated successfully, False if event_id doesn't exist
         """
-        if event_id not in self.events:
-            return False
-        self.events[event_id] = event_data
-        return True
+        """ YOUR CODE HERE """
 
     def delete_event(self, event_id: str) -> bool:
         """
@@ -64,7 +57,5 @@ class EventManager:
         Returns:
             bool: True if event deleted successfully, False if event_id doesn't exist
         """
-        if event_id not in self.events:
-            return False
-        del self.events[event_id]
-        return True
+        """ YOUR CODE HERE """
+
