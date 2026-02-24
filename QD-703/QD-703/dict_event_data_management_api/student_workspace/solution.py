@@ -6,54 +6,65 @@ class EventManager:
 
     def __init__(self):
         """
-        Initialize the EventManager.
-        Create storage for event data using dictionaries.
+        Initialize the EventManager with empty event registry.
+        
+        Returns:
+            None
         """
-        """ YOUR CODE HERE"""
+        self.events = {}
 
     def add_event(self, event_id: str, event_data: dict) -> bool:
         """
-        Add a new event to the manager.
+        Successfully add a new event.
         
         Parameters:
             event_id (str): Unique identifier for the event
-            event_data (dict): Dictionary containing event details (name, type, timestamp)
+            event_data (dict): Dictionary containing event details
         
         Returns:
             bool: True if event added successfully, False if event_id already exists
         """
-        """ YOUR CODE HERE"""
-        
-    def get_event(self, event_id: str) -> dict:
+        if event_id in self.events:
+            return False
+        self.events[event_id] = event_data
+        return True
+
+    def fetch_all(self) -> dict:
         """
-        Get event details by event ID.
+        Retrieve the dictionary of all events.
+        
+        Returns:
+            dict: Dictionary containing all events
+        """
+        return self.events
+
+    def update_event(self, event_id: str, event_data: dict) -> bool:
+        """
+        Correctly update an existing event.
         
         Parameters:
-            event_id (str): The event identifier to retrieve
+            event_id (str): The event identifier to update
+            event_data (dict): New event data to update with
         
         Returns:
-            dict: Event data if found, empty dict if not found
+            bool: True if event updated successfully, False if event_id doesn't exist
         """
-        """ YOUR CODE HERE"""
-        
-    def filter_events_by_type(self, event_type: str) -> list:
+        if event_id not in self.events:
+            return False
+        self.events[event_id] = event_data
+        return True
+
+    def delete_event(self, event_id: str) -> bool:
         """
-        Get all events of a specific type.
+        Correctly delete an event resource.
         
         Parameters:
-            event_type (str): The type of events to filter (e.g., "login", "error")
+            event_id (str): The event identifier to delete
         
         Returns:
-            list: List of event IDs matching the event type, empty list if none found
+            bool: True if event deleted successfully, False if event_id doesn't exist
         """
-        """ YOUR CODE HERE"""
-        
-    def get_event_summary(self) -> dict:
-        """
-        Get summary statistics about all events.
-        
-        Returns:
-            dict: Contains 'total_events', 'unique_types', 'event_ids'
-                  Returns zeros if no events
-        """
-        """ YOUR CODE HERE"""
+        if event_id not in self.events:
+            return False
+        del self.events[event_id]
+        return True
