@@ -11,7 +11,7 @@ class HealthMonitor:
     
     def __init__(self):
         """Initialize the HealthMonitor with an empty DataFrame."""
-        self.df = None
+        """ YOUR CODE HERE """
     
     def read_data(self, file_path: str):
         """
@@ -20,7 +20,7 @@ class HealthMonitor:
         Parameters:
             file_path (str): Path to the CSV file
         """
-        self.df = pd.read_csv(file_path)
+        """ YOUR CODE HERE """
     
     def clean_records(self) -> int:
         """
@@ -29,13 +29,7 @@ class HealthMonitor:
         Returns:
             int: Number of rows removed (NaN records)
         """
-        if self.df is None:
-            return 0
-        
-        initial_count = len(self.df)
-        self.df = self.df.dropna(subset=['HeartRate'])
-        removed_count = initial_count - len(self.df)
-        return removed_count
+        """ YOUR CODE HERE """
     
     def patient_averages(self) -> dict:
         """
@@ -44,11 +38,7 @@ class HealthMonitor:
         Returns:
             dict: Dictionary with PatientID as key and mean heart rate as value
         """
-        if self.df is None or self.df.empty:
-            return {}
-        
-        avg_by_patient = self.df.groupby("PatientID")["HeartRate"].mean().round(2).to_dict()
-        return avg_by_patient
+        """ YOUR CODE HERE """
     
     def high_risk(self, threshold: int) -> list:
         """
@@ -60,8 +50,5 @@ class HealthMonitor:
         Returns:
             list: Sorted list of unique PatientIDs with at least one reading above threshold
         """
-        if self.df is None or self.df.empty:
-            return []
-        
-        high_risk_patients = self.df[self.df["HeartRate"] > threshold]["PatientID"].unique().tolist()
-        return sorted(high_risk_patients)
+        """ YOUR CODE HERE """
+
