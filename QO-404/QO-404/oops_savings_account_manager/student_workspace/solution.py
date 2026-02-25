@@ -14,8 +14,7 @@ class SavingsAccount:
             holder_name (str): Name of the account holder
             initial_balance (float): Initial account balance
         """
-        self.holder_name = holder_name
-        self.balance = initial_balance
+        """ YOUR CODE HERE """
     
     def deposit(self, amount: float):
         """
@@ -24,7 +23,7 @@ class SavingsAccount:
         Parameters:
             amount (float): Amount to deposit (increases balance)
         """
-        self.balance += amount
+        """ YOUR CODE HERE """
     
     def withdraw(self, amount: float) -> bool:
         """
@@ -36,19 +35,13 @@ class SavingsAccount:
         Returns:
             bool: True if withdrawal successful, False if insufficient funds
         """
-        if self.balance >= amount:
-            self.balance -= amount
-            return True
-        return False
+        """ YOUR CODE HERE """
     
     def get_balance(self) -> float:
         """
         Get the current account balance.
-        
-        Returns:
-            float: Current balance
         """
-        return self.balance
+        """ YOUR CODE HERE """
     
     def get_summary(self) -> str:
         """
@@ -57,4 +50,5 @@ class SavingsAccount:
         Returns:
             str: Formatted string with holder name and balance
         """
-        return f"Holder: {self.holder_name}, Balance: {self.balance}"
+        """ YOUR CODE HERE """
+
