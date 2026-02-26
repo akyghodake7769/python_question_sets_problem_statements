@@ -1,0 +1,27 @@
+Running Tests for: Movie Ratings List Operations
+
+PASS Visible Test Case 1 Passed: Count movies in 'Sci-Fi' genre
+PASS Visible Test Case 2 Passed: Find highest rated movie
+PASS Visible Test Case 3 Passed: Calculate average rating
+PASS Visible Test Case 4 Passed: List movies with rating >= 8
+PASS Visible Test Case 5 Passed: Check existing movie 'Dangal'
+
+SCORE: 10/10.0 (Visible)
+Running Tests for: Movie Ratings List Operations
+
+PASS Visible Test Case 1 Passed: Count movies in 'Sci-Fi' genre
+PASS Visible Test Case 2 Passed: Find highest rated movie
+PASS Visible Test Case 3 Passed: Calculate average rating
+PASS Visible Test Case 4 Passed: List movies with rating >= 8
+PASS Visible Test Case 5 Passed: Check existing movie 'Dangal'
+
+SCORE: 10/10.0 (Visible)
+Running Tests for: Movie Ratings List Operations
+
+PASS Visible Test Case 1 Passed: Count movies in 'Sci-Fi' genre
+PASS Visible Test Case 2 Passed: Find highest rated movie
+PASS Visible Test Case 3 Passed: Calculate average rating
+PASS Visible Test Case 4 Passed: List movies with rating >= 8
+PASS Visible Test Case 5 Passed: Check existing movie 'Dangal'
+
+SCORE: 10/10.0 (Visible)

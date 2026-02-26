@@ -1,0 +1,9 @@
+Running Tests for: List Warehouse Inventory Manager (Central Server)
+
+PASS TC1 [Check items in blank inventory (Initial State)] (2/2)
+PASS TC2 [Add multiple items and verify list] (2/2)
+PASS TC3 [Verify the total count of items] (2/2)
+PASS TC4 [Successfully remove an existing item] (2/2)
+PASS TC5 [Remove a non-existent item] (2/2)
+
+SCORE: 10/10 (Visible) | 10/10 (Total)
