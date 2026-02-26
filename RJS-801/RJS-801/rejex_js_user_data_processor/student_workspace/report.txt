@@ -1,9 +1,0 @@
-Running Tests for: User Data Processor
-
-PASS TC1 [Initialize UserDataProcessor]
-PASS TC2 [Validate email addresses]
-PASS TC3 [Validate phone numbers]
-PASS TC4 [Extract usernames from text]
-PASS TC5 [Mask sensitive data]
-
-SCORE: 25/25 (Visible)
