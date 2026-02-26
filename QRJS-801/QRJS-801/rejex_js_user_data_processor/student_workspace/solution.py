@@ -12,7 +12,7 @@ class UserDataProcessor:
         Initialize the UserDataProcessor.
         Create storage for processed user data.
         """
-        self.users = []
+        """ YOUR CODE HERE """
 
     def validate_email(self, email: str) -> bool:
         """
@@ -20,13 +20,8 @@ class UserDataProcessor:
         
         Parameters:
             email (str): Email address to validate
-        
-        Returns:
-            bool: True if valid email format, False otherwise
-        
-        Pattern: ^[\\w\\.-]+@[\\w\\.-]+\\.[\\w]+$
         """
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        """ YOUR CODE HERE """
         return bool(re.match(pattern, email))
 
     def validate_username(self, username: str) -> bool:
@@ -36,27 +31,17 @@ class UserDataProcessor:
         
         Parameters:
             username (str): Username to validate
-        
-        Returns:
-            bool: True if valid username format (5-10 alphanumeric), False otherwise
-        
-        Pattern: ^[a-zA-Z0-9]{5,10}$
         """
-        pattern = r'^[a-zA-Z0-9]{5,10}$'
-        return bool(re.match(pattern, username))
-
+        """ YOUR CODE HERE """
+        
     def clean_phone(self, phone_str: str) -> str:
         """
         Extract all digits from phone string (remove non-digit characters).
         
         Parameters:
-            phone_str (str): Phone string with possible formatting characters
-        
-        Returns:
-            str: String containing only digits extracted from phone
-        
-        Uses: re.sub(r'\\D', '', phone_str) to remove all non-digit characters
+            phone_str (str): Phone string with possible formatting character
         """
+        """ YOUR CODE HERE """
         return re.sub(r'\D', '', phone_str)
 
     def to_json(self, data: dict) -> str:
@@ -65,12 +50,8 @@ class UserDataProcessor:
         
         Parameters:
             data (dict): Dictionary to convert to JSON
-        
-        Returns:
-            str: JSON formatted string with 4-space indentation
-        
-        Uses: json.dumps() with indent=4
         """
+        """ YOUR CODE HERE """
         return json.dumps(data, indent=4)
 
     def from_json(self, json_str: str) -> dict:
@@ -79,13 +60,7 @@ class UserDataProcessor:
         
         Parameters:
             json_str (str): JSON formatted string to parse
-        
-        Returns:
-            dict: Dictionary parsed from JSON string
-        
-        Uses: json.loads()
         """
-        try:
-            return json.loads(json_str)
-        except json.JSONDecodeError:
+        """ YOUR CODE HERE """
             return {}
+
