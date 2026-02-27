@@ -1,0 +1,24 @@
+Running Tests for: Server Traffic Logs Analysis
+
+PASS Visible Test Case 1 Passed: Load traffic_logs.csv and verify 20 rows loaded
+PASS Visible Test Case 2 Passed: Identify and remove 2 outliers (ResponseTime > 10s)
+PASS Visible Test Case 3 Passed: Verify 18 rows remain after outlier removal
+PASS Visible Test Case 4 Passed: Fill NaN values in ResponseTime with mean
+PASS Visible Test Case 5 Passed: Identify slowest endpoint (/profile with ~0.93s avg)
+PASS Visible Test Case 6 Passed: Count 404 errors in traffic logs
+PASS Visible Test Case 7 Passed: Check for 500 errors (should return 0)
+PASS Visible Test Case 8 Passed: Verify row count is correct after all operations
+
+SCORE: 20/20.0 (Visible)
+Running Tests for: Server Traffic Logs Analysis
+
+PASS Visible Test Case 1 Passed: Load traffic_logs.csv and verify 20 rows loaded
+PASS Visible Test Case 2 Passed: Identify and remove 2 outliers (ResponseTime > 10s)
+PASS Visible Test Case 3 Passed: Verify 18 rows remain after outlier removal
+PASS Visible Test Case 4 Passed: Fill NaN values in ResponseTime with mean
+PASS Visible Test Case 5 Passed: Identify slowest endpoint (/profile with ~0.93s avg)
+PASS Visible Test Case 6 Passed: Count 404 errors in traffic logs
+PASS Visible Test Case 7 Passed: Check for 500 errors (should return 0)
+PASS Visible Test Case 8 Passed: Verify row count is correct after all operations
+
+SCORE: 20/20.0 (Visible)

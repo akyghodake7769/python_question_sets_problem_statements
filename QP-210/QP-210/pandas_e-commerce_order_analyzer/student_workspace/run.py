@@ -1,17 +1,17 @@
-#!/usr/bin/env python3
-"""
-E-Commerce Order Analyzer - Test Runner
-"""
+# student_workspace/run.py
 
+import importlib.util
 import os
-import sys
 
-# Add secret_tests directory to path for imports
-secret_tests_path = os.path.join(os.path.dirname(__file__), '..', 'secret_tests')
-sys.path.insert(0, secret_tests_path)
+# Set up paths
+solution_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "solution.py"))
+driver_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "secret_tests", "driver.py"))
 
-from driver import test_student_code
+# Load driver module (use unique name to avoid import conflicts)
+spec = importlib.util.spec_from_file_location("secret_driver", driver_path)
+driver_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(driver_module)
 
+# Run tests
 if __name__ == "__main__":
-    solution_path = os.path.join(os.path.dirname(__file__), 'solution.py')
-    test_student_code(solution_path)
+    driver_module.test_student_code(solution_path)
