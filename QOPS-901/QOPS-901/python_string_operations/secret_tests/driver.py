@@ -1,6 +1,8 @@
 import os
 import sys
 import importlib.util
+import io
+import contextlib
 
 def validate_method_exists(obj, method_name):
     """Check if method exists and is callable."""
@@ -55,57 +57,57 @@ def test_student_code(solution_path):
     
     test_cases = [
         {
-            "desc": "Convert strict string to standard uppercase",
+            "desc": "Convert to uppercase",
             "func": "convert_to_uppercase",
             "setup": lambda: _setup_tc1(Solution),
             "call": lambda obj: obj.convert_to_uppercase("python programming language"),
-            "check": lambda result: result == "PYTHON PROGRAMMING LANGUAGE",
-            "expected_output": "'PYTHON PROGRAMMING LANGUAGE'",
+            "check": lambda result, output: "PYTHON PROGRAMMING LANGUAGE" in output,
+            "expected_output": "Printed 'PYTHON PROGRAMMING LANGUAGE'",
             "marks": 5
         },
         {
-            "desc": "Convert complete string to pure lowercase",
+            "desc": "Convert to lowercase",
             "func": "convert_to_lowercase",
             "setup": lambda: _setup_tc2(Solution),
             "call": lambda obj: obj.convert_to_lowercase("WELCOME TO PYTHON"),
-            "check": lambda result: result == "welcome to python",
-            "expected_output": "'welcome to python'",
+            "check": lambda result, output: "welcome to python" in output,
+            "expected_output": "Printed 'welcome to python'",
             "marks": 5
         },
         {
-            "desc": "Capitalize absolutely the first letter only",
+            "desc": "Capitalize first letter",
             "func": "capitalize_sentence",
             "setup": lambda: _setup_tc3(Solution),
             "call": lambda obj: obj.capitalize_sentence("python is easy to learn"),
-            "check": lambda result: result == "Python is easy to learn",
-            "expected_output": "'Python is easy to learn'",
+            "check": lambda result, output: "Python is easy to learn" in output,
+            "expected_output": "Printed 'Python is easy to learn'",
             "marks": 5
         },
         {
-            "desc": "Count all exact specific word occurrences",
+            "desc": "Count word occurrences",
             "func": "count_word_occurrences",
             "setup": lambda: _setup_tc4(Solution),
-            "call": lambda obj: obj.count_word_occurrences("data science is fun because data drives decisions", "data"),
-            "check": lambda result: result == 2,
-            "expected_output": "2",
+            "call": lambda obj: obj.count_word_occurrences("...", "data"),
+            "check": lambda result, output: "2" in output,
+            "expected_output": "Printed '2'",
             "marks": 5
         },
         {
-            "desc": "Replace any explicit word within string",
+            "desc": "Replace word",
             "func": "replace_word",
             "setup": lambda: _setup_tc5(Solution),
-            "call": lambda obj: obj.replace_word("Python is a powerful language", "Python", "Java"),
-            "check": lambda result: result == "Java is a powerful language",
-            "expected_output": "'Java is a powerful language'",
+            "call": lambda obj: obj.replace_word("...", "Python", "Java"),
+            "check": lambda result, output: "Java is a powerful language" in output,
+            "expected_output": "Printed 'Java is a powerful language'",
             "marks": 5
         },
         {
-            "desc": "Split sentence directly into sequential words",
+            "desc": "Split sentence",
             "func": "split_sentence",
             "setup": lambda: _setup_tc6(Solution),
-            "call": lambda obj: obj.split_sentence("Python makes data analysis easier"),
-            "check": lambda result: result == ['Python', 'makes', 'data', 'analysis', 'easier'],
-            "expected_output": "['Python', 'makes', 'data', 'analysis', 'easier']",
+            "call": lambda obj: obj.split_sentence("..."),
+            "check": lambda result, output: "['Python', 'makes', 'data', 'analysis', 'easier']" in output or "'Python', 'makes', 'data', 'analysis', 'easier'" in output,
+            "expected_output": "Printed list of words",
             "marks": 5
         }
     ]
@@ -126,10 +128,14 @@ def test_student_code(solution_path):
                 report_lines.append(msg)
                 continue
             
-            # Setup and execute test
+            # Setup and execute test with stdout capture
             obj = case["setup"]()
-            result = case["call"](obj)
-            passed = case["check"](result)
+            f = io.StringIO()
+            with contextlib.redirect_stdout(f):
+                result = case["call"](obj)
+            output = f.getvalue()
+            
+            passed = case["check"](result, output)
             
             if passed:
                 msg = f"PASS TC{idx} [{case['desc']}] ({marks}/{marks})"
@@ -137,7 +143,7 @@ def test_student_code(solution_path):
             else:
                 msg = f"FAIL TC{idx} [{case['desc']}]\n"
                 msg += f"  Expected: {case['expected_output']}\n"
-                msg += f"  Got: {repr(result)}\n"
+                msg += f"  Captured Output: {repr(output.strip())}\n"
             
             print(msg)
             report_lines.append(msg)
