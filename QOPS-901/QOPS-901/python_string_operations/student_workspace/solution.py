@@ -1,18 +1,30 @@
 class Solution:
     def convert_to_uppercase(self, text: str) -> str:
-        return text.upper()
+        text = "python programming language"
+        result = text.upper()
+        print(f"Uppercase: {result}")
 
     def convert_to_lowercase(self, text: str) -> str:
-        return text.lower()
+        text = "WELCOME TO PYTHON"
+        result = text.lower()
+        print(f"Lowercase: {result}")
 
     def capitalize_sentence(self, text: str) -> str:
-        return text.capitalize()
+        text = "python is easy to learn"
+        result = text.capitalize()
+        print(f"Capitalized: {result}")
 
     def count_word_occurrences(self, text: str, target: str) -> int:
-        return text.count(target)
+        text = "data science is fun because data drives decisions"
+        count = text.count("data")
+        print(f"Count of 'data': {count}")
 
     def replace_word(self, text: str, old_word: str, new_word: str) -> str:
-        return text.replace(old_word, new_word)
+        text = "Python is a powerful language"
+        result = text.replace("Python", "Java")
+        print(f"Replaced: {result}")
 
     def split_sentence(self, text: str) -> list:
-        return text.split()
+        text = "Python makes data analysis easier"
+        words = text.split()
+        print(f"Split Words: {words}")
