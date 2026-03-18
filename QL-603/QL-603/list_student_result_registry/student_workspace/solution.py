@@ -7,35 +7,32 @@ class ResultRegistry:
 
     def create_status_dict(self) -> dict:
         """Map each score to its pass/fail status."""
-        status_dict = {}
-        for score in self.scores:
-            if score >= 80:
-                status_dict[score] = "Pass"
-            else:
-                status_dict[score] = "Fail"
-        return status_dict
+        # Hint: Iterate through self.scores and create a dictionary mapping each score 
+        # to "Pass" if >= 80, otherwise "Fail".
+        pass
 
     def find_highest_score(self) -> int:
         """Find and return the highest score."""
-        return max(self.scores)
+        # Hint: Use the built-in max() function on self.scores.
+        pass
 
     def calculate_average(self) -> float:
         """Calculate and return the average score rounded to 1 decimal place."""
-        average = sum(self.scores) / len(self.scores)
-        return round(average, 1)
+        # Hint: Calculate the sum divided by the length, and use round(result, 1).
+        pass
 
     def get_passing_scores(self) -> list:
         """Get all passing scores (>= 80) sorted in descending order."""
-        passing = [score for score in self.scores if score >= 80]
-        return sorted(passing, reverse=True)
+        # Hint: Use a list comprehension to filter scores >= 80, then sort with reverse=True.
+        pass
 
     def get_failed_scores(self) -> list:
         """Get all failed scores (< 80) sorted in ascending order."""
-        failed = [score for score in self.scores if score < 80]
-        return sorted(failed)
+        # Hint: Use a list comprehension to filter scores < 80, then use the sort method.
+        pass
 
     def count_pass_fail(self) -> dict:
         """Count the total number of passing and failing students."""
-        d = self.create_status_dict()
-        vals = list(d.values())
-        return {'Pass': vals.count('Pass'), 'Fail': vals.count('Fail')}
+        # Hint: Use create_status_dict() to get all statuses, then count the occurrences 
+        # of "Pass" and "Fail".
+        pass
