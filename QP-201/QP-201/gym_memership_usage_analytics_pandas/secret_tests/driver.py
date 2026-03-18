@@ -11,12 +11,15 @@ def test_student_code(solution_path):
 
     spec = importlib.util.spec_from_file_location("student_module", solution_path)
     student_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(student_module)
+    
+    try:
+        spec.loader.exec_module(student_module)
+    except Exception as e:
+        print(f"IMPORT ERROR: {e}")
+        return
 
-    analyzer = student_module.GymUsageAnalyzer()
-
-    print("🧪 Running Tests for: Gym Membership Usage Analytics\n")
-    report_lines = ["🧪 Running Tests for: Gym Membership Usage Analytics\n"]
+    print("🧪 Running Tests for: Gym Membership Usage Analytics (Strict Independence Mode)\n")
+    report_lines = ["🧪 Running Tests for: Gym Membership Usage Analytics (Strict Independence Mode)\n"]
 
     # Define test DataFrames for reuse across independent tests
     test_df_1 = pd.DataFrame({
@@ -31,13 +34,6 @@ def test_student_code(solution_path):
         "Branch": ["Downtown", "Downtown", "Uptown"],
         "Workout": ["Cardio", "Yoga", "Weights"],
         "Duration": [45, 30, 60]
-    })
-
-    test_df_3 = pd.DataFrame({
-        "Member": ["Alice", "Bob", "Zoe"],
-        "Branch": ["A", "B", "C"],
-        "Workout": ["Yoga", "Cardio", "Weights"],
-        "Duration": [30, 60, 45]
     })
 
     test_df_4 = pd.DataFrame({
@@ -82,35 +78,35 @@ def test_student_code(solution_path):
         {
             "desc": "Compute total duration per member",
             "func": "compute_total_duration",
-            "input": test_df_2.copy(),
+            "input": test_df_2,
             "expected_columns": ["Total Duration"],
             "marks": 2.5
         },
         {
             "desc": "Add calorie column to DataFrame",
             "func": "add_calorie_column",
-            "input": test_df_1.copy(),
+            "input": test_df_1,
             "expected_columns": ["Calories Burned"],
             "marks": 2.5
         },
         {
             "desc": "Filter sessions longer than threshold",
             "func": "filter_long_sessions",
-            "input": (test_df_1.copy(), 45),
+            "input": (test_df_1, 45),
             "expected_rows": 2,
             "marks": 2.5
         },
         {
             "desc": "Get top N sessions by calories",
             "func": "get_top_sessions",
-            "input": (test_df_4.copy(), 2),
+            "input": (test_df_4, 2),
             "expected_type": pd.DataFrame,
             "marks": 2.5
         },
         {
             "desc": "Remove duplicate logs",
             "func": "remove_duplicates",
-            "input": test_df_duplicates.copy(),
+            "input": test_df_duplicates,
             "expected_rows": 2,
             "marks": 2.5,
             "is_hidden": True
@@ -118,7 +114,7 @@ def test_student_code(solution_path):
         {
             "desc": "Handle zero duration session",
             "func": "compute_total_duration",
-            "input": test_df_zero_duration.copy(),
+            "input": test_df_zero_duration,
             "expected_columns": ["Total Duration"],
             "marks": 2.5,
             "is_hidden": True
@@ -126,7 +122,7 @@ def test_student_code(solution_path):
         {
             "desc": "Handle tie in top calorie-burning sessions",
             "func": "get_top_sessions",
-            "input": (test_df_tie_top.copy(), 2),
+            "input": (test_df_tie_top, 2),
             "expected_type": pd.DataFrame,
             "marks": 2.5,
             "is_hidden": True
@@ -137,30 +133,41 @@ def test_student_code(solution_path):
     max_score = 0
 
     for idx, case in enumerate(test_cases, 1):
-        marks = case.get("marks", 2)
+        marks = case.get("marks", 2.5)
         is_hidden = case.get("is_hidden", False)
         
-        # Only count visible tests toward score
         if not is_hidden:
             max_score += marks
         
         try:
+            # CREATE FRESH OBJECT FOR EVERY TEST CASE (Strict Independence)
+            analyzer = student_module.GymUsageAnalyzer()
+            
+            if not hasattr(analyzer, case["func"]):
+                msg = f" Test Case {idx} Failed: Method '{case['func']}' not found"
+                print(msg)
+                report_lines.append(msg)
+                continue
+
             func = getattr(analyzer, case["func"])
             src = inspect.getsource(func).replace(" ", "").replace("\n", "").lower()
 
-            # Check 1: Pass-only
+            # Check for pass-only implementation
             if 'pass' in src and len(src) < 80:
-                test_type = "🔒 Hidden" if is_hidden else "✅ Visible"
-                msg = f"❌ {test_type} Test Case {idx} Failed: {case['desc']} | Reason: Contains only 'pass'"
+                test_type = " Hidden" if is_hidden else " Visible"
+                msg = f" {test_type} Test Case {idx} Failed: {case['desc']} | Reason: Contains only 'pass'"
                 report_lines.append(msg)
                 print(msg)
                 continue
 
-            # Execute test
+            # Prepare Input (Always using FRESH COPIES from driver data)
             if isinstance(case["input"], tuple):
-                result = func(*case["input"])
+                input_data = tuple(item.copy() if isinstance(item, pd.DataFrame) else item for item in case["input"])
+                result = func(*input_data)
+            elif isinstance(case["input"], pd.DataFrame):
+                result = func(case["input"].copy())
             elif isinstance(case["input"], list):
-                result = func(case["input"])
+                result = func(case["input"][:]) # Shallow copy of list
             else:
                 result = func(case["input"])
 
@@ -174,24 +181,22 @@ def test_student_code(solution_path):
                 passed = result.shape[0] == case["expected_rows"]
             
             if passed:
-                test_type = "🔒 Hidden" if is_hidden else "✅ Visible"
+                test_type = " Hidden" if is_hidden else " Visible"
                 msg = f"{test_type} Test Case {idx} Passed: {case['desc']}"
-                # Only add to score if visible
                 if not is_hidden:
                     total_score += marks
             else:
-                test_type = "🔒 Hidden" if is_hidden else "❌ Visible"
+                test_type = " Hidden" if is_hidden else " Visible"
                 msg = f"{test_type} Test Case {idx} Failed: {case['desc']} | Reason: Output mismatch"
 
         except Exception as e:
-            test_type = "🔒 Hidden" if is_hidden else "❌ Visible"
+            test_type = " Hidden" if is_hidden else " Visible"
             msg = f"{test_type} Test Case {idx} Crashed: {case['desc']} | Error: {str(e)}"
 
         print(msg)
         report_lines.append(msg)
 
-    # Print total score summary
-    score_line = f"\n🎯 SCORE: {total_score}/12.5 (Visible) | Total: 20 (Visible: 12.5 + Hidden: 7.5)"
+    score_line = f"\n SCORE: {total_score}/{max_score} (Visible) | Total Max: 20 (Visible: 12.5 + Hidden: 7.5)"
     print(score_line)
     report_lines.append(score_line)
 
