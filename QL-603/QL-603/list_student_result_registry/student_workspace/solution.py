@@ -9,26 +9,36 @@ class ResultRegistry:
         """Map each score to its pass/fail status."""
         # Hint: Iterate through self.scores and create a dictionary mapping each score 
         # to "Pass" if >= 80, otherwise "Fail".
+        
+        """ YOUR CODE HERE """
         pass
 
     def find_highest_score(self) -> int:
         """Find and return the highest score."""
         # Hint: Use the built-in max() function on self.scores.
+
+        """ YOUR CODE HERE """
         pass
 
     def calculate_average(self) -> float:
         """Calculate and return the average score rounded to 1 decimal place."""
         # Hint: Calculate the sum divided by the length, and use round(result, 1).
+
+        """ YOUR CODE HERE """
         pass
 
     def get_passing_scores(self) -> list:
         """Get all passing scores (>= 80) sorted in descending order."""
         # Hint: Use a list comprehension to filter scores >= 80, then sort with reverse=True.
+
+        """ YOUR CODE HERE """
         pass
 
     def get_failed_scores(self) -> list:
         """Get all failed scores (< 80) sorted in ascending order."""
         # Hint: Use a list comprehension to filter scores < 80, then use the sort method.
+
+        """ YOUR CODE HERE """
         pass
 
     def count_pass_fail(self) -> dict:
