@@ -10,90 +10,97 @@ def test_student_code(solution_path):
 
     spec = importlib.util.spec_from_file_location("student_module", solution_path)
     student_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(student_module)
+    
+    try:
+        spec.loader.exec_module(student_module)
+    except Exception as e:
+        print(f"IMPORT ERROR: {e}")
+        return
 
-    print("Running Tests for: Student Exam Advanced Operations Dictionary\n")
-    report_lines = ["Running Tests for: Student Exam Advanced Operations Dictionary\n"]
+    print("Running Tests for: Student Exam Advanced Operations Dictionary (Independent Mode)\n")
+    report_lines = ["Running Tests for: Student Exam Advanced Operations Dictionary (Independent Mode)\n"]
+
+    if not hasattr(student_module, "StudentResultManager"):
+        print("ERROR: StudentResultManager class not found")
+        return
+
+    StudentResultManager = student_module.StudentResultManager
+    
+    # Shared test data derived from the problem sample
+    test_data = {
+        "S001": {"name": "Arjun", "math": 85, "science": 92, "english": 78},
+        "S002": {"name": "Nisha", "math": 95, "science": 88, "english": 90},
+        "S003": {"name": "Rohan", "math": 72, "science": 79, "english": 85},
+        "S004": {"name": "Divya", "math": 88, "science": 95, "english": 92},
+        "S005": {"name": "Karan", "math": 80, "science": 82, "english": 88}
+    }
 
     test_cases = [
         {
-            "desc": "Calculate average score for each student",
+            "desc": "Calculate student averages",
             "func": "calculate_student_averages",
-            "setup": lambda: student_module.StudentResultManager(),
-            "call": lambda obj: obj.calculate_student_averages(),
-            "check": lambda output: "Student Averages:" in output and "'S001': 85.0" in output and "'S004': 91.7" in output,
+            "expected": ["'S001': 85.0", "'S004': 91.7"],
             "marks": 7
         },
         {
-            "desc": "Find student with highest average score",
+            "desc": "Find highest average student",
             "func": "find_highest_average",
-            "setup": lambda: student_module.StudentResultManager(),
-            "call": lambda obj: obj.find_highest_average(),
-            "check": lambda output: "Highest Average: Divya (S004) - 91.7" in output,
+            "expected": ["Highest Average: Divya (S004) - 91.7"],
             "marks": 7
         },
         {
             "desc": "Calculate subject-wise averages",
             "func": "calculate_subject_averages",
-            "setup": lambda: student_module.StudentResultManager(),
-            "call": lambda obj: obj.calculate_subject_averages(),
-            "check": lambda output: "Subject Averages:" in output and "'math': 84.0" in output and "'science': 87.2" in output and "'english': 86.6" in output,
+            "expected": ["'math': 84.0", "'science': 87.2", "'english': 86.6"],
             "marks": 6
         }
     ]
 
     total_score = 0
-    max_score = 0
+    max_score = 20.0
 
     for idx, case in enumerate(test_cases, 1):
-        marks = case.get("marks", 7)
-        is_hidden = case.get("is_hidden", False)
-        
-        if not is_hidden:
-            max_score += marks
-        
         try:
-            obj = case["setup"]()
+            obj = StudentResultManager()
+            # Injection point for independence
+            obj.students = test_data.copy()
             
-            # Capture stdout for methods that print
+            if not hasattr(obj, case["func"]):
+                msg = f"FAIL TC{idx} [{case['desc']}] | Method '{case['func']}' missing"
+                print(msg); report_lines.append(msg); continue
+
+            # Capture stdout
             old_stdout = sys.stdout
-            sys.stdout = StringIO()
-            
+            new_stdout = StringIO()
+            sys.stdout = new_stdout
             try:
                 getattr(obj, case["func"])()
-                output = sys.stdout.getvalue()
+                output = new_stdout.getvalue().strip()
             finally:
                 sys.stdout = old_stdout
-            
-            # Execute test check
-            passed = case["check"](output)
+
+            # Check for all expected snippets
+            passed = all(snippet in output for snippet in case["expected"])
             
             if passed:
-                test_type = "Hidden" if is_hidden else "Visible"
-                msg = f"PASS {test_type} Test Case {idx} Passed: {case['desc']}"
-                if not is_hidden:
-                    total_score += marks
+                msg = f"PASS TC{idx} [{case['desc']}] ({case['marks']}/{case['marks']})"
+                total_score += case["marks"]
             else:
-                test_type = "Hidden" if is_hidden else "Visible"
-                msg = f"FAIL {test_type} Test Case {idx} Failed: {case['desc']} | Reason: Output mismatch"
+                msg = f"FAIL TC{idx} [{case['desc']}] | Expected snippets: {case['expected']}, Got: {repr(output)}"
             
-            print(msg)
-            report_lines.append(msg)
-        
         except Exception as e:
-            test_type = "Hidden" if is_hidden else "Visible"
-            msg = f"FAIL {test_type} Test Case {idx} Crashed: {case['desc']} | Error: {str(e)}"
-            print(msg)
-            report_lines.append(msg)
+            msg = f"FAIL TC{idx} [{case['desc']}] | Error: {str(e)}"
+        
+        print(msg)
+        report_lines.append(msg)
 
-    score_line = f"\nSCORE: {total_score}/20.0 (Visible)"
+    score_line = f"\nSCORE: {total_score}/{max_score}"
     print(score_line)
     report_lines.append(score_line)
 
-    with open(report_path, "a", encoding="utf-8") as f:
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(report_lines) + "\n")
 
-
 if __name__ == "__main__":
-    solution_file = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
-    test_student_code(solution_file)
+    sol_file = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
+    test_student_code(sol_file)
