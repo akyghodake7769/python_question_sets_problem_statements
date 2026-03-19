@@ -14,57 +14,23 @@ class StudentResultManager:
     def calculate_student_averages(self):
         """
         Calculate and print average score for each student across all subjects.
-        
-        Processing:
-            - For each student, calculate average of math, science, english
-            - Round to 1 decimal place
-        Output:
+                Output:
             - Print: "Student Averages: {dictionary with student_id: average}"
         """
-        averages = {}
-        """Your code here"""
-        print(f"Student Averages: {averages}")
+
+
 
     def find_highest_average(self):
         """
         Find and print the student with the highest average score.
-        
-        Processing:
-            - Calculate average for each student
-            - Find student with maximum average
         Output:
             - Print: "Highest Average: {name} ({student_id}) - {average}"
         """
-        highest_avg = -1
-        highest_student_id = None
-        highest_name = None
-        
-        for student_id, scores in self.students.items():
-            """Your code here"""
-            print(f"Highest Average: {highest_name} ({highest_student_id}) - {highest_avg}")
 
     def calculate_subject_averages(self):
         """
         Calculate and print average score for each subject across all students.
-        
-        Processing:
-            - Sum scores for each subject across all students
-            - Divide by number of students
-            - Round to 1 decimal place
         Output:
             - Print: "Subject Averages: {dictionary with subject: average}"
         """
-        total_math = 0
-        total_science = 0
-        total_english = 0
-        num_students = len(self.students)
-        
-        for scores in self.students.values():
-            """Your code here"""
-        
-        subject_averages = {
-            """Your code here"""
-        }
-        
-        print(f"Subject Averages: {subject_averages}")
 
