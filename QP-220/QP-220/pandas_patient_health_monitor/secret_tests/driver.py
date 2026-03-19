@@ -15,21 +15,22 @@ def resolve_health_csv_path():
     return None
 
 def test_student_code(solution_path):
+    # Output path setup
     report_dir = os.path.join(os.path.dirname(__file__), "..", "student_workspace")
     report_path = os.path.join(report_dir, "report.txt")
     os.makedirs(report_dir, exist_ok=True)
 
+    # Load solution
     spec = importlib.util.spec_from_file_location("solution", solution_path)
     solution = importlib.util.module_from_spec(spec)
-    
     try:
         spec.loader.exec_module(solution)
     except Exception as e:
         print(f"IMPORT ERROR: {e}")
         return
     
-    print("Running Tests for: Patient Health Monitor (File-Based Independence)\n")
-    report_lines = ["Running Tests for: Patient Health Monitor (File-Based Independence)\n"]
+    print("Running Tests for: Patient Health Monitor (Dynamic Anti-Cheat Mode)\n")
+    report_lines = ["Running Tests for: Patient Health Monitor (Dynamic Anti-Cheat Mode)\n"]
     
     if not hasattr(solution, "HealthMonitor"):
         print("ERROR: HealthMonitor class not found")
@@ -37,71 +38,97 @@ def test_student_code(solution_path):
     
     HealthMonitor = solution.HealthMonitor
     health_csv = resolve_health_csv_path()
-    
     if not health_csv:
-        print("ERROR: health.csv not found")
-        return
+        print("ERROR: health.csv not found"); return
 
-    # Load data from FILE
+    # Load base data
     try:
         raw_df = pd.read_csv(health_csv)
         cleaned_df = raw_df.dropna(subset=['HeartRate']).copy()
     except Exception as e:
-        print(f"READ ERROR: {e}")
-        return
-
-    test_cases = [
-        {"desc": "Initial State (Sample)", "type": "sample", "expected": None},
-        {"desc": "Data Loading (Sample)", "type": "sample", "expected": 12},
-        {"desc": "Clean Records (Logic)", "type": "marked", "func": "clean_records", "expected": 2},
-        {"desc": "Find Highest Rate (Logic)", "type": "marked", "func": "find_highest_rate", "expected": 110},
-        {"desc": "Patient Averages (Logic)", "type": "marked", "func": "patient_averages", "expected": 72.33},
-        {"desc": "High Risk Identification (Logic)", "type": "marked", "func": "high_risk", "expected": ['P03']},
-        {"desc": "Count High Risk Patients (Logic)", "type": "marked", "func": "count_high_risk", "expected": 1}
-    ]
+        print(f"READ ERROR: {e}"); return
 
     total_score = 0
     max_score = 20.0
 
-    for idx, case in enumerate(test_cases, 1):
+    # Execute tests with dynamic modifications
+    for idx in range(1, 8):
         try:
             temp = HealthMonitor()
             actual = None
-            
-            if idx == 1: # init state
+            expected = None
+            desc = ""
+            marks = 0
+
+            if idx == 1:
+                desc = "Initial State (Sample)"
                 actual = temp.df
-            elif idx == 2: # data loading
+                expected = None
+            elif idx == 2:
+                desc = "Data Loading (Sample)"
                 temp.read_data(health_csv)
                 actual = len(temp.df) if temp.df is not None else 0
-            elif idx == 3: # clean_records
-                temp.df = raw_df.copy()
+                expected = 12
+            elif idx == 3:
+                desc = "Clean Records (Logic)"
+                marks = 4
+                # Modify: Add 3 extra NaN rows
+                extra = pd.DataFrame({'PatientID':['X','Y','Z'], 'Day':['Mon']*3, 'HeartRate':[None]*3})
+                test_df = pd.concat([raw_df, extra], ignore_index=True)
+                temp.df = test_df.copy()
                 actual = temp.clean_records()
-            elif idx == 4: # find_highest_rate
-                temp.df = cleaned_df.copy()
+                expected = test_df['HeartRate'].isna().sum()
+            elif idx == 4:
+                desc = "Find Highest Rate (Logic)"
+                marks = 4
+                # Modify: Inject a peak rate of 160
+                test_df = cleaned_df.copy()
+                test_df.iloc[0, test_df.columns.get_loc('HeartRate')] = 160
+                temp.df = test_df.copy()
                 actual = temp.find_highest_rate()
-            elif idx == 5: # patient_averages
-                temp.df = cleaned_df.copy()
+                expected = 160
+            elif idx == 5:
+                desc = "Patient Averages (Logic)"
+                marks = 4
+                # Modify: Fix P01 values to all be 90
+                test_df = cleaned_df.copy()
+                test_df.loc[test_df['PatientID'] == 'P01', 'HeartRate'] = 90
+                temp.df = test_df.copy()
                 res = temp.patient_averages()
-                actual = round(res.get('P01', 0), 2) if isinstance(res, dict) and 'P01' in res else (res.get('P01', 0) if isinstance(res, dict) else res)
-            elif idx == 6: # high_risk
-                temp.df = cleaned_df.copy()
-                actual = temp.high_risk(100)
-            elif idx == 7: # count_high_risk
-                temp.df = cleaned_df.copy()
-                temp.high_risk = lambda threshold: ['P03'] if threshold == 100 else []
-                actual = temp.count_high_risk(100)
-            
-            if actual == case["expected"]:
-                if case["type"] == "marked":
-                    msg = f"PASS TC{idx} [{case['desc']}] (4/4)"
-                    total_score += 4
+                actual = res.get('P01') if isinstance(res, dict) else res
+                expected = 90.0
+            elif idx == 6:
+                desc = "High Risk Identification (Logic)"
+                marks = 4
+                # Modify: Add a very high risk patient
+                test_df = cleaned_df.copy()
+                test_df.loc[0, 'PatientID'] = 'P_HIGH'
+                test_df.loc[0, 'HeartRate'] = 150
+                temp.df = test_df.copy()
+                actual = temp.high_risk(140)
+                expected = ['P_HIGH']
+            elif idx == 7:
+                desc = "Count High Risk Patients (Logic)"
+                marks = 4
+                # Modify: 3 patients high risk
+                test_df = cleaned_df.copy()
+                test_df.loc[0:2, 'HeartRate'] = 140
+                temp.df = test_df.copy()
+                temp.high_risk = lambda t: ['P01','P02','P03'] if t == 135 else []
+                actual = temp.count_high_risk(135)
+                expected = 3
+
+            if actual == expected:
+                if marks > 0:
+                    total_score += marks
+                    msg = f"PASS TC{idx} [{desc}] (4/4)"
                 else:
-                    msg = f"PASS TC{idx} [{case['desc']}] (Sample)"
+                    msg = f"PASS TC{idx} [{desc}] (Sample)"
             else:
-                msg = f"FAIL TC{idx} [{case['desc']}] | Expected: {case['expected']}, Got: {actual}"
+                msg = f"FAIL TC{idx} [{desc}] | Expected: {expected}, Got: {actual}"
             
         except Exception as e:
-            msg = f"FAIL TC{idx} [{case['desc']}] | Error: {str(e)}"
+            msg = f"FAIL TC{idx} | Error: {str(e)}"
         
         print(msg)
         report_lines.append(msg)
