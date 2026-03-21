@@ -1,7 +1,7 @@
 class RetailInventorySystem:
     def __init__(self):
         # Initialize internal data structure to store products.
-        pass
+        self.inventory = {}
 
     def register_product(self, name: str, price: float, stock: int) -> str:
         # Add a new product with its price and initial stock level.
