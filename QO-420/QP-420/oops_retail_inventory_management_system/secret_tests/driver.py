@@ -51,39 +51,50 @@ def test_student_code(solution_path):
                 if idx == 7: current_obj.inventory[name] = {'price': price, 'stock': stock}; return current_obj.remove_product(name)
                 return None
 
-            p_ok, h_det = False, False
+            p_ok, h_det, none_ret = False, False, False
+            actual_res = None
+            expected_res = None
+
             if i == 1:
-                p_ok = (run_t(i, None, ("", 0, 0)) == {})
+                actual_res = run_t(i, None, ("", 0, 0))
+                expected_res = {}
+                p_ok = (actual_res == expected_res)
             else:
                 # DUAL RUN
-                rv, rp = random.randint(10, 80), float(random.randint(150, 450))
+                rv, rp = random.randint(10, 80), float(random.randint(155, 455))
                 
                 # RUN 1
                 obj1 = SystemClass(); obj1.inventory = {}
-                res1 = run_t(i, obj1, ("TestX", 100.0, 10))
+                res1 = run_t(idx=i, current_obj=obj1, data_params=("TestX", 100.0, 10))
                 
                 # RUN 2
                 obj2 = SystemClass(); obj2.inventory = {}
-                res2 = run_t(i, obj2, ("TestX", rp, rv))
+                res2 = run_t(idx=i, current_obj=obj2, data_params=("TestX", rp, rv))
                 
-                exp2 = None
-                if i == 2: exp2 = "Product TestX registered."
-                elif i == 3: exp2 = f"Restocked TestX. Now: {rv + 10}"
-                elif i == 4: exp2 = f"Bill: ${rp * 2}"
-                elif i == 5: exp2 = float(rp * rv)
-                elif i == 6: exp2 = {'price': rp, 'stock': rv}
-                elif i == 7: exp2 = "Removed TestX from catalog."
+                actual_res = res2
+                if i == 2: expected_res = "Product TestX registered."
+                elif i == 3: expected_res = f"Restocked TestX. Now: {rv + 10}"
+                elif i == 4: expected_res = f"Bill: ${rp * 2}"
+                elif i == 5: expected_res = float(rp * rv)
+                elif i == 6: expected_res = {'price': rp, 'stock': rv}
+                elif i == 7: expected_res = "Removed TestX from catalog."
 
-                if res1 == res2 and res2 != exp2: h_det = True
-                elif res2 == exp2: p_ok = True
+                if actual_res == expected_res:
+                    p_ok = True
+                elif actual_res is None:
+                    none_ret = True
+                elif res1 == res2:
+                    h_det = True
 
             if p_ok:
                 total_score += marks
                 msg = f"PASS TC{i} [{desc}] ({marks}/{marks})"
+            elif none_ret:
+                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Method not implemented / No return value"
             elif h_det:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Hardcoded"
+                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Hardcoded. Dynamic check failed."
             else:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks})"
+                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Incorrect Output. Expected: {expected_res}"
         except Exception as e: msg = f"FAIL TC{i} [{desc}] | Error: {e}"
         print(msg); report_lines.append(msg)
 
@@ -92,5 +103,6 @@ def test_student_code(solution_path):
     with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
 
 if __name__ == "__main__":
+    import sys
     sol_file = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
     test_student_code(sol_file)
