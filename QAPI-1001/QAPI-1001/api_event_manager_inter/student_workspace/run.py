@@ -1,17 +1,17 @@
-#!/usr/bin/env python3
+# student_workspace/run.py
+
 import importlib.util
 import os
-import sys
 
-# Add path to secret_tests
-secret_tests_path = os.path.join(os.path.dirname(__file__), "..", "secret_tests")
-sys.path.insert(0, secret_tests_path)
+# Set up paths
+solution_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "solution.py"))
+driver_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "secret_tests", "driver.py"))
 
-# Import and run driver
-driver_module = importlib.util.spec_from_file_location("driver", os.path.join(secret_tests_path, "driver.py"))
-driver = importlib.util.module_from_spec(driver_module)
-driver_module.loader.exec_module(driver)
+# Load driver module
+spec = importlib.util.spec_from_file_location("driver", driver_path)
+driver_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(driver_module)
 
 # Run tests
-solution_file = os.path.join(os.path.dirname(__file__), "solution.py")
-driver.test_student_code(solution_file)
+if __name__ == "__main__":
+    driver_module.test_student_code(solution_path)
