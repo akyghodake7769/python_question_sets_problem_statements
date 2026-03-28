@@ -6,5 +6,4 @@ class WarehouseManager:
     
 class SupplyOptimizer:
 
-
     """ YOUR CODE HERE """
