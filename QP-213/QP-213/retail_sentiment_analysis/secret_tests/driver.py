@@ -1,109 +1,180 @@
+import importlib.util
 import os
 import sys
-import importlib.util
 import pandas as pd
+import random
+
+def validate_method_exists(obj, method_name):
+    """Check if method exists and is callable."""
+    if not hasattr(obj, method_name):
+        return False, f"Method '{method_name}' not found. Please check implementation."
+    if not callable(getattr(obj, method_name)):
+        return False, f"'{method_name}' is not callable. Make sure it's a method."
+    return True, None
 
 def test_student_code(solution_path):
-    run_tests(solution_path)
+    report_dir = os.path.dirname(solution_path)
+    report_path = os.path.join(report_dir, "report.txt")
+    
+    # Load Student Solution
+    spec = importlib.util.spec_from_file_location("solution", solution_path)
+    solution = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(solution)
+    except Exception as e:
+        msg = f"IMPORT ERROR: {e}"
+        print(msg)
+        with open(report_path, "w", encoding="utf-8") as f: f.write(msg + "\n")
+        return
 
-def run_tests(sol_p=None):
-    base_p = os.path.dirname(os.path.abspath(__file__))
-    if sol_p is None:
-        sol_p = os.path.join(base_p, "..", "student_workspace", "solution.py")
-    ref_p = os.path.join(base_p, "..", "student_workspace", "solution.py")
-    data_dir = os.path.join(base_p, "..", "data")
+    print("Running Tests for: Retail Sentiment Analysis (Professional Driver)\n")
+    report_lines = ["Running Tests for: Retail Sentiment Analysis (Professional Driver)\n"]
+
+    if not hasattr(solution, "SalesTracker"):
+        msg = "ERROR: SalesTracker class not found in solution.py"
+        print(msg); report_lines.append(msg)
+        with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
+        return
+
+    # Data Paths
+    data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
     sales_p = os.path.join(data_dir, "product_sales.csv")
     reviews_p = os.path.join(data_dir, "customer_reviews.csv")
     
-    sys.path.append(os.path.join(base_p, "..", "student_workspace"))
-    
-    def lmod(name, path):
-        spec = importlib.util.spec_from_file_location(name, path)
-        m = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(m)
-        return m
-
-    print("Running Tests for: Retail Sentiment Analysis\n")
+    # Pre-load data for setup functions
     try:
-        sol = lmod("sol", sol_p); ref = lmod("ref", ref_p)
+        raw_sales = pd.read_csv(sales_p)
+        raw_reviews = pd.read_csv(reviews_p)
     except Exception as e:
-        print(f"FAIL TC1 [Structure Check] (0/20) - Syntax: {e}"); return
+        print(f"CRITICAL ERROR: Data files missing. {e}"); return
 
-    tests = [
-        {"id": 1, "desc": "Load internal DataFrames", "marks": 0},
-        {"id": 2, "desc": "Filter sales by volume threshold", "marks": 3},
-        {"id": 3, "desc": "Categorical price aggregation", "marks": 3},
-        {"id": 4, "desc": "Product-level review aggregation", "marks": 3},
-        {"id": 5, "desc": "Cross-dataset merging check", "marks": 3},
-        {"id": 6, "desc": "Discount/Sales impact analysis", "marks": 4},
-        {"id": 7, "desc": "Opportunity detection logic", "marks": 4},
+    # Helper for Rounded Equality (Hardcoding Prevention Check)
+    def compare_rounded(r, e, precision=1):
+        try:
+            if isinstance(r, (float, int)): return round(float(r), precision) == round(float(e), precision)
+            if isinstance(r, dict):
+                return all(compare_rounded(r[k], e.get(k)) for k in e)
+            if isinstance(r, list):
+                return all(compare_rounded(x, y) for x, y in zip(r, e))
+            return str(r) == str(e)
+        except: return False
+
+    test_cases = [
+        {
+            "desc": "Initialize and Load DataFrames",
+            "func": "load_csvs",
+            "setup": lambda: solution.SalesTracker(),
+            "call": lambda obj: (obj.load_csvs(sales_p, reviews_p), isinstance(obj.df_sales, pd.DataFrame)),
+            "check": lambda res: res[1] == True,
+            "expected_output": "SalesTracker.df_sales should be a pandas DataFrame.",
+            "marks": 0
+        },
+        {
+            "desc": "Filter sales by volume threshold",
+            "func": "get_top_sellers",
+            "setup": lambda: _setup_with_data(solution.SalesTracker(), raw_sales),
+            "call": lambda obj: len(obj.get_top_sellers(100)),
+            "check": lambda res: res == len(raw_sales[raw_sales['Units_Sold'] >= 100]),
+            "expected_output": f"Expected {len(raw_sales[raw_sales['Units_Sold'] >= 100])} rows for threshold 100.",
+            "marks": 3
+        },
+        {
+            "desc": "Categorical price analysis (Mean)",
+            "func": "category_price_analysis",
+            "setup": lambda: _setup_with_data(solution.SalesTracker(), raw_sales),
+            "call": lambda obj: obj.category_price_analysis().to_dict(),
+            "check": lambda res: compare_rounded(res, raw_sales.groupby('Category')['Unit_Price'].mean().to_dict()),
+            "expected_output": "Dictionary of categories and mean prices.",
+            "marks": 3
+        },
+        {
+            "desc": "Product-level review aggregation",
+            "func": "aggregate_reviews",
+            "setup": lambda: solution.SentimentAnalyzer(),
+            "call": lambda obj: obj.aggregate_reviews(raw_reviews).to_dict(orient='records'),
+            "check": lambda res: compare_rounded(res, raw_reviews.groupby('Product_ID')['Rating'].mean().reset_index().to_dict(orient='records')),
+            "expected_output": "Aggregated ratings per Product_ID.",
+            "marks": 3
+        },
+        {
+            "desc": "Cross-dataset merging logic",
+            "func": "get_correlation_summary",
+            "setup": lambda: solution.SentimentAnalyzer(),
+            "call": lambda obj: len(obj.get_correlation_summary(raw_sales, raw_reviews)),
+            "check": lambda res: res == len(pd.merge(raw_sales[['Product_ID', 'Units_Sold']], raw_reviews.groupby('Product_ID')['Rating'].mean().reset_index(), on='Product_ID', how='inner')),
+            "expected_output": "Total rows in merged DataFrame matches reference join.",
+            "marks": 3
+        },
+        {
+            "desc": "Discount performance analysis",
+            "func": "discount_performance",
+            "setup": lambda: solution.SentimentAnalyzer(),
+            "call": lambda obj: obj.discount_performance(raw_sales),
+            "check": lambda res: compare_rounded(res, _ref_discount(raw_sales)),
+            "expected_output": "Avg sales for Discounted vs FullPrice items.",
+            "marks": 4
+        },
+        {
+            "desc": "Sales opportunity detection logic",
+            "func": "detect_opportunities",
+            "setup": lambda: solution.SentimentAnalyzer(),
+            "call": lambda obj: sorted(obj.detect_opportunities(_ref_merge(raw_sales, raw_reviews))),
+            "check": lambda res: res == _ref_opps(raw_sales, raw_reviews),
+            "expected_output": "List of high-rating, low-sales Product_IDs.",
+            "marks": 4
+        }
     ]
 
-    total = 0
-    df_s = pd.read_csv(sales_p); df_r = pd.read_csv(reviews_p)
-
-    for i, t in enumerate(tests, 1):
-        desc = t["desc"]; marks = t["marks"]
+    total_score = 0
+    for idx, case in enumerate(test_cases, 1):
+        marks = case["marks"]
         try:
-            r1, e1 = run_single(sol, ref, i, df_s, df_r, sales_p, reviews_p)
-            if compare_results(r1, e1):
-                print(f"PASS TC{i} [{desc}] ({marks}/{marks})"); total += marks
+            # Setup Object
+            obj = case["setup"]()
+            
+            # Verify Method
+            valid, err = validate_method_exists(obj, case["func"])
+            if not valid:
+                msg = f"FAIL TC{idx} [{case['desc']}]: {err}"
+                print(msg); report_lines.append(msg); continue
+
+            # Execute & Check
+            result = case["call"](obj)
+            passed = case["check"](result)
+
+            if passed:
+                total_score += marks
+                msg = f"PASS TC{idx} [{case['desc']}] ({marks}/{marks})"
             else:
-                 print(f"FAIL TC{i} [{desc}] (0/{marks}) - Incorrect Output.")
-        except Exception as ex:
-            print(f"FAIL TC{i} [{desc}] (0/{marks}) - Runtime Error: {ex}")
-    
-    print(f"\nTotal Marks: {total}/20")
+                msg = f"FAIL TC{idx} [{case['desc']}] (0/{marks})\n  Expected: {case['expected_output']}\n  Got: {repr(result)}"
+        except Exception as e:
+            msg = f"FAIL TC{idx} [{case['desc']}] (0/{marks}) | Error: {type(e).__name__}: {e}"
+        print(msg); report_lines.append(msg)
 
-def run_single(mod, ref, tc, df_s, df_r, s_p, r_p):
-    st = mod.SalesTracker(); sa = mod.SentimentAnalyzer()
-    rst = ref.SalesTracker(); rsa = ref.SentimentAnalyzer()
-    
-    if tc == 1:
-        st.load_csvs(s_p, r_p); rst.load_csvs(s_p, r_p)
-        return (isinstance(st.df_sales, pd.DataFrame), True)
-    
-    if tc == 2:
-        st.df_sales = df_s; rst.df_sales = df_s
-        return (len(st.get_top_sellers(100)), len(rst.get_top_sellers(100)))
+    score_line = f"\nSCORE: {total_score}/20.0"
+    print(score_line); report_lines.append(score_line)
+    with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
 
-    if tc == 3:
-        st.df_sales = df_s; rst.df_sales = df_s
-        return (st.category_price_analysis().to_dict(), rst.category_price_analysis().to_dict())
+# Helper Functions for Data Injection / Reference Logic
+def _setup_with_data(obj, df):
+    obj.df_sales = df.copy()
+    return obj
 
-    if tc == 4:
-        # Use orient='records' for easier comparison of DataFrames as list of dicts
-        d1 = sa.aggregate_reviews(df_r).to_dict(orient='records')
-        d2 = rsa.aggregate_reviews(df_r).to_dict(orient='records')
-        return (d1, d2)
-    
-    if tc == 5: 
-        # MONKEY-PATCH for Independence: Substitute student's aggregation with reference
-        sa.aggregate_reviews = rsa.aggregate_reviews 
-        return (len(sa.get_correlation_summary(df_s, df_r)), len(rsa.get_correlation_summary(df_s, df_r)))
-    
-    if tc == 6: return (sa.discount_performance(df_s), rsa.discount_performance(df_s))
-    
-    if tc == 7:
-        m = rsa.get_correlation_summary(df_s, df_r)
-        return (sa.detect_opportunities(m), rsa.detect_opportunities(m))
+def _ref_discount(df):
+    d = df[df['Discount_Applied'] == True]['Units_Sold'].mean()
+    f = df[df['Discount_Applied'] == False]['Units_Sold'].mean()
+    return {'Discounted_Avg_Sales': round(float(d), 2), 'FullPrice_Avg_Sales': round(float(f), 2)}
 
-    return (None, "NOT_IMPLEMENTED")
+def _ref_merge(df_s, df_r):
+    agg = df_r.groupby('Product_ID')['Rating'].mean().reset_index()
+    return pd.merge(df_s[['Product_ID', 'Units_Sold']], agg, on='Product_ID', how='inner')
 
-def compare_results(r, e):
-    try:
-        if isinstance(r, (float, int)): return round(float(r), 1) == round(float(e), 1)
-        if isinstance(r, dict):
-            if len(r) != len(e): return False
-            for k in e:
-                if k not in r: return False
-                if not compare_results(r[k], e[k]): return False
-            return True
-        if isinstance(r, list):
-            if len(r) != len(e): return False
-            return all(compare_results(x, y) for x, y in zip(r, e))
-        return r == e
-    except: return False
+def _ref_opps(df_s, df_r):
+    df_m = _ref_merge(df_s, df_r)
+    m = df_m['Units_Sold'].median()
+    opps = df_m[(df_m['Rating'] > 4.0) & (df_m['Units_Sold'] < m)]
+    return sorted(opps['Product_ID'].unique().tolist())
 
 if __name__ == "__main__":
-    run_tests()
+    sol_file = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
+    test_student_code(sol_file)
