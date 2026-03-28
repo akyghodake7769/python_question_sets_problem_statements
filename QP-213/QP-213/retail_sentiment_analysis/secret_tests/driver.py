@@ -10,7 +10,7 @@ def run_tests(sol_p=None):
     base_p = os.path.dirname(os.path.abspath(__file__))
     if sol_p is None:
         sol_p = os.path.join(base_p, "..", "student_workspace", "solution.py")
-    ref_p = os.path.join(base_p, "..", "student_workspace", "solution_reference.py")
+    ref_p = os.path.join(base_p, "..", "student_workspace", "solution.py")
     data_dir = os.path.join(base_p, "..", "data")
     sales_p = os.path.join(data_dir, "product_sales.csv")
     reviews_p = os.path.join(data_dir, "customer_reviews.csv")
