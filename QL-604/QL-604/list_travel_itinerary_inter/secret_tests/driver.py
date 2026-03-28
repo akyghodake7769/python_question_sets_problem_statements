@@ -3,131 +3,152 @@ import os
 import sys
 import random
 
+def validate_method_exists(obj, method_name):
+    """Check if method exists and is callable."""
+    if not hasattr(obj, method_name):
+        return False, f"Method '{method_name}' not found. Please implement this method."
+    if not callable(getattr(obj, method_name)):
+        return False, f"'{method_name}' exists but is not callable."
+    return True, None
+
+# Embedded Reference Logic for Grading (Oracle)
+class _GradingLogic:
+    @staticmethod
+    def get_reversed_itinerary(destinations):
+        return [city.upper() for city in destinations[::-1]]
+
+    @staticmethod
+    def format_itinerary(destinations):
+        if not destinations: return "No Destinations"
+        joined = " -> ".join(destinations)
+        return f"{joined} ({len(destinations)} stops)"
+
 def test_student_code(solution_path):
     report_dir = os.path.dirname(solution_path)
     report_path = os.path.join(report_dir, "report.txt")
     
+    # Load Student Solution
     spec = importlib.util.spec_from_file_location("solution", solution_path)
     solution = importlib.util.module_from_spec(spec)
-    try: spec.loader.exec_module(solution)
+    try:
+        spec.loader.exec_module(solution)
     except Exception as e:
-        print(f"IMPORT ERROR: {e}"); return
+        msg = f"IMPORT ERROR: {e}"
+        print(msg)
+        with open(report_path, "w", encoding="utf-8") as f: f.write(msg + "\n")
+        return
 
-    print("Running Tests for: Travel Itinerary Planner (Enriched QO-420 Mode)\n")
-    report_lines = ["Running Tests for: Travel Itinerary Planner (Enriched QO-420 Mode)\n"]
+    print("Running Tests for: Travel Itinerary Planner (Professional Expansion)\n")
+    report_lines = ["Running Tests for: Travel Itinerary Planner (Professional Expansion)\n"]
 
     if not hasattr(solution, "ItineraryPlanner"):
-        print("ERROR: ItineraryPlanner class not found"); return
-    
-    PlannerClass = solution.ItineraryPlanner
-    
-    tc_configs = [
-        ("Verification of list initialization", 0),
-        ("Strategic adding of new destination", 1),
-        ("Number of unique stops in the plan", 1),
-        ("Finding the index of a specific stop", 1),
-        ("Removing a valid destination", 1),
-        ("Reversed itinerary in uppercase", 2),
-        ("Detecting identical city names", 2),
-        ("Formatting string with stop count", 2)
+        msg = "ERROR: ItineraryPlanner class not found in solution.py"
+        print(msg); report_lines.append(msg)
+        with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
+        return
+
+    # Randomized Seed for Hardcoding Prevention
+    rv = random.randint(1, 100)
+    base_cities = [f"City_{rv}", f"City_{rv+1}", f"City_{rv+2}"]
+
+    test_cases = [
+        {
+            "desc": "Verification of list initialization",
+            "func": "__init__",
+            "setup": lambda: solution.ItineraryPlanner(base_cities),
+            "call": lambda obj: obj.destinations,
+            "check": lambda res: res == base_cities,
+            "expected_output": f"Itinerary initialized with {base_cities}.",
+            "marks": 0
+        },
+        {
+            "desc": "Strategic adding of new destination",
+            "func": "add_destination",
+            "setup": lambda: solution.ItineraryPlanner(base_cities),
+            "call": lambda obj: (obj.add_destination(base_cities[-1]), obj.add_destination(f"City_{rv+10}")),
+            "check": lambda res: res == (False, True),
+            "expected_output": "Sequential duplicate add returns False; unique city returns True.",
+            "marks": 1
+        },
+        {
+            "desc": "Number of unique stops in the plan",
+            "func": "get_total_stops",
+            "setup": lambda: solution.ItineraryPlanner(base_cities + [base_cities[0]]),
+            "call": lambda obj: obj.get_total_stops(),
+            "check": lambda res: res == len(set(base_cities)),
+            "expected_output": f"Expected {len(set(base_cities))} unique stops.",
+            "marks": 1
+        },
+        {
+            "desc": "Finding the index of a specific stop",
+            "func": "get_stop_index",
+            "setup": lambda: solution.ItineraryPlanner(base_cities),
+            "call": lambda obj: obj.get_stop_index(base_cities[1]),
+            "check": lambda res: res == 1,
+            "expected_output": "Index of second city should be 1.",
+            "marks": 1
+        },
+        {
+            "desc": "Removing a valid destination",
+            "func": "remove_destination",
+            "setup": lambda: solution.ItineraryPlanner(base_cities),
+            "call": lambda obj: (obj.remove_destination(base_cities[0]), base_cities[0] in obj.destinations),
+            "check": lambda res: res == (True, False),
+            "expected_output": "First city removed successfully.",
+            "marks": 1
+        },
+        {
+            "desc": "Reversed itinerary in uppercase",
+            "func": "get_reversed_itinerary",
+            "setup": lambda: solution.ItineraryPlanner(base_cities),
+            "call": lambda obj: obj.get_reversed_itinerary(),
+            "check": lambda res: res == _GradingLogic.get_reversed_itinerary(base_cities),
+            "expected_output": "List in reverse order and UPPERCASE.",
+            "marks": 2
+        },
+        {
+            "desc": "Detecting identical city names",
+            "func": "has_duplicates",
+            "setup": lambda: solution.ItineraryPlanner(base_cities + [base_cities[0]]),
+            "call": lambda obj: obj.has_duplicates(),
+            "check": lambda res: res == True,
+            "expected_output": "Duplicate detected successfully.",
+            "marks": 2
+        },
+        {
+            "desc": "Formatting string with stop count",
+            "func": "format_itinerary",
+            "setup": lambda: solution.ItineraryPlanner(base_cities),
+            "call": lambda obj: obj.format_itinerary(),
+            "check": lambda res: res == _GradingLogic.format_itinerary(base_cities),
+            "expected_output": "Formatted string with ' -> ' and stop count.",
+            "marks": 2
+        }
     ]
 
-    random.seed(None)
-
     total_score = 0
-    for i, (desc, marks) in enumerate(tc_configs, 1):
+    for idx, case in enumerate(test_cases, 1):
+        marks = case["marks"]
         try:
-            def run_t(idx, current_obj, data_params):
-                cities = data_params
-                if idx == 1: 
-                    t1 = PlannerClass(cities)
-                    if not hasattr(t1, 'destinations'): return "MISSING_ATTR"
-                    return t1.destinations
-                
-                if idx == 2: return current_obj.add_destination(cities[0])
-                if idx == 3: return current_obj.get_total_stops()
-                if idx == 4: return current_obj.get_stop_index(cities[1])
-                if idx == 5: return current_obj.remove_destination(cities[0])
-                if idx == 6: return current_obj.get_reversed_itinerary()
-                if idx == 7: return current_obj.has_duplicates()
-                if idx == 8: return current_obj.format_itinerary()
-                return None
+            obj = case["setup"]()
+            valid, err = validate_method_exists(obj, case["func"])
+            if not valid:
+                msg = f"FAIL TC{idx} [{case['desc']}]: {err}"
+                print(msg); report_lines.append(msg); continue
 
-            p_ok, h_det, none_ret = False, False, False
-            actual_res = None
-            expected_res = None
+            result = case["call"](obj)
+            passed = case["check"](result)
 
-            if i == 1:
-                test_data = ["London", "Paris"]
-                actual_res = run_t(i, None, test_data)
-                expected_res = list(test_data)
-                p_ok = (actual_res == expected_res)
-            else:
-                d1 = ["Paris", "London", "Rome", "Paris"]
-                d2 = ["Tokyo", "Berlin", "Osaka", "Miami"]
-                
-                # RUN 1
-                obj1 = PlannerClass([]); obj1.destinations = list(d1)
-                res1 = run_t(idx=i, current_obj=obj1, data_params=d1)
-                
-                # RUN 2
-                obj2 = PlannerClass([]); obj2.destinations = list(d2)
-                res2 = run_t(idx=i, current_obj=obj2, data_params=d2)
-                
-                actual_res = res1
-                # Reference logic for RUN 1
-                def get_ref(idx, data):
-                    if idx == 2: 
-                        # Strategic add: Paris is already at end? No, London.
-                        # Wait, d1 ends in Paris. If we add "Paris" -> False. 
-                        # But run_t for idx 2 adds data[0] -> "Paris".
-                        # d1 is ["Paris", "London", "Rome", "Paris"]. 
-                        # Adding data[0] ("Paris") to obj with d1 -> Already ends in Paris?
-                        # Yes! So it should return False.
-                        return False
-                    if idx == 3: return len(set(data))
-                    if idx == 4: return 1 # Index of data[1] ("London")
-                    if idx == 5: return True # Remove data[0] ("Paris")
-                    if idx == 6: return [c.upper() for c in data[::-1]]
-                    if idx == 7: return len(data) != len(set(data))
-                    if idx == 8: return " -> ".join(data) + f" ({len(data)} stops)"
-                    return None
-
-                expected_res = get_ref(i, d1)
-
-                if actual_res == expected_res:
-                    def get_ref2(idx, data):
-                        if idx == 2: return True
-                        if idx == 3: return len(set(data))
-                        if idx == 4: return 1
-                        if idx == 5: return True
-                        if idx == 6: return [c.upper() for c in data[::-1]]
-                        if idx == 7: return len(data) != len(set(data))
-                        if idx == 8: return " -> ".join(data) + f" ({len(data)} stops)"
-                        return None
-                    
-                    if res2 == get_ref2(i, d2):
-                        p_ok = True
-                    else:
-                        h_det = True
-                elif actual_res is None:
-                    none_ret = True
-                elif res1 == res2:
-                    h_det = True
-
-            if p_ok:
+            if passed:
                 total_score += marks
-                msg = f"PASS TC{i} [{desc}] ({marks}/{marks})"
-            elif none_ret:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Method not implemented / No return value"
-            elif h_det:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Hardcoded result detected."
+                msg = f"PASS TC{idx} [{case['desc']}] ({marks}/{marks})"
             else:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Incorrect Output. Expected: {expected_res} | Actual: {actual_res}"
-        except Exception as e: msg = f"FAIL TC{i} [{desc}] | Error: {e}"
+                msg = f"FAIL TC{idx} [{case['desc']}] (0/{marks})\n  Expected: {case['expected_output']}\n  Got: {repr(result)}"
+        except Exception as e:
+            msg = f"FAIL TC{idx} [{case['desc']}] (0/{marks}) | Error: {type(e).__name__}: {e}"
         print(msg); report_lines.append(msg)
 
-    score_line = f"\nSCORE: {total_score}/10"
+    score_line = f"\nSCORE: {total_score}/10.0"
     print(score_line); report_lines.append(score_line)
     with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
 
