@@ -73,7 +73,7 @@ def run_tests(solution_path=None):
         except Exception as e:
             print(f"FAIL TC{idx} [{desc}] (0/{marks}) | Error: {e}")
 
-    print(f"\nSCORE: {total_score}/30 (Visible) | {total_score}/30 (Total)")
+    print(f"\nSCORE: {total_score}/10 (Visible) | {total_score}/10 (Total)")
 
 if __name__ == "__main__":
     run_tests()
