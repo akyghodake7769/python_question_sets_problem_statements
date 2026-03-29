@@ -24,12 +24,12 @@ def run_tests(solution_path=None):
 
     test_cases = [
         {"desc": "Instantiate complex structures", "func": "__init__", "m": 0},
-        {"desc": "Register a new Room object", "func": "register_room", "m": 5},
-        {"desc": "Check-in with status validation", "func": "secure_check_in", "m": 5},
-        {"desc": "Bill with Season & Type multipliers", "func": "calculate_checkout_bill", "m": 5},
-        {"desc": "Housekeeping vs Maintenance trigger", "func": "complete_stay", "m": 5},
-        {"desc": "Professional Release of Room to Avail", "func": "system_release", "m": 5},
-        {"desc": "Calculate 24hr potential of all rooms", "func": "total_inventory_potential", "m": 5}
+        {"desc": "Register a new Room object", "func": "register_room", "m": 1},
+        {"desc": "Check-in with status validation", "func": "secure_check_in", "m": 2},
+        {"desc": "Bill with Season & Type multipliers", "func": "calculate_checkout_bill", "m": 2},
+        {"desc": "Housekeeping vs Maintenance trigger", "func": "complete_stay", "m": 2},
+        {"desc": "Professional Release of Room to Avail", "func": "system_release", "m": 2},
+        {"desc": "Calculate 24hr potential of all rooms", "func": "total_inventory_potential", "m": 1}
     ]
 
     total_score = 0
