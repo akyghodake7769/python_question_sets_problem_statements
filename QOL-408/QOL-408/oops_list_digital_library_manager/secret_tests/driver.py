@@ -75,4 +75,5 @@ def run_tests(solution_path=None):
     print(f"\nSCORE: {total_score}/20 (Visible) | {total_score}/20 (Total)")
 
 if __name__ == "__main__":
-    run_tests()
+    sol_file = sys.argv[1] if len(sys.argv) > 1 else None
+    run_tests(sol_file)
