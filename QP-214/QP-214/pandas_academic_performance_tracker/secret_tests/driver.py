@@ -22,10 +22,10 @@ class _GradingLogic:
     @staticmethod
     def calculate_cgpa(df_m):
         df = df_m.copy()
-        df['Weight'] = df['Marks'] * df['Credits']
+        df['Weight'] = (df['Marks'] / 10) * df['Credits']
         grp = df.groupby('Student_ID').agg({'Weight': 'sum', 'Credits': 'sum'})
         grp['CGPA'] = grp['Weight'] / grp['Credits']
-        return grp['CGPA'].to_dict()
+        return {k: round(float(v), 2) for k, v in grp['CGPA'].to_dict().items()}
 
     @staticmethod
     def identify_anomalies(df_m):
