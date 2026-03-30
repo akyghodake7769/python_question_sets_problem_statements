@@ -174,5 +174,5 @@ def _inject_data(obj, r, s):
     return obj
 
 if __name__ == "__main__":
-    sol_file = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
+    sol_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
     test_student_code(sol_file)
