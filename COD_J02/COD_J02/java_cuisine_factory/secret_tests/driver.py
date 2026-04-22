@@ -22,8 +22,7 @@ def compile_java():
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     solution_path = "student_workspace/Solution.java"
     harness_path = "secret_tests/Harness.java"
-    base_path = "student_workspace/Base.java"
-    files = [solution_path, harness_path, base_path]
+    files = [solution_path, harness_path]
     result = subprocess.run(['javac', '-d', '.'] + files, capture_output=True, text=True, cwd=parent_dir)
     return result.returncode == 0, result.stderr
 
