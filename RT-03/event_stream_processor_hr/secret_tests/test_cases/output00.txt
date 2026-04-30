@@ -1,0 +1,1 @@
+[["click_1", 999, "click", "ad_banner_top"], ["imp_1", 1001, "impression", "ad_sidebar"], ["imp_2", 1002, "impression", "ad_footer"]]
