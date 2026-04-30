@@ -23,6 +23,8 @@ def process_events(
     """
     pass
 
+
+#Don't make any changes in below code.
 if __name__ == '__main__':
     try:
         # Standard input reading for a JSON block representing the stream

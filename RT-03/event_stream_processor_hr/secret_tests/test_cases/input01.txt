@@ -1,12 +1,1 @@
-{
-    "events": [
-        ["e1", 1000, "impression", "ad_A"],
-        ["e2", 1002, "click", "ad_A"],
-        ["e3", 1005, "impression", "ad_B"],
-        ["e4", 1008, "click", "ad_B"],
-        ["e5", 1010, "impression", "ad_C"]
-    ],
-    "event_types": null,
-    "window_seconds": 5,
-    "batch_size": null
-}
+{"events": [["e1", 1000, "login"], ["e1", 900, "login"]]}
