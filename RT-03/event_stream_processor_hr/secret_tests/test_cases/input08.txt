@@ -1,1 +1,0 @@
-{"events": [["e1", 100, "type1"]], "event_types": ["type2"]}
