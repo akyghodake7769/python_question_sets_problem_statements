@@ -18,15 +18,26 @@ class WeatherService:
 
     @staticmethod
     def get_temperature(city: str) -> str:
-        """Fetches temperature for a given city from the dynamic Enum."""
-        # Implementation here (including range validation -25 to 122)
+        """Fetches temperature for a given city from the dynamic Enum.
+        Requirement:
+        - If city not in Data, raise ValueError("Invalid city name <city>")
+        - Convert temperature to float and validate range [-25, 122].
+        - If out of range or invalid format, raise ValueError("Temperature <val> is out of range")
+        - Return string: "The temperature for <city> is <int(temp)>"
+        """
+        # Implementation here
         return ""
 
     @staticmethod
     def get_forecast(city: str) -> str:
-        """Fetches forecast for a given city from the dynamic Enum."""
+        """Fetches forecast for a given city from the dynamic Enum.
+        Requirement:
+        - If city not in Data, raise ValueError("Invalid city name <city>")
+        - Return string: "The forecast for <city> is <forecast>"
+        """
         # Implementation here
         return ""
+
 
 def process_weather_queries():
     input_data = sys.stdin.read().splitlines()
@@ -61,10 +72,15 @@ def process_weather_queries():
         city = query[0].strip()
         q_type = query[1].strip()
         
-        if q_type == "temperature":
-            print(WeatherService.get_temperature(city))
-        elif q_type == "forecast":
-            print(WeatherService.get_forecast(city))
+        try:
+            if q_type == "temperature":
+                print(WeatherService.get_temperature(city))
+            elif q_type == "forecast":
+                print(WeatherService.get_forecast(city))
+        except ValueError as e:
+            # Catching validation errors and printing in 'Error: <msg>' format
+            # This ensures the script doesn't crash during evaluation.
+            print(f"Error: {e}")
 
 if __name__ == '__main__':
     process_weather_queries()
