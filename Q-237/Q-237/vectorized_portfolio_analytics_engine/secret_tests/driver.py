@@ -17,7 +17,7 @@ def run_test(input_file, solution_path):
             stderr=subprocess.PIPE,
             text=True,
             encoding='utf-8',
-            cwd=os.path.dirname(os.path.dirname(os.path.abspath(solution_path)))
+            cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         )
         stdout, stderr = process.communicate(input=input_str)
         return stdout.strip(), stderr.strip()
@@ -85,6 +85,10 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         test_student_code(sys.argv[2], sys.argv[1])
     elif len(sys.argv) > 1:
-        test_student_code(sys.argv[1])
+        arg = sys.argv[1]
+        if arg.endswith(".py"):
+            test_student_code(solution_path=arg)
+        else:
+            test_student_code(vm_tag=arg)
     else:
         test_student_code()
