@@ -1,3 +1,0 @@
-LOAD data/portfolio.csv
-CALC
-TOTAL
