@@ -1,30 +1,26 @@
+import importlib.util
 import os
 import sys
 
-# Standardized Evaluation Harness for Batch-2
-# This script triggers the driver.py located in the secret_tests folder.
+# Set up paths
+current_dir = os.path.dirname(os.path.abspath(__file__))
+solution_path = os.path.join(current_dir, "solution.py")
+driver_path = os.path.abspath(os.path.join(current_dir, "..", "secret_tests", "driver.py"))
 
 def main():
-    # Set the path to the driver
-    driver_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "secret_tests", "driver.py"))
-    
     if not os.path.exists(driver_path):
-        print(f"Error: Evaluation driver not found at {driver_path}")
-        sys.exit(1)
+        print(f"Error: Driver not found at {driver_path}")
+        return
 
-    # Add driver directory to sys.path
-    sys.path.append(os.path.dirname(driver_path))
-    
+    # Load driver module
+    spec = importlib.util.spec_from_file_location("driver", driver_path)
+    driver_module = importlib.util.module_from_spec(spec)
     try:
-        import driver
-        # Pass sys.argv[1] to the driver if any
-        if len(sys.argv) > 1:
-            driver.test_student_code(sys.argv[1])
-        else:
-            driver.test_student_code()
+        spec.loader.exec_module(driver_module)
+        # Call the test function
+        driver_module.test_student_code(solution_path)
     except Exception as e:
-        print(f"Error during execution: {e}")
-        sys.exit(1)
+        print(f"Error executing driver: {e}")
 
 if __name__ == "__main__":
     main()
