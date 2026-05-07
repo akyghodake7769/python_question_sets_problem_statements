@@ -1,28 +1,25 @@
-from typing import List, Dict, Generator, Optional, Any, Set
+from typing import List, Dict, Generator, Optional, Any, Set, Tuple
 import json
-from collections import defaultdict
+from collections import defaultdict, Counter
 import sys
 
-# Complete the 'process_events' function below.
+# Complete the 'processEventStream' function below.
 #
 # The function is expected to yield results in batches.
 # Deduplicate events by 'event_id' (keep the earliest timestamp).
 
-def process_events(
-    events: List[List[Any]], 
+def processEventStream(
+    events: List[Tuple[str, int, str, str]], 
     event_types: Optional[Set[str]] = None, 
-    window_seconds: Optional[int] = None, 
+    window_seconds: Optional[int] = None,
     batch_size: Optional[int] = None
-) -> Generator[List[Any], None, None]:
-    """
-    1. Deduplicate events (keep earliest).
-    2. Filter by type.
-    3. Sort by timestamp.
-    4. Window aggregate if required.
-    5. Batch results if required.
-    """
-    pass
+) -> Generator: 
 
+    """ WRITE YOUR CODE HERE """
+    
+    
+
+    pass
 
 #Don't make any changes in below code.
 if __name__ == '__main__':
@@ -37,5 +34,5 @@ if __name__ == '__main__':
         batch_size = data.get("batch_size")
         
         # Execute and print batches
-        for batch in process_events(events, event_types, window_seconds, batch_size):
+        for batch in processEventStream(events, event_types, window_seconds, batch_size):
             print(json.dumps(batch, sort_keys=True))
