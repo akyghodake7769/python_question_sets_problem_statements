@@ -39,6 +39,13 @@ class WeatherService:
         return ""
 
 
+
+
+
+
+
+#NOTE : Don't  modify below code.
+
 def process_weather_queries():
     input_data = sys.stdin.read().splitlines()
     if not input_data:
