@@ -6,17 +6,15 @@ import sys
 
 class InsufficientFundsError(Exception):
     def __init__(self, message: str = "Insufficient funds"):
-        self.message = message
-        self.status_code = 400
-        super().__init__(self.message)
+        # Implementation here
+        pass        
 
 class InvalidTransactionType(Exception):
     def __init__(self, message: str):
-        self.message = message
-        self.status_code = 400
-        super().__init__(self.message)
+        # Implementation here
+        pass
 
-class Transaction:
+clas Transaction:
     def __init__(self, trans_type: str, amount: float, balance_after: float):
         # Implementation here
         pass
@@ -38,6 +36,10 @@ class BankAccount:
         # Return list of transaction strings
         return []
 
+
+
+
+#NOTE : Don't modify below code.
 def process_banking_operations():
     try:
         input_data = sys.stdin.read().splitlines()
