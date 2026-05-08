@@ -33,6 +33,13 @@ def delay_min(*args: int, **kwargs: Any) -> int:
 def delay_sum(*args: int, **kwargs: Any) -> int:
     return sum(args)
 
+
+
+
+
+
+#NOTE : Dont modify below code.
+
 def process_commands():
     input_data = sys.stdin.read().splitlines()
     if not input_data:
