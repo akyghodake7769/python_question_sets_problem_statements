@@ -47,7 +47,9 @@ def verify_task():
             job_dir = "/var/lib/jenkins/jobs/github_jenkins_docker_CICD"
             tc1_passed = os.path.exists(job_dir)
             if START_TIME and tc1_passed:
-                mtime = datetime.fromtimestamp(os.path.getmtime(job_dir), timezone.utc)
+                check_files = [job_dir, os.path.join(job_dir, "config.xml"), os.path.join(job_dir, "builds"), os.path.join(job_dir, "nextBuildNumber")]
+                existing_files = [f for f in check_files if os.path.exists(f)]
+                mtime = datetime.fromtimestamp(max(os.path.getmtime(f) for f in existing_files), timezone.utc)
                 if mtime < START_TIME:
                     tc1_passed = False
                     print(f"[WARN] Jenkins job was created/modified before current session started (Old Session).")
@@ -77,7 +79,7 @@ def verify_task():
                 build_dir = "/var/lib/jenkins/jobs/github_jenkins_docker_CICD/builds/lastStableBuild"
                 tc2_passed = os.path.exists(build_dir)
                 if START_TIME and tc2_passed:
-                    mtime = datetime.fromtimestamp(os.path.getmtime(build_dir), timezone.utc)
+                    mtime = datetime.fromtimestamp(max(os.path.getmtime(build_dir), os.lstat(build_dir).st_mtime), timezone.utc)
                     if mtime < START_TIME:
                         tc2_passed = False
                         print(f"[WARN] Jenkins build was completed before current session started (Old Session).")
