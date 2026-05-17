@@ -9,6 +9,38 @@ START_TIME_STR = os.getenv('KLOUDKRAFT_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else "LOCAL_USER"
 
+def find_active_jenkins_job(candidate_names, start_time):
+    base_dirs = [
+        "/var/lib/jenkins/jobs",
+        "/var/snap/jenkins/common/jobs",
+        "/var/snap/jenkins/current/jobs"
+    ]
+    snap_base = "/var/snap/jenkins"
+    if os.path.exists(snap_base):
+        for item in os.listdir(snap_base):
+            if item.isdigit():
+                base_dirs.append(os.path.join(snap_base, item, "jobs"))
+
+    for b_dir in base_dirs:
+        for name in candidate_names:
+            p = os.path.join(b_dir, name)
+            if os.path.exists(p):
+                return p
+
+    for b_dir in base_dirs:
+        if os.path.exists(b_dir) and start_time:
+            for j in os.listdir(b_dir):
+                p = os.path.join(b_dir, j)
+                if os.path.isdir(p):
+                    c_files = [p, os.path.join(p, "config.xml"), os.path.join(p, "builds"), os.path.join(p, "nextBuildNumber")]
+                    e_files = [f for f in c_files if os.path.exists(f)]
+                    if e_files:
+                        mt = datetime.fromtimestamp(max(os.path.getmtime(f) for f in e_files), timezone.utc)
+                        if mt >= start_time:
+                            return p
+
+    return f"/var/lib/jenkins/jobs/{candidate_names[0]}"
+
 def verify_task():
     user_prefix = USER_PREFIX
     start_time = START_TIME_STR
@@ -38,12 +70,16 @@ def verify_task():
         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
 
+        # Dynamically locate the Jenkins job directory
+        job_dir = find_active_jenkins_job(["github_jenkins_apache_CICD", "Code-Pipeline-Eval"], START_TIME)
+
         # --- TC1: GitHub Webhook ---
         try:
-            job_dir = "/var/lib/jenkins/jobs/github_jenkins_apache_CICD"
             tc1_passed = os.path.exists(job_dir)
             if START_TIME and tc1_passed:
-                mtime = datetime.fromtimestamp(os.path.getmtime(job_dir), timezone.utc)
+                check_files = [job_dir, os.path.join(job_dir, "config.xml"), os.path.join(job_dir, "builds"), os.path.join(job_dir, "nextBuildNumber")]
+                existing_files = [f for f in check_files if os.path.exists(f)]
+                mtime = datetime.fromtimestamp(max(os.path.getmtime(f) for f in existing_files), timezone.utc)
                 if mtime < START_TIME:
                     tc1_passed = False
                     print(f"[WARN] Jenkins job was created/modified before current session started (Old Session).")
@@ -70,13 +106,28 @@ def verify_task():
             print(f"     └─ [Reason]: Prerequisite failed.")
         else:
             try:
-                build_dir = "/var/lib/jenkins/jobs/github_jenkins_apache_CICD/builds/lastStableBuild"
-                tc2_passed = os.path.exists(build_dir)
-                if START_TIME and tc2_passed:
-                    mtime = datetime.fromtimestamp(os.path.getmtime(build_dir), timezone.utc)
-                    if mtime < START_TIME:
-                        tc2_passed = False
-                        print(f"[WARN] Jenkins build was completed before current session started (Old Session).")
+                tc2_passed = False
+                builds_base = os.path.join(job_dir, "builds")
+                if os.path.exists(builds_base):
+                    build_dirs = [os.path.join(builds_base, d) for d in os.listdir(builds_base) if d.isdigit()]
+                    for b_dir in build_dirs:
+                        if os.path.isdir(b_dir):
+                            b_mtime = datetime.fromtimestamp(os.path.getmtime(b_dir), timezone.utc)
+                            if not START_TIME or b_mtime >= START_TIME:
+                                build_xml = os.path.join(b_dir, "build.xml")
+                                log_file = os.path.join(b_dir, "log")
+                                success = False
+                                if os.path.exists(build_xml):
+                                    with open(build_xml, 'r', encoding='utf-8', errors='ignore') as f:
+                                        if "<result>SUCCESS</result>" in f.read():
+                                            success = True
+                                if not success and os.path.exists(log_file):
+                                    with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                                        if "Finished: SUCCESS" in f.read():
+                                            success = True
+                                if success:
+                                    tc2_passed = True
+                                    break
 
                 if tc2_passed:
                     results['tc2'] = True
@@ -136,6 +187,10 @@ def verify_task():
         ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
         os.makedirs(ws_path, exist_ok=True)
         with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
+            json.dump(solution_data, f, indent=4)
+        
+        root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+        with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
             json.dump(solution_data, f, indent=4)
     except Exception as e:
         print(f"[ERROR] Could not write solution.json: {e}")
