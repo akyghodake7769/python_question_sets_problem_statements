@@ -13,6 +13,24 @@ def call_audit_lambda(username, action, start_time_iso):
     # Local runs typically don't call the central lambda directly, this is a stub for potential syncing
     pass
 
+def find_active_jenkins_job(candidate_names, start_time):
+    for name in candidate_names:
+        p = f"/var/lib/jenkins/jobs/{name}"
+        if os.path.exists(p):
+            return p
+    jobs_base = "/var/lib/jenkins/jobs"
+    if os.path.exists(jobs_base) and start_time:
+        for j in os.listdir(jobs_base):
+            p = os.path.join(jobs_base, j)
+            if os.path.isdir(p):
+                c_files = [p, os.path.join(p, "config.xml"), os.path.join(p, "builds"), os.path.join(p, "nextBuildNumber")]
+                e_files = [f for f in c_files if os.path.exists(f)]
+                if e_files:
+                    mt = datetime.fromtimestamp(max(os.path.getmtime(f) for f in e_files), timezone.utc)
+                    if mt >= start_time:
+                        return p
+    return f"/var/lib/jenkins/jobs/{candidate_names[0]}"
+
 def verify_task():
     user_prefix = USER_PREFIX
     start_time = START_TIME_STR
@@ -42,9 +60,11 @@ def verify_task():
         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
 
+        # Dynamically locate the Jenkins job directory
+        job_dir = find_active_jenkins_job(["github_jenkins_docker_CICD", "Docker-Pipeline-Eval"], START_TIME)
+
         # --- TC1: GitHub Webhook ---
         try:
-            job_dir = "/var/lib/jenkins/jobs/github_jenkins_docker_CICD"
             tc1_passed = os.path.exists(job_dir)
             if START_TIME and tc1_passed:
                 check_files = [job_dir, os.path.join(job_dir, "config.xml"), os.path.join(job_dir, "builds"), os.path.join(job_dir, "nextBuildNumber")]
@@ -76,7 +96,8 @@ def verify_task():
             print(f"     └─ [Reason]: Prerequisite failed.")
         else:
             try:
-                build_dir = "/var/lib/jenkins/jobs/github_jenkins_docker_CICD/builds/lastStableBuild"
+                build_symlinks = [f"{job_dir}/builds/lastStableBuild", f"{job_dir}/builds/lastSuccessfulBuild", f"{job_dir}/builds/lastCompletedBuild"]
+                build_dir = next((b for b in build_symlinks if os.path.exists(b)), f"{job_dir}/builds/lastStableBuild")
                 tc2_passed = os.path.exists(build_dir)
                 if START_TIME and tc2_passed:
                     mtime = datetime.fromtimestamp(max(os.path.getmtime(build_dir), os.lstat(build_dir).st_mtime), timezone.utc)
