@@ -40,15 +40,21 @@ def verify_task():
 
         # --- TC1: GitHub Webhook ---
         try:
-            # Check Jenkins job configuration for GitHub push trigger
-            tc1_passed = True # Stub for actual verification
+            job_dir = "/var/lib/jenkins/jobs/github_jenkins_apache_CICD"
+            tc1_passed = os.path.exists(job_dir)
+            if START_TIME and tc1_passed:
+                mtime = datetime.fromtimestamp(os.path.getmtime(job_dir), timezone.utc)
+                if mtime < START_TIME:
+                    tc1_passed = False
+                    print(f"[WARN] Jenkins job was created/modified before current session started (Old Session).")
+
             if tc1_passed:
                 results['tc1'] = True
                 print(f"TC1: GitHub Webhook Integration & Trigger .............. [PASSED] (10/10)")
             else:
                 results['tc1'] = False
                 print(f"TC1: GitHub Webhook Integration & Trigger .............. [FAILED] (0/10)")
-                print(f"     └─ [Reason]: Webhook trigger not configured or activated.")
+                print(f"     └─ [Reason]: Webhook trigger not configured or activated in current session.")
         except Exception as e:
             results['tc1'] = False
             print(f"TC1: GitHub Webhook Integration & Trigger .............. [FAILED] (0/10)")
@@ -64,15 +70,21 @@ def verify_task():
             print(f"     └─ [Reason]: Prerequisite failed.")
         else:
             try:
-                # Check Jenkins last build status
-                tc2_passed = True # Stub for actual verification
+                build_dir = "/var/lib/jenkins/jobs/github_jenkins_apache_CICD/builds/lastStableBuild"
+                tc2_passed = os.path.exists(build_dir)
+                if START_TIME and tc2_passed:
+                    mtime = datetime.fromtimestamp(os.path.getmtime(build_dir), timezone.utc)
+                    if mtime < START_TIME:
+                        tc2_passed = False
+                        print(f"[WARN] Jenkins build was completed before current session started (Old Session).")
+
                 if tc2_passed:
                     results['tc2'] = True
                     print(f"TC2: Jenkins Pipeline Execution (Success) .............. [PASSED] (10/10)")
                 else:
                     results['tc2'] = False
                     print(f"TC2: Jenkins Pipeline Execution (Success) .............. [FAILED] (0/10)")
-                    print(f"     └─ [Reason]: Jenkins pipeline build failed.")
+                    print(f"     └─ [Reason]: Jenkins pipeline build failed or missing in current session.")
             except Exception as e:
                 results['tc2'] = False
                 print(f"TC2: Jenkins Pipeline Execution (Success) .............. [FAILED] (0/10)")
@@ -80,15 +92,21 @@ def verify_task():
             
             # --- TC3: Apache Deployment ---
             try:
-                # Check Apache /var/www/html or curl localhost
-                tc3_passed = True # Stub for actual verification
+                apache_file = "/var/www/html/index.html"
+                tc3_passed = os.path.exists(apache_file)
+                if START_TIME and tc3_passed:
+                    mtime = datetime.fromtimestamp(os.path.getmtime(apache_file), timezone.utc)
+                    if mtime < START_TIME:
+                        tc3_passed = False
+                        print(f"[WARN] Apache deployment file was created/modified before current session started (Old Session).")
+
                 if tc3_passed:
                     results['tc3'] = True
                     print(f"TC3: Apache Web Server Deployment (Success) ............ [PASSED] (10/10)")
                 else:
                     results['tc3'] = False
                     print(f"TC3: Apache Web Server Deployment (Success) ............ [FAILED] (0/10)")
-                    print(f"     └─ [Reason]: Application files not deployed to Apache.")
+                    print(f"     └─ [Reason]: Application files not deployed to Apache in current session.")
             except Exception as e:
                 results['tc3'] = False
                 print(f"TC3: Apache Web Server Deployment (Success) ............ [FAILED] (0/10)")
