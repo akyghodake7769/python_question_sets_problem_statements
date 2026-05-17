@@ -14,21 +14,35 @@ def call_audit_lambda(username, action, start_time_iso):
     pass
 
 def find_active_jenkins_job(candidate_names, start_time):
-    for name in candidate_names:
-        p = f"/var/lib/jenkins/jobs/{name}"
-        if os.path.exists(p):
-            return p
-    jobs_base = "/var/lib/jenkins/jobs"
-    if os.path.exists(jobs_base) and start_time:
-        for j in os.listdir(jobs_base):
-            p = os.path.join(jobs_base, j)
-            if os.path.isdir(p):
-                c_files = [p, os.path.join(p, "config.xml"), os.path.join(p, "builds"), os.path.join(p, "nextBuildNumber")]
-                e_files = [f for f in c_files if os.path.exists(f)]
-                if e_files:
-                    mt = datetime.fromtimestamp(max(os.path.getmtime(f) for f in e_files), timezone.utc)
-                    if mt >= start_time:
-                        return p
+    base_dirs = [
+        "/var/lib/jenkins/jobs",
+        "/var/snap/jenkins/common/jobs",
+        "/var/snap/jenkins/current/jobs"
+    ]
+    snap_base = "/var/snap/jenkins"
+    if os.path.exists(snap_base):
+        for item in os.listdir(snap_base):
+            if item.isdigit():
+                base_dirs.append(os.path.join(snap_base, item, "jobs"))
+
+    for b_dir in base_dirs:
+        for name in candidate_names:
+            p = os.path.join(b_dir, name)
+            if os.path.exists(p):
+                return p
+
+    for b_dir in base_dirs:
+        if os.path.exists(b_dir) and start_time:
+            for j in os.listdir(b_dir):
+                p = os.path.join(b_dir, j)
+                if os.path.isdir(p):
+                    c_files = [p, os.path.join(p, "config.xml"), os.path.join(p, "builds"), os.path.join(p, "nextBuildNumber")]
+                    e_files = [f for f in c_files if os.path.exists(f)]
+                    if e_files:
+                        mt = datetime.fromtimestamp(max(os.path.getmtime(f) for f in e_files), timezone.utc)
+                        if mt >= start_time:
+                            return p
+
     return f"/var/lib/jenkins/jobs/{candidate_names[0]}"
 
 def verify_task():
