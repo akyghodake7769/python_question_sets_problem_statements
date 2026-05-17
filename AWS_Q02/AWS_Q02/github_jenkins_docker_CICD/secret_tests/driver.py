@@ -44,16 +44,21 @@ def verify_task():
 
         # --- TC1: GitHub Webhook ---
         try:
-            # Add actual webhook verification logic here
-            # E.g., check Jenkins API or GitHub API
-            tc1_passed = True # Stub
+            job_dir = "/var/lib/jenkins/jobs/github_jenkins_docker_CICD"
+            tc1_passed = os.path.exists(job_dir)
+            if START_TIME and tc1_passed:
+                mtime = datetime.fromtimestamp(os.path.getmtime(job_dir), timezone.utc)
+                if mtime < START_TIME:
+                    tc1_passed = False
+                    print(f"[WARN] Jenkins job was created/modified before current session started (Old Session).")
+
             if tc1_passed:
                 results['tc1'] = True
                 print(f"TC1: GitHub Webhook Integration & Trigger .............. [PASSED] (10/10)")
             else:
                 results['tc1'] = False
                 print(f"TC1: GitHub Webhook Integration & Trigger .............. [FAILED] (0/10)")
-                print(f"     └─ [Reason]: Webhook not configured or triggered.")
+                print(f"     └─ [Reason]: Webhook trigger not configured or activated in current session.")
         except Exception as e:
             results['tc1'] = False
             print(f"TC1: GitHub Webhook Integration & Trigger .............. [FAILED] (0/10)")
@@ -69,15 +74,21 @@ def verify_task():
             print(f"     └─ [Reason]: Prerequisite failed.")
         else:
             try:
-                # Add actual Jenkins API verification here
-                tc2_passed = True # Stub
+                build_dir = "/var/lib/jenkins/jobs/github_jenkins_docker_CICD/builds/lastStableBuild"
+                tc2_passed = os.path.exists(build_dir)
+                if START_TIME and tc2_passed:
+                    mtime = datetime.fromtimestamp(os.path.getmtime(build_dir), timezone.utc)
+                    if mtime < START_TIME:
+                        tc2_passed = False
+                        print(f"[WARN] Jenkins build was completed before current session started (Old Session).")
+
                 if tc2_passed:
                     results['tc2'] = True
                     print(f"TC2: Jenkins Pipeline Execution (Success) .............. [PASSED] (10/10)")
                 else:
                     results['tc2'] = False
                     print(f"TC2: Jenkins Pipeline Execution (Success) .............. [FAILED] (0/10)")
-                    print(f"     └─ [Reason]: Jenkins build failed.")
+                    print(f"     └─ [Reason]: Jenkins pipeline build failed or missing in current session.")
             except Exception as e:
                 results['tc2'] = False
                 print(f"TC2: Jenkins Pipeline Execution (Success) .............. [FAILED] (0/10)")
@@ -85,15 +96,20 @@ def verify_task():
             
             # --- TC3: Docker Container ---
             try:
-                # Add Docker ps verification here
-                tc3_passed = True # Stub
+                # Check docker ps or container existence
+                docker_check = subprocess.run(["docker", "ps", "-q"], capture_output=True, text=True)
+                tc3_passed = len(docker_check.stdout.strip()) > 0 if docker_check.returncode == 0 else False
+                if not tc3_passed and os.path.exists("/var/lib/docker/containers"):
+                    # Fallback check if docker command not accessible but directory exists
+                    tc3_passed = len(os.listdir("/var/lib/docker/containers")) > 0
+
                 if tc3_passed:
                     results['tc3'] = True
                     print(f"TC3: Docker Container Running Successfully ............. [PASSED] (10/10)")
                 else:
                     results['tc3'] = False
                     print(f"TC3: Docker Container Running Successfully ............. [FAILED] (0/10)")
-                    print(f"     └─ [Reason]: Container not running.")
+                    print(f"     └─ [Reason]: Docker container not running or missing in current session.")
             except Exception as e:
                 results['tc3'] = False
                 print(f"TC3: Docker Container Running Successfully ............. [FAILED] (0/10)")
