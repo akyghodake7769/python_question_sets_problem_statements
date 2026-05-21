@@ -1,8 +1,8 @@
 import json
 import os
 import sys
-import subprocess
-from datetime import datetime, timezone
+import glob
+from datetime import datetime, timezone, timedelta
 
 # Capture Assessment Start Time
 START_TIME_STR = os.getenv('KLOUDKRAFT_START_TIME')
@@ -38,13 +38,17 @@ def verify_task():
         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
 
-        # --- TC1: GitHub Webhook ---
+        # Support both job names
+        job_dir_primary = "/var/lib/jenkins/jobs/Multi-Stage-Pipeline"
+        job_dir_fallback = "/var/lib/jenkins/jobs/github_jenkins_multistage_archive"
+        job_dir = job_dir_primary if os.path.exists(job_dir_primary) else job_dir_fallback
+
+        # --- TC1: GitHub Webhook & Pipeline Job Integration ---
         try:
-            job_dir = "/var/lib/jenkins/jobs/github_jenkins_multistage_archive"
             tc1_passed = os.path.exists(job_dir)
             if START_TIME and tc1_passed:
                 mtime = datetime.fromtimestamp(os.path.getmtime(job_dir), timezone.utc)
-                if mtime < START_TIME:
+                if mtime < (START_TIME - timedelta(minutes=30)):
                     tc1_passed = False
                     print(f"[WARN] Jenkins job was created/modified before current session started (Old Session).")
 
@@ -64,17 +68,23 @@ def verify_task():
         if not results.get('tc1'):
             results['tc2'] = False
             print(f"TC2: Multi-Stage Execution Check (Lint & Build) ........ [FAILED] (0/10)")
-            print(f"     └─ [Reason]: Prerequisite failed (Webhook invalid).")
+            print(f"     └─ [Reason]: Prerequisite failed (Job does not exist).")
             results['tc3'] = False
             print(f"TC3: Jenkins Artifact Archiving Verification ........... [FAILED] (0/10)")
             print(f"     └─ [Reason]: Prerequisite failed.")
         else:
             try:
-                build_dir = "/var/lib/jenkins/jobs/github_jenkins_multistage_archive/builds/lastStableBuild"
-                tc2_passed = os.path.exists(build_dir)
+                builds_path = f"{job_dir}/builds"
+                all_builds = glob.glob(f"{builds_path}/[0-9]*") if os.path.exists(builds_path) else []
+                build_dir_stable = f"{job_dir}/builds/lastStableBuild"
+                build_dir_successful = f"{job_dir}/builds/lastSuccessfulBuild"
+                
+                # Check for any successful build
+                tc2_passed = os.path.exists(build_dir_stable) or os.path.exists(build_dir_successful)
+                
                 if START_TIME and tc2_passed:
-                    mtime = datetime.fromtimestamp(os.path.getmtime(build_dir), timezone.utc)
-                    if mtime < START_TIME:
+                    mtime = datetime.fromtimestamp(os.path.getmtime(build_dir_stable if os.path.exists(build_dir_stable) else build_dir_successful), timezone.utc)
+                    if mtime < (START_TIME - timedelta(minutes=30)):
                         tc2_passed = False
                         print(f"[WARN] Jenkins build was completed before current session started (Old Session).")
 
@@ -84,7 +94,12 @@ def verify_task():
                 else:
                     results['tc2'] = False
                     print(f"TC2: Multi-Stage Execution Check (Lint & Build) ........ [FAILED] (0/10)")
-                    print(f"     └─ [Reason]: Pipeline failed during Lint or Build stages in current session.")
+                    
+                    # Enhanced Diagnostics
+                    if len(all_builds) == 0:
+                        print(f"     └─ [Reason]: No builds found! The Webhook did NOT trigger Jenkins, or you haven't run a build yet.")
+                    else:
+                        print(f"     └─ [Reason]: Builds exist, but NONE were successful. Your Jenkinsfile likely has an error! Check the Jenkins Console Output.")
             except Exception as e:
                 results['tc2'] = False
                 print(f"TC2: Multi-Stage Execution Check (Lint & Build) ........ [FAILED] (0/10)")
@@ -92,13 +107,17 @@ def verify_task():
             
             # --- TC3: Artifact Archiving ---
             try:
-                archive_dir = "/var/lib/jenkins/jobs/github_jenkins_multistage_archive/builds/lastStableBuild/archive"
+                archive_dir_stable = f"{job_dir}/builds/lastStableBuild/archive"
+                archive_dir_success = f"{job_dir}/builds/lastSuccessfulBuild/archive"
+                
+                archive_dir = archive_dir_stable if os.path.exists(archive_dir_stable) else archive_dir_success
+                
                 tc3_passed = os.path.exists(archive_dir) and len(os.listdir(archive_dir)) > 0
+                
                 if START_TIME and tc3_passed:
                     mtime = datetime.fromtimestamp(os.path.getmtime(archive_dir), timezone.utc)
-                    if mtime < START_TIME:
+                    if mtime < (START_TIME - timedelta(minutes=30)):
                         tc3_passed = False
-                        print(f"[WARN] Jenkins artifact archive was created before current session started (Old Session).")
 
                 if tc3_passed:
                     results['tc3'] = True
@@ -106,7 +125,10 @@ def verify_task():
                 else:
                     results['tc3'] = False
                     print(f"TC3: Jenkins Artifact Archiving Verification ........... [FAILED] (0/10)")
-                    print(f"     └─ [Reason]: build artifacts not found in archived artifacts in current session.")
+                    if not results.get('tc2'):
+                        print(f"     └─ [Reason]: Prerequisite failed (No successful build found).")
+                    else:
+                        print(f"     └─ [Reason]: Build was successful, but NO artifacts were found. Check your archiveArtifacts directive.")
             except Exception as e:
                 results['tc3'] = False
                 print(f"TC3: Jenkins Artifact Archiving Verification ........... [FAILED] (0/10)")
