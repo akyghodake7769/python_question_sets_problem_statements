@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import glob
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
 
 # Capture Assessment Start Time
@@ -76,14 +77,33 @@ def verify_task():
             try:
                 builds_path = f"{job_dir}/builds"
                 all_builds = glob.glob(f"{builds_path}/[0-9]*") if os.path.exists(builds_path) else []
-                build_dir_stable = f"{job_dir}/builds/lastStableBuild"
-                build_dir_successful = f"{job_dir}/builds/lastSuccessfulBuild"
                 
-                # Check for any successful build
-                tc2_passed = os.path.exists(build_dir_stable) or os.path.exists(build_dir_successful)
+                # Robust build resolution: Parse build.xml to avoid unreliable symlinks
+                successful_build_dir = None
+                
+                # Sort numerically by build ID descending
+                try:
+                    all_builds_sorted = sorted(all_builds, key=lambda x: int(os.path.basename(x)), reverse=True)
+                except ValueError:
+                    all_builds_sorted = all_builds
+                
+                for b_dir in all_builds_sorted:
+                    build_xml = os.path.join(b_dir, "build.xml")
+                    if os.path.exists(build_xml):
+                        try:
+                            tree = ET.parse(build_xml)
+                            root = tree.getroot()
+                            result_elem = root.find('result')
+                            if result_elem is not None and result_elem.text == 'SUCCESS':
+                                successful_build_dir = b_dir
+                                break
+                        except Exception:
+                            continue
+                
+                tc2_passed = successful_build_dir is not None
                 
                 if START_TIME and tc2_passed:
-                    mtime = datetime.fromtimestamp(os.path.getmtime(build_dir_stable if os.path.exists(build_dir_stable) else build_dir_successful), timezone.utc)
+                    mtime = datetime.fromtimestamp(os.path.getmtime(successful_build_dir), timezone.utc)
                     if mtime < (START_TIME - timedelta(minutes=30)):
                         tc2_passed = False
                         print(f"[WARN] Jenkins build was completed before current session started (Old Session).")
@@ -95,11 +115,10 @@ def verify_task():
                     results['tc2'] = False
                     print(f"TC2: Multi-Stage Execution Check (Lint & Build) ........ [FAILED] (0/10)")
                     
-                    # Enhanced Diagnostics
                     if len(all_builds) == 0:
                         print(f"     └─ [Reason]: No builds found! The Webhook did NOT trigger Jenkins, or you haven't run a build yet.")
                     else:
-                        print(f"     └─ [Reason]: Builds exist, but NONE were successful. Your Jenkinsfile likely has an error! Check the Jenkins Console Output.")
+                        print(f"     └─ [Reason]: Builds exist, but NONE were successful. Checked {len(all_builds)} builds for a SUCCESS result in build.xml.")
             except Exception as e:
                 results['tc2'] = False
                 print(f"TC2: Multi-Stage Execution Check (Lint & Build) ........ [FAILED] (0/10)")
@@ -107,17 +126,17 @@ def verify_task():
             
             # --- TC3: Artifact Archiving ---
             try:
-                archive_dir_stable = f"{job_dir}/builds/lastStableBuild/archive"
-                archive_dir_success = f"{job_dir}/builds/lastSuccessfulBuild/archive"
+                tc3_passed = False
+                archive_dir = None
                 
-                archive_dir = archive_dir_stable if os.path.exists(archive_dir_stable) else archive_dir_success
-                
-                tc3_passed = os.path.exists(archive_dir) and len(os.listdir(archive_dir)) > 0
-                
-                if START_TIME and tc3_passed:
-                    mtime = datetime.fromtimestamp(os.path.getmtime(archive_dir), timezone.utc)
-                    if mtime < (START_TIME - timedelta(minutes=30)):
-                        tc3_passed = False
+                if successful_build_dir:
+                    archive_dir = f"{successful_build_dir}/archive"
+                    tc3_passed = os.path.exists(archive_dir) and len(os.listdir(archive_dir)) > 0
+                    
+                    if START_TIME and tc3_passed:
+                        mtime = datetime.fromtimestamp(os.path.getmtime(archive_dir), timezone.utc)
+                        if mtime < (START_TIME - timedelta(minutes=30)):
+                            tc3_passed = False
 
                 if tc3_passed:
                     results['tc3'] = True
@@ -125,10 +144,10 @@ def verify_task():
                 else:
                     results['tc3'] = False
                     print(f"TC3: Jenkins Artifact Archiving Verification ........... [FAILED] (0/10)")
-                    if not results.get('tc2'):
+                    if not successful_build_dir:
                         print(f"     └─ [Reason]: Prerequisite failed (No successful build found).")
                     else:
-                        print(f"     └─ [Reason]: Build was successful, but NO artifacts were found. Check your archiveArtifacts directive.")
+                        print(f"     └─ [Reason]: Build was successful, but NO artifacts were found in {archive_dir}. Check your archiveArtifacts directive.")
             except Exception as e:
                 results['tc3'] = False
                 print(f"TC3: Jenkins Artifact Archiving Verification ........... [FAILED] (0/10)")
