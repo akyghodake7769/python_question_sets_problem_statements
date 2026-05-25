@@ -39,37 +39,54 @@ def verify_task():
         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
 
-        aws_region = os.getenv('AWS_DEFAULT_REGION', 'eu-west-1')
-        ec2_client = boto3.client('ec2', region_name=aws_region)
-        sns_client = boto3.client('sns', region_name=aws_region)
-        cw_client = boto3.client('cloudwatch', region_name=aws_region)
-
+        aws_region = None
+        ec2_client = None
+        valid_instance = None
+        target_instance_id = None
+        
         # --- TC1 & TC2: EC2 Instance & IAM Setup ---
         tc1_passed = False
         tc2_passed = False
-        target_instance_id = None
         
-        try:
-            instances = ec2_client.describe_instances(Filters=[
-                {'Name': 'tag:Name', 'Values': [f'labskraft-monitor-ec2-{user_prefix}']},
-                {'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopped']}
-            ])
-            
-            valid_instance = None
-            if instances.get('Reservations'):
-                from datetime import timedelta
-                for res in instances['Reservations']:
-                    for inst in res.get('Instances', []):
-                        # Allow up to 2 hours of clock skew
-                        if START_TIME:
-                            if inst.get('LaunchTime') >= (START_TIME - timedelta(hours=2)):
+        from datetime import timedelta
+        
+        for region in ['eu-west-1', 'eu-west-2', 'eu-west-3']:
+            temp_ec2 = boto3.client('ec2', region_name=region)
+            try:
+                instances = temp_ec2.describe_instances(Filters=[
+                    {'Name': 'tag:Name', 'Values': [f'labskraft-monitor-ec2-{user_prefix}']},
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopped']}
+                ])
+                
+                if instances.get('Reservations'):
+                    for res in instances['Reservations']:
+                        for inst in res.get('Instances', []):
+                            # Allow up to 2 hours of clock skew
+                            if START_TIME:
+                                if inst.get('LaunchTime') >= (START_TIME - timedelta(hours=2)):
+                                    valid_instance = inst
+                                    break
+                            else:
                                 valid_instance = inst
                                 break
-                        else:
-                            valid_instance = inst
+                        if valid_instance:
                             break
-                    if valid_instance:
-                        break
+            except Exception:
+                pass
+                
+            if valid_instance:
+                aws_region = region
+                ec2_client = temp_ec2
+                break
+                
+        if not aws_region:
+            aws_region = os.getenv('AWS_DEFAULT_REGION', 'eu-west-1')
+            ec2_client = boto3.client('ec2', region_name=aws_region)
+            
+        sns_client = boto3.client('sns', region_name=aws_region)
+        cw_client = boto3.client('cloudwatch', region_name=aws_region)
+        
+        try:
             
             if valid_instance:
                 tc1_passed = True
