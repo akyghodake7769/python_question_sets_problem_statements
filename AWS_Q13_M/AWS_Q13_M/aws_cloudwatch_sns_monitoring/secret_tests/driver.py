@@ -5,7 +5,7 @@ import subprocess
 from datetime import datetime, timezone
 
 # Capture Assessment Start Time
-START_TIME_STR = os.getenv('KLOUDKRAFT_START_TIME')
+START_TIME_STR = os.getenv('KODEARENA_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else "LOCAL_USER"
 
@@ -24,7 +24,7 @@ def verify_task():
     try:
         # Time Enforcement Logic
         if not START_TIME:
-            print("[ERROR] KLOUDKRAFT_START_TIME environment variable is missing.")
+            print("[ERROR] KODEARENA_START_TIME environment variable is missing.")
             raise Exception("Invalid Session")
 
         now = datetime.now(timezone.utc)
