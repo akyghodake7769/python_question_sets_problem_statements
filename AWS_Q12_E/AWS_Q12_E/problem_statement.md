@@ -14,7 +14,7 @@ The learner must:
 - Create an AWS CodeCommit repository (or connect a GitHub repository) containing a static web application (e.g., `index.html`).
 - Create an AWS S3 Bucket named `labskraft-web-app-<your-labskraft-username>` configured for **Static Website Hosting**.
 - Configure appropriate bucket policies or public access settings to allow public read access to the web objects.
-- Build an AWS CodePipeline named `labskraft-frontend-pipeline` that:
+- Build an AWS CodePipeline named `labskraft-frontend-pipeline-<your-labskraft-username>` that:
   - Uses the CodeCommit/GitHub repository as the **Source** stage.
   - Uses the destination S3 Bucket as the **Deploy** stage (using AWS CodeDeploy / S3 deploy provider).
 - Ensure the pipeline executes successfully upon a git push, and the web application is accessible via the S3 static website endpoint.
