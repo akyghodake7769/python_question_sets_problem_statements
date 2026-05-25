@@ -1,8 +1,9 @@
 import json
 import os
 import sys
-import subprocess
 from datetime import datetime, timezone
+
+import boto3
 
 # Capture Assessment Start Time
 START_TIME_STR = os.getenv('KODEARENA_START_TIME')
@@ -15,7 +16,7 @@ def verify_task():
     
     # Standard LabsKraft Header
     print("\n" + "-"*70)
-    print(f"{'KODEARENA REAL-TIME CI/CD AUDIT':^70}")
+    print(f"{'KODEARENA REAL-TIME AWS AUDIT':^70}")
     print("-"*70)
 
     total_score = 0
@@ -38,25 +39,53 @@ def verify_task():
         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
 
+        aws_region = os.getenv('AWS_DEFAULT_REGION', 'eu-west-2')
+        ec2_client = boto3.client('ec2', region_name=aws_region)
+        sns_client = boto3.client('sns', region_name=aws_region)
+        cw_client = boto3.client('cloudwatch', region_name=aws_region)
+
         # --- TC1 & TC2: EC2 Instance & IAM Setup ---
+        tc1_passed = False
+        tc2_passed = False
+        target_instance_id = None
+        
         try:
-            tc1_passed = True # Stub for actual AWS boto3 verification
-            if tc1_passed:
+            instances = ec2_client.describe_instances(Filters=[
+                {'Name': 'tag:Name', 'Values': [f'labskraft-monitor-ec2-{user_prefix}']},
+                {'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopped']}
+            ])
+            
+            valid_instance = None
+            if instances.get('Reservations'):
+                for res in instances['Reservations']:
+                    for inst in res.get('Instances', []):
+                        if inst.get('LaunchTime') >= START_TIME:
+                            valid_instance = inst
+                            break
+                    if valid_instance:
+                        break
+            
+            if valid_instance:
+                tc1_passed = True
+                target_instance_id = valid_instance.get('InstanceId')
                 results['tc1'] = True
                 print(f"TC1: EC2 Instance Setup ................................ [PASSED] (4/4)")
+                
+                if 'IamInstanceProfile' in valid_instance:
+                    tc2_passed = True
+                    results['tc2'] = True
+                    print(f"TC2: IAM Instance Profile Setup ........................ [PASSED] (4/4)")
+                else:
+                    results['tc2'] = False
+                    print(f"TC2: IAM Instance Profile Setup ........................ [FAILED] (0/4)")
+                    print(f"     └─ [Reason]: IAM Instance Profile not attached.")
             else:
                 results['tc1'] = False
-                print(f"TC1: EC2 Instance Setup ................................ [FAILED] (0/4)")
-                print(f"     └─ [Reason]: EC2 instance missing.")
-                
-            tc2_passed = True # Stub for actual AWS boto3 verification
-            if tc2_passed:
-                results['tc2'] = True
-                print(f"TC2: IAM Instance Profile Setup ........................ [PASSED] (4/4)")
-            else:
                 results['tc2'] = False
+                print(f"TC1: EC2 Instance Setup ................................ [FAILED] (0/4)")
+                print(f"     └─ [Reason]: EC2 instance missing or created before session start.")
                 print(f"TC2: IAM Instance Profile Setup ........................ [FAILED] (0/4)")
-                print(f"     └─ [Reason]: IAM Instance Profile not attached.")
+                print(f"     └─ [Reason]: Prerequisite failed.")
         except Exception as e:
             results['tc1'] = False
             results['tc2'] = False
@@ -65,6 +94,8 @@ def verify_task():
             print(f"     └─ [Error]: {str(e)}")
 
         # --- TC3: Amazon SNS Topic Setup ---
+        tc3_passed = False
+        target_topic_arn = None
         if not results.get('tc1'):
             results['tc3'] = False
             print(f"TC3: Amazon SNS Topic Setup ............................ [FAILED] (0/4)")
@@ -77,14 +108,26 @@ def verify_task():
             print(f"     └─ [Reason]: Prerequisite failed.")
         else:
             try:
-                tc3_passed = True # Stub for actual AWS boto3 verification
-                if tc3_passed:
-                    results['tc3'] = True
-                    print(f"TC3: Amazon SNS Topic Setup ............................ [PASSED] (4/4)")
+                topics = sns_client.list_topics()
+                for t in topics.get('Topics', []):
+                    if t['TopicArn'].endswith(f':DevOps-Alerts-{user_prefix}'):
+                        target_topic_arn = t['TopicArn']
+                        break
+                
+                if target_topic_arn:
+                    subs = sns_client.list_subscriptions_by_topic(TopicArn=target_topic_arn)
+                    if subs.get('Subscriptions'):
+                        tc3_passed = True
+                        results['tc3'] = True
+                        print(f"TC3: Amazon SNS Topic Setup ............................ [PASSED] (4/4)")
+                    else:
+                        results['tc3'] = False
+                        print(f"TC3: Amazon SNS Topic Setup ............................ [FAILED] (0/4)")
+                        print(f"     └─ [Reason]: SNS Topic exists but no email subscription configured.")
                 else:
                     results['tc3'] = False
                     print(f"TC3: Amazon SNS Topic Setup ............................ [FAILED] (0/4)")
-                    print(f"     └─ [Reason]: SNS Topic missing or email subscription not configured.")
+                    print(f"     └─ [Reason]: SNS Topic DevOps-Alerts-{user_prefix} missing.")
             except Exception as e:
                 results['tc3'] = False
                 print(f"TC3: Amazon SNS Topic Setup ............................ [FAILED] (0/4)")
@@ -92,23 +135,45 @@ def verify_task():
             
             # --- TC4 & TC5: CloudWatch Alarm Configuration ---
             try:
-                tc4_passed = True # Stub for actual AWS boto3 verification
-                if tc4_passed:
-                    results['tc4'] = True
-                    print(f"TC4: CloudWatch Alarm Setup ............................ [PASSED] (4/4)")
+                alarms = cw_client.describe_alarms(AlarmNames=['High-CPU-Alarm'])
+                target_alarm = None
+                if alarms.get('MetricAlarms'):
+                    target_alarm = alarms['MetricAlarms'][0]
+                    
+                if target_alarm:
+                    dimensions = {d['Name']: d['Value'] for d in target_alarm.get('Dimensions', [])}
+                    is_correct_instance = dimensions.get('InstanceId') == target_instance_id
+                    
+                    if target_alarm.get('MetricName') == 'CPUUtilization' and \
+                       target_alarm.get('Threshold') == 70.0 and \
+                       target_alarm.get('Period') == 300 and \
+                       target_alarm.get('EvaluationPeriods') == 1 and \
+                       target_alarm.get('Namespace') == 'AWS/EC2' and \
+                       is_correct_instance:
+                        results['tc4'] = True
+                        print(f"TC4: CloudWatch Alarm Setup ............................ [PASSED] (4/4)")
+                        
+                        if target_topic_arn and target_topic_arn in target_alarm.get('AlarmActions', []):
+                            results['tc5'] = True
+                            print(f"TC5: Alarm SNS Configuration ........................... [PASSED] (4/4)")
+                        else:
+                            results['tc5'] = False
+                            print(f"TC5: Alarm SNS Configuration ........................... [FAILED] (0/4)")
+                            print(f"     └─ [Reason]: Alarm SNS action invalid or not linked to the correct SNS topic.")
+                    else:
+                        results['tc4'] = False
+                        results['tc5'] = False
+                        print(f"TC4: CloudWatch Alarm Setup ............................ [FAILED] (0/4)")
+                        print(f"     └─ [Reason]: CloudWatch Alarm settings are incorrect (check Threshold, Period, Metric or Target Instance).")
+                        print(f"TC5: Alarm SNS Configuration ........................... [FAILED] (0/4)")
+                        print(f"     └─ [Reason]: Prerequisite failed.")
                 else:
                     results['tc4'] = False
-                    print(f"TC4: CloudWatch Alarm Setup ............................ [FAILED] (0/4)")
-                    print(f"     └─ [Reason]: CloudWatch Alarm for CPU >70% missing.")
-                    
-                tc5_passed = True # Stub for actual AWS boto3 verification
-                if tc5_passed:
-                    results['tc5'] = True
-                    print(f"TC5: Alarm SNS Configuration ........................... [PASSED] (4/4)")
-                else:
                     results['tc5'] = False
+                    print(f"TC4: CloudWatch Alarm Setup ............................ [FAILED] (0/4)")
+                    print(f"     └─ [Reason]: CloudWatch Alarm 'High-CPU-Alarm' missing.")
                     print(f"TC5: Alarm SNS Configuration ........................... [FAILED] (0/4)")
-                    print(f"     └─ [Reason]: Alarm SNS action invalid.")
+                    print(f"     └─ [Reason]: Prerequisite failed.")
             except Exception as e:
                 results['tc4'] = False
                 results['tc5'] = False
