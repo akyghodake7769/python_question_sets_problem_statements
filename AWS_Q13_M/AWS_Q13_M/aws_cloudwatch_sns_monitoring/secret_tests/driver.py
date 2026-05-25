@@ -57,9 +57,15 @@ def verify_task():
             
             valid_instance = None
             if instances.get('Reservations'):
+                from datetime import timedelta
                 for res in instances['Reservations']:
                     for inst in res.get('Instances', []):
-                        if inst.get('LaunchTime') >= START_TIME:
+                        # Allow up to 2 hours of clock skew
+                        if START_TIME:
+                            if inst.get('LaunchTime') >= (START_TIME - timedelta(hours=2)):
+                                valid_instance = inst
+                                break
+                        else:
                             valid_instance = inst
                             break
                     if valid_instance:
