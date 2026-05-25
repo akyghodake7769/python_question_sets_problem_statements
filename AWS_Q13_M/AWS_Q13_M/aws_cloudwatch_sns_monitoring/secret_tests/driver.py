@@ -39,7 +39,7 @@ def verify_task():
         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
 
-        aws_region = os.getenv('AWS_DEFAULT_REGION', 'eu-west-2')
+        aws_region = os.getenv('AWS_DEFAULT_REGION', 'eu-west-1')
         ec2_client = boto3.client('ec2', region_name=aws_region)
         sns_client = boto3.client('sns', region_name=aws_region)
         cw_client = boto3.client('cloudwatch', region_name=aws_region)
