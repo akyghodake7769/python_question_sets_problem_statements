@@ -50,7 +50,7 @@ def verify_task():
             raise e
 
         target_bucket = f"labskraft-web-app-{user_prefix}"
-        pipeline_name = "labskraft-frontend-pipeline"
+        pipeline_name = f"labskraft-frontend-pipeline-{user_prefix}"
 
         # --- TC1: Repository & S3 Hosting Setup ---
         tc1_passed = False
