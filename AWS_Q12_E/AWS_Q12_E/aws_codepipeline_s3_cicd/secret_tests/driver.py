@@ -9,9 +9,16 @@ START_TIME_STR = os.getenv('KODEARENA_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else "LOCAL_USER"
 
+# def get_aws_clients():
+#     # Automatically picks up environment credentials
+#     return boto3.client('s3'), boto3.client('codepipeline'), boto3.client('codecommit')
 def get_aws_clients():
-    # Automatically picks up environment credentials
-    return boto3.client('s3'), boto3.client('codepipeline'), boto3.client('codecommit')
+    # Example: Hardcoding us-east-1
+    return (
+        boto3.client('s3', region_name='us-east-1'), 
+        boto3.client('codepipeline', region_name='eu-west-1'), 
+        boto3.client('codecommit', region_name='eu-west-1')
+    )
 
 def verify_task():
     user_prefix = USER_PREFIX
