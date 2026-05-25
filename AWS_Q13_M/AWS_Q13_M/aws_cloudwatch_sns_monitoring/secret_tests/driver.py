@@ -54,19 +54,20 @@ def verify_task():
             temp_ec2 = boto3.client('ec2', region_name=region)
             try:
                 instances = temp_ec2.describe_instances(Filters=[
-                    {'Name': 'tag:Name', 'Values': [f'labskraft-monitor-ec2-{user_prefix}']},
                     {'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopped']}
                 ])
                 
                 if instances.get('Reservations'):
                     for res in instances['Reservations']:
                         for inst in res.get('Instances', []):
-                            # Allow up to 2 hours of clock skew
-                            if START_TIME:
-                                if inst.get('LaunchTime') >= (START_TIME - timedelta(hours=2)):
-                                    valid_instance = inst
-                                    break
-                            else:
+                            name_tag = ""
+                            for tag in inst.get('Tags', []):
+                                if tag['Key'] == 'Name':
+                                    name_tag = tag['Value']
+                            
+                            expected_name = f'labskraft-monitor-ec2-{user_prefix}'.lower()
+                            if expected_name == name_tag.lower() or \
+                               ('labskraft-monitor-ec2' in name_tag.lower() and user_prefix.lower() in name_tag.lower()):
                                 valid_instance = inst
                                 break
                         if valid_instance:
