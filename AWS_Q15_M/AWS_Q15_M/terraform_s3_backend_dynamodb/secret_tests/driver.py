@@ -102,14 +102,16 @@ def verify_task():
         except:
             pass
             
+        default_region = boto3.Session().region_name or 'eu-west-1'
         if not detected_region:
-            detected_region = 'eu-west-2'
+            detected_region = default_region
         elif detected_region == 'EU':
             detected_region = 'eu-west-1'
 
-        # Setup candidate regions for multi-region lookup
-        candidate_regions = [detected_region, 'eu-west-1', 'eu-west-2', 'us-east-1', 'us-east-2', 'ap-south-1', 'eu-central-1']
-        # unique-ify candidate regions preserving order
+        # Setup candidate regions for fast lookup
+        candidate_regions = [detected_region]
+        if default_region not in candidate_regions:
+            candidate_regions.append(default_region)
         candidate_regions = list(dict.fromkeys([r for r in candidate_regions if r]))
 
         desc = None
@@ -216,8 +218,14 @@ def verify_task():
     try:
         ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
         os.makedirs(ws_path, exist_ok=True)
-        with open(os.path.join(ws_path, 'solution.json'), 'w') as f: json.dump(solution_data, f, indent=4)
-    except: pass
+        with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
+            json.dump(solution_data, f, indent=4)
+            
+        root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+        with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
+            json.dump(solution_data, f, indent=4)
+    except:
+        pass
 
 if __name__ == "__main__":
     verify_task()
