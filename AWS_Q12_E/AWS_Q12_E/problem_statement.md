@@ -1,6 +1,7 @@
 # DevOps Lab: AWS CodePipeline Automated S3 Static Website CI/CD
 
 **Difficulty Level:** Easy
+
 **Duration:** 30 Minutes
 
 ## Scenario
