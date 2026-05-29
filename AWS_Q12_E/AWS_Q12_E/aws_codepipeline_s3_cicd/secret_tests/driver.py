@@ -9,16 +9,9 @@ START_TIME_STR = os.getenv('KODEARENA_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else "LOCAL_USER"
 
-# def get_aws_clients():
-#     # Automatically picks up environment credentials
-#     return boto3.client('s3'), boto3.client('codepipeline'), boto3.client('codecommit')
 def get_aws_clients():
-    # Example: Hardcoding us-east-1
-    return (
-        boto3.client('s3', region_name='us-east-1'), 
-        boto3.client('codepipeline', region_name='eu-west-1'), 
-        boto3.client('codecommit', region_name='eu-west-1')
-    )
+    # Automatically picks up environment credentials
+    return boto3.client('s3'), boto3.client('codepipeline'), boto3.client('codecommit')
 
 def verify_task():
     user_prefix = USER_PREFIX
@@ -61,9 +54,26 @@ def verify_task():
 
         # --- TC1: Repository & S3 Hosting Setup ---
         tc1_passed = False
+        valid_session = True
         try:
             # 1. Check if S3 bucket exists
             s3.head_bucket(Bucket=target_bucket)
+            
+            # Verify creation date if START_TIME is present
+            if START_TIME:
+                try:
+                    buckets = s3.list_buckets().get('Buckets', [])
+                    for b in buckets:
+                        if b['Name'] == target_bucket:
+                            b_date = b['CreationDate']
+                            if b_date < START_TIME:
+                                valid_session = False
+                            break
+                except Exception as e:
+                    print(f"[WARN] Could not verify bucket creation date: {e}")
+                    
+            if not valid_session:
+                raise Exception(f"Bucket '{target_bucket}' was created before the current assessment session started (Old Session).")
             
             # 2. Check if S3 Static website hosting is enabled
             website_configured = False
