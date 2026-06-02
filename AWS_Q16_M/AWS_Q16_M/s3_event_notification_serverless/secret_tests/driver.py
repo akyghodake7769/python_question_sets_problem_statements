@@ -1,13 +1,28 @@
 import sys, os, boto3, json
 
 def verify_task():
-    username = os.getenv('KLOUDKRAFT_USERNAME', 'LOCAL_USER')
+    username = os.getenv('KODEARENA_USERNAME', 'LOCAL_USER')
     bucket_name = f"compliance-docs-{username}"
     topic_name = f"compliance-alerts-{username}"
     print("-" * 40); print("AWS RESOURCE VERIFICATION REPORT"); print("-" * 40)
     
+    aws_region = 'eu-west-2'
+    for r in ['eu-west-1', 'eu-west-2', 'eu-west-3']:
+        try:
+            temp_sns = boto3.client('sns', region_name=r)
+            topics = temp_sns.list_topics()['Topics']
+            for t in topics:
+                if topic_name in t['TopicArn']:
+                    aws_region = r
+                    break
+            if aws_region == r:
+                break
+        except Exception:
+            pass
+
     try:
-        s3 = boto3.client('s3'); sns = boto3.client('sns')
+        s3 = boto3.client('s3')
+        sns = boto3.client('sns', region_name=aws_region)
     except Exception as e:
         print(f"FAILED: Could not connect to AWS. Error: {e}"); return
 
