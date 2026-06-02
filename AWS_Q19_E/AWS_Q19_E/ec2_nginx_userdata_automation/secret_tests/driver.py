@@ -1,11 +1,21 @@
 import sys, os, boto3, urllib.request
 
 def verify_task():
-    username = os.getenv('KLOUDKRAFT_USERNAME', 'LOCAL_USER')
+    username = os.getenv('KODEARENA_USERNAME', 'LOCAL_USER')
     instance_name = f"nginx-server-{username}"
     print("-" * 40); print("AWS RESOURCE VERIFICATION REPORT"); print("-" * 40)
-    
-    try: ec2 = boto3.client('ec2')
+    aws_region = 'eu-west-2'
+    for r in ['eu-west-1', 'eu-west-2', 'eu-west-3']:
+        try:
+            temp_ec2 = boto3.client('ec2', region_name=r)
+            res = temp_ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': [instance_name]}, {'Name': 'instance-state-name', 'Values': ['running']}])
+            if len(res['Reservations']) > 0:
+                aws_region = r
+                break
+        except Exception:
+            pass
+
+    try: ec2 = boto3.client('ec2', region_name=aws_region)
     except Exception as e: print(f"FAILED: Could not connect to AWS. Error: {e}"); return
     
     try:
