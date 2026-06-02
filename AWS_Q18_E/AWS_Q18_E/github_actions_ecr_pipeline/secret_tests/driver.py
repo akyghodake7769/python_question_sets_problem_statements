@@ -1,11 +1,20 @@
 import sys, os, boto3
 
 def verify_task():
-    username = os.getenv('KLOUDKRAFT_USERNAME', 'LOCAL_USER')
+    username = os.getenv('KODEARENA_USERNAME', 'LOCAL_USER')
     repo_name = f"webapp-repo-{username}"
     print("-" * 40); print("AWS RESOURCE VERIFICATION REPORT"); print("-" * 40)
-    
-    try: ecr = boto3.client('ecr')
+    aws_region = 'eu-west-2'
+    for r in ['eu-west-1', 'eu-west-2', 'eu-west-3']:
+        try:
+            temp_ecr = boto3.client('ecr', region_name=r)
+            temp_ecr.describe_repositories(repositoryNames=[repo_name])
+            aws_region = r
+            break
+        except Exception:
+            pass
+
+    try: ecr = boto3.client('ecr', region_name=aws_region)
     except Exception as e: print(f"FAILED: Could not connect to AWS. Error: {e}"); return
     
     try:
