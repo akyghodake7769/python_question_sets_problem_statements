@@ -10,8 +10,26 @@ START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00'
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else "LOCAL_USER"
 
 def get_aws_clients():
-    # Automatically picks up environment credentials
-    return boto3.client('s3'), boto3.client('codepipeline'), boto3.client('codecommit')
+    user_prefix = USER_PREFIX
+    pipeline_name = f"labskraft-frontend-pipeline-{user_prefix}"
+    
+    aws_region = 'eu-west-2'
+    for r in ['eu-west-1', 'eu-west-2', 'eu-west-3']:
+        try:
+            temp_codepipeline = boto3.client('codepipeline', region_name=r)
+            temp_codepipeline.get_pipeline(name=pipeline_name)
+            aws_region = r
+            break
+        except Exception:
+            try:
+                temp_codecommit = boto3.client('codecommit', region_name=r)
+                if temp_codecommit.list_repositories().get('repositories'):
+                    aws_region = r
+                    break
+            except Exception:
+                pass
+                
+    return boto3.client('s3'), boto3.client('codepipeline', region_name=aws_region), boto3.client('codecommit', region_name=aws_region)
 
 def verify_task():
     user_prefix = USER_PREFIX
