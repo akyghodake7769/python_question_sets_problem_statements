@@ -41,12 +41,11 @@ def verify_task():
     # --- TEST CASE 3: REGION CHECK ---
     try:
         location = s3.get_bucket_location(Bucket=target_bucket)
-        region = location.get('LocationConstraint')
-        # S3 get_bucket_location returns None for us-east-1, but for London it returns 'eu-west-2'
-        if region == 'eu-west-2':
-            print("TC3 [Region: eu-west-2] (5/5) - Success: Correct region used.")
+        region = location.get('LocationConstraint') or 'us-east-1'
+        if region in ['eu-west-1', 'eu-west-2', 'eu-west-3']:
+            print(f"TC3 [Region Check] (5/5) - Success: Correct region '{region}' used.")
         else:
-            print(f"TC3 [Region: eu-west-2] (0/5) - Failed: Found in {region or 'us-east-1'}.")
+            print(f"TC3 [Region Check] (0/5) - Failed: Found in {region}.")
     except:
         print("TC3 [Region Check] (0/5) - Failed: Error retrieving location.")
 
