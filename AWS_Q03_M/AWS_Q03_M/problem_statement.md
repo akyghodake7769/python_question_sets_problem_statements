@@ -1,7 +1,8 @@
 # DevOps Lab: GitHub to Jenkins to Apache CI/CD
 
 **Difficulty Level:** Medium
-**Duration:** 30 Minutes
+
+**Duration:** 90 Minutes
 
 ## Scenario
 
