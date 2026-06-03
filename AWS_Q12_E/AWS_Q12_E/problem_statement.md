@@ -2,7 +2,7 @@
 
 **Difficulty Level:** Easy
 
-**Duration:** 30 Minutes
+**Duration:** 90 Minutes
 
 ## Scenario
 
