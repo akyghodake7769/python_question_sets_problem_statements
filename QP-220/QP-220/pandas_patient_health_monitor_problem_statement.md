@@ -3,7 +3,7 @@
 
 ****Difficulty Level****: Medium | Total Marks: 20
 ****Duration** : 30 Minutes
-**Design Format**: 1 Class | 7 Methods | 7 Test Cases (5 Marked)**
+**Design Format**: 1 Class | 7 Methods | 7 Test Cases**
 
 **Summary of Design Requirements**
 Implement a class `b` to track and analyze patient heart rates using Pandas.
