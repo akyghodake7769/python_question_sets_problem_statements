@@ -1,14 +1,28 @@
 import importlib.util
+import sys
 import os
 
-# Get paths
-script_dir = os.path.dirname(os.path.abspath(__file__))
-driver_path = os.path.join(script_dir, "..", "secret_tests", "driver.py")
-solution_path = os.path.join(script_dir, "solution.py")
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python run.py <vm_tag> [solution_filename]")
+        sys.exit(1)
 
-# Load and run driver tests
-spec = importlib.util.spec_from_file_location("driver", driver_path)
-driver_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(driver_module)
+    vm_tag = sys.argv[1]
+    solution_filename = sys.argv[2] if len(sys.argv) > 2 else "solution.py"
 
-driver_module.test_student_code(solution_path)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    solution_path = os.path.join(
+        script_dir,
+        "..",
+        "student_workspace",
+        solution_filename
+    )
+
+    driver_path = os.path.join(script_dir, "driver.py")
+
+    spec = importlib.util.spec_from_file_location("driver", driver_path)
+    driver = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(driver)
+
+    driver.test_student_code(solution_path, vm_tag)
