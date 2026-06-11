@@ -1,0 +1,177 @@
+import os
+import sys
+import importlib.util
+import random
+import copy
+
+def resolve_health_csv_path():
+    paths = [
+        os.path.join(os.path.dirname(__file__), "..", "data", "health.csv"),
+        os.path.join(os.path.dirname(__file__), "health.csv")
+    ]
+    for p in paths:
+        if os.path.exists(p): return p
+    return None
+
+def test_student_code(solution_path):
+    report_dir = os.path.dirname(solution_path)
+    report_path = os.path.join(report_dir, "report.txt")
+    
+    spec = importlib.util.spec_from_file_location("solution", solution_path)
+    solution = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(solution)
+    except Exception as e:
+        print(f"IMPORT ERROR: {e}")
+        return
+    
+    print("Running Tests for: Pulse Rates List Tracker\n")
+    report_lines = ["Running Tests for: Pulse Rates List Tracker\n"]
+    
+    if not hasattr(solution, "HealthMonitor"):
+        print("ERROR: HealthMonitor class not found")
+        return
+    
+    HealthMonitor = solution.HealthMonitor
+    health_csv = resolve_health_csv_path()
+    
+    # Load base data for injection
+    # In list: records is list of lists
+    raw_records = [
+        ['P01', 'Mon', 72],
+        ['P02', 'Mon', None],
+        ['P01', 'Tue', 75],
+        ['P03', 'Mon', 105],
+        ['P04', 'Tue', 68],
+        ['P05', 'Mon', 80],
+        ['P06', 'Mon', None],
+        ['P01', 'Wed', 70],
+        ['P03', 'Tue', 110],
+        ['P04', 'Wed', 75],
+        ['P02', 'Tue', 85],
+        ['P05', 'Wed', 90]
+    ]
+    
+    cleaned_records = [copy.deepcopy(r) for r in raw_records if r[2] is not None]
+
+    tc_configs = [
+        ("Initial State", 0),
+        ("Data Loading", 0),
+        ("Clean Records", 4),
+        ("Find Highest Rate", 4),
+        ("Patient Averages", 4),
+        ("High Risk Identification", 4),
+        ("Count High Risk Patients", 4)
+    ]
+
+    total_score = 0
+    for i, (desc, marks) in enumerate(tc_configs, 1):
+        try:
+            def run_t(idx, current_obj, current_records=None):
+                if idx == 1: 
+                    return current_obj.records
+                if idx == 2: 
+                    current_obj.read_data(health_csv)
+                    return len(current_obj.records) if current_obj.records is not None else 0
+                if idx == 3: 
+                    if current_records is not None:
+                        current_obj.records = copy.deepcopy(current_records)
+                    return current_obj.clean_records()
+                if idx == 4: 
+                    if current_records is not None:
+                        current_obj.records = copy.deepcopy(current_records)
+                    return current_obj.find_highest_rate()
+                if idx == 5: 
+                    if current_records is not None:
+                        current_obj.records = copy.deepcopy(current_records)
+                    res = current_obj.patient_averages()
+                    return res
+                if idx == 6: 
+                    if current_records is not None:
+                        current_obj.records = copy.deepcopy(current_records)
+                    return current_obj.high_risk(100)
+                if idx == 7: 
+                    if current_records is not None:
+                        current_obj.records = copy.deepcopy(current_records)
+                    return current_obj.count_high_risk(100)
+                return None
+
+            p_ok, h_det, none_ret = False, False, False
+            
+            if i <= 2: # Samples
+                res2 = run_t(i, HealthMonitor())
+                exp2 = None if i == 1 else 12
+                if i == 1:
+                    p_ok = (res2 is None or res2 == [])
+                else:
+                    p_ok = (res2 == exp2)
+            else:
+                rv = random.randint(115, 150)
+                
+                # Setup obj1 (base run)
+                obj1 = HealthMonitor()
+                if i == 3:
+                    res1 = run_t(i, obj1, raw_records)
+                else:
+                    res1 = run_t(i, obj1, cleaned_records)
+                
+                # Setup obj2 (dynamic run)
+                obj2 = HealthMonitor()
+                if i == 3:
+                    # In dyn_raw, we make one more record None
+                    dyn_raw = copy.deepcopy(raw_records)
+                    for r in dyn_raw:
+                        if r[2] is not None:
+                            r[2] = None
+                            break
+                    res2 = run_t(i, obj2, dyn_raw)
+                    exp2 = 3
+                else:
+                    dyn_records = copy.deepcopy(cleaned_records)
+                    for r in dyn_records:
+                        if r[0] == 'P01':
+                            r[2] = rv
+                            break
+                    res2 = run_t(i, obj2, dyn_records)
+                    
+                    if i == 4:
+                        exp2 = rv
+                    elif i == 5:
+                        p01_vals = [r[2] for r in dyn_records if r[0] == 'P01' and r[2] is not None]
+                        exp2 = {
+                            'P01': round(sum(p01_vals) / len(p01_vals), 2),
+                            'P03': 107.5,
+                            'P04': 71.5,
+                            'P05': 85.0,
+                            'P02': 85.0
+                        }
+                    elif i == 6:
+                        exp2 = ['P01', 'P03']
+                    elif i == 7:
+                        exp2 = 2
+                
+                if res2 == exp2:
+                    p_ok = True
+                elif res2 is None:
+                    none_ret = True
+                elif res1 == res2:
+                    h_det = True
+            
+            if p_ok:
+                total_score += marks
+                msg = f"PASS TC{i} [{desc}] ({marks if marks > 0 else 'Sample'})"
+            elif none_ret:
+                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Method not implemented / No return value"
+            elif h_det:
+                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Hardcoded. Dynamic check failed."
+            else:
+                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Incorrect Output. Expected: {exp2} | Actual: {res2}"
+        except Exception as e:
+            msg = f"FAIL TC{i} [{desc}] | Error: {e}"
+        print(msg)
+        report_lines.append(msg)
+
+    print(f"\nSCORE: {total_score}/20.0")
+    report_lines.append(f"\nSCORE: {total_score}/20.0")
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(report_lines) + "\n")
