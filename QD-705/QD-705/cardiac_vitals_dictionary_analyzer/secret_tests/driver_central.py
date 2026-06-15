@@ -17,6 +17,7 @@ def resolve_health_csv_path():
     paths = [
         os.path.join(os.path.dirname(__file__), "..", "data", "health_cardiac.csv"),
         os.path.join(os.path.dirname(__file__), "health_cardiac.csv"),
+        "/home/ubuntu/central_server/data/health_cardiac.csv",
         "secret_test/cardiac_vitals_dictionary_analyzer/data/health_cardiac.csv",
         "secret_test/cardiac_vitals_dictionary_analyzer/health_cardiac.csv",
         "secret_tests/cardiac_vitals_dictionary_analyzer/data/health_cardiac.csv",
