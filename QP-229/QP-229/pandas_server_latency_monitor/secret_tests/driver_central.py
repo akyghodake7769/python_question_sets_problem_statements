@@ -189,29 +189,8 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
     print(f"{'TOTAL SCORE':<15} | {'':<10} | {total_score}/20")
     results.append(f"\n🎯 TOTAL SCORE: {total_score}/20")
 
-    # Write report file if on server
-    print("\n========== REPORT DEBUG ==========")
-    print("USERNAME     :", username)
-    print("REPORT BASE  :", report_base)
-    print("REPORT PATH  :", report_path)
-    print("BASE EXISTS  :", os.path.exists(report_base))
-    print("==================================")
-
-    try:
-        with open(report_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(results) + "\n")
-
-        try:
-            print("✅ REPORT WRITTEN SUCCESSFULLY")
-        except UnicodeEncodeError:
-            print("[SUCCESS] REPORT WRITTEN SUCCESSFULLY")
-        print("FILE EXISTS :", os.path.exists(report_path))
-
-    except Exception as e:
-        try:
-            print("❌ REPORT WRITE ERROR:", e)
-        except UnicodeEncodeError:
-            print("[ERROR] REPORT WRITE ERROR:", e)
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(results) + "\n")
 
     # Final Standardized CSV Output (8-Column Format)
     date_str = datetime.now(ist_offset).strftime("%d-%m-%Y")
