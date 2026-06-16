@@ -52,7 +52,7 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
     # 1. Robust Path and Slug Discovery
     try:
         current_file_path = os.path.abspath(__file__)
-        slug = os.path.basename(os.path.dirname(os.path.dirname(current_file_path)))
+        slug = os.path.basename(os.path.dirname(current_file_path))
     except:
         slug = "pulse_rates_list_tracker"
 
