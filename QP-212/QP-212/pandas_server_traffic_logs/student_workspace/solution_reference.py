@@ -32,13 +32,23 @@ class TrafficAnalyzer:
         Returns:
             int: Number of outlier rows removed
         """
-        pass
+        if self.df is None:
+            return 0
+        
+        outlier_count = len(self.df[self.df['ResponseTime'] > 10.0])
+        # Keep rows where ResponseTime <= 10.0 OR ResponseTime is NaN
+        self.df = self.df[(self.df['ResponseTime'] <= 10.0) | (self.df['ResponseTime'].isna())]
+        return outlier_count
     
     def fix_missing_records(self):
         """
         Fill NaN values in ResponseTime column with the mean of existing values.
         """
-        pass
+        if self.df is None:
+            return
+        
+        mean_response_time = self.df['ResponseTime'].mean()
+        self.df['ResponseTime'] = self.df['ResponseTime'].fillna(mean_response_time)
     
     def get_slowest_endpoint(self) -> str:
         """
@@ -47,7 +57,11 @@ class TrafficAnalyzer:
         Returns:
             str: The endpoint path with the slowest average response time
         """
-        pass
+        if self.df is None or len(self.df) == 0:
+            return ""
+        
+        slowest = self.df.groupby('Endpoint')['ResponseTime'].mean().idxmax()
+        return slowest
     
     def count_errors(self, error_code: int) -> int:
         """
@@ -59,4 +73,8 @@ class TrafficAnalyzer:
         Returns:
             int: Number of occurrences of the error code
         """
-        pass
+        if self.df is None:
+            return 0
+        
+        count = len(self.df[self.df['StatusCode'] == error_code])
+        return count
