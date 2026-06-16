@@ -14,15 +14,6 @@ def get_timestamp():
     """Returns timestamp in YYYYMMDD_HHMMSS format (IST assumption)"""
     return datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")
 
-def resolve_csv_path():
-    paths = [
-        os.path.join(os.path.dirname(__file__), "..", "data", "latency.csv"),
-        os.path.join(os.path.dirname(__file__), "latency.csv")
-    ]
-    for p in paths:
-        if os.path.exists(p): return p
-    return None
-
 def test_student_code(solution_path, vm_tag="DEFAULT"):
     problem_code = "pandas_server_latency_monitor"
     
@@ -41,6 +32,16 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
     report_base = f"/home/ubuntu/central_server/reports/{problem_code}/{username}"
     os.makedirs(report_base, exist_ok=True)
     report_path = os.path.join(report_base, f"{username}_{timestamp}.txt")
+    
+    # Fallback for local testing
+    if not os.path.exists("/home/ubuntu/central_server"):
+        report_dir = os.path.join(os.path.dirname(__file__), "..", "student_workspace")
+        os.makedirs(report_dir, exist_ok=True)
+        report_path = os.path.join(report_dir, f"{username}_{timestamp}.txt")
+
+    csv_file = "/home/ubuntu/central_server/data/latency.csv"
+    if not os.path.exists(csv_file):
+        csv_file = os.path.join(os.path.dirname(__file__), "..", "data", "latency.csv")
 
     results = [f">> Testing solution for {username} at {timestamp}"]
     report_items = []
@@ -58,7 +59,6 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
         print(f"IMPORT ERROR: {e}")
         return
 
-    csv_file = resolve_csv_path()
     
     try:
         raw_df = pd.read_csv(csv_file)
