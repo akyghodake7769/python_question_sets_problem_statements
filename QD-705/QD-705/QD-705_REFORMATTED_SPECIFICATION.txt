@@ -1,17 +1,17 @@
 QD-705: CARDIAC VITALS DICTIONARY ANALYZER
-(Reformatted to match standard specification format)
+(Reformatted to match standard specification format, no CSV)
 
 ================================================================================
 PROBLEM STATEMENT
 ================================================================================
 
 You are required to implement a HealthMonitor class to track and analyze cardiac vitals 
-heart rates using dictionary data structures. The system should support data loading, 
-data cleaning, peak reading identification, and calculating health metrics.
+heart rates using dictionary data structures. The system should support initialization 
+with default records, data cleaning, peak reading identification, and calculating health metrics.
 
-Design Format: 1 Class with 7 Independent Methods
+Design Format: 1 Class with 6 Independent Methods
 Difficulty Level: Medium
-Number of Test Cases: 7
+Number of Test Cases: 6
 Total Marks: 20
 
 ================================================================================
@@ -28,86 +28,83 @@ Method 1: __init__
 -----------
 def __init__(self):
     """
-    Initialize the HealthMonitor with empty storage.
-    Set self.records to None.
+    Initialize the HealthMonitor with default storage records.
+    Set self.records to the following dictionary:
+    {
+        0: {'PatientID': 'P01', 'Day': 'Mon', 'HeartRate': 72},
+        1: {'PatientID': 'P02', 'Day': 'Mon', 'HeartRate': None},
+        2: {'PatientID': 'P01', 'Day': 'Tue', 'HeartRate': 75},
+        3: {'PatientID': 'P03', 'Day': 'Mon', 'HeartRate': 105},
+        4: {'PatientID': 'P04', 'Day': 'Tue', 'HeartRate': 68},
+        5: {'PatientID': 'P05', 'Day': 'Mon', 'HeartRate': 80},
+        6: {'PatientID': 'P06', 'Day': 'Mon', 'HeartRate': None},
+        7: {'PatientID': 'P01', 'Day': 'Wed', 'HeartRate': 70},
+        8: {'PatientID': 'P03', 'Day': 'Tue', 'HeartRate': 110},
+        9: {'PatientID': 'P04', 'Day': 'Wed', 'HeartRate': 75},
+        10: {'PatientID': 'P02', 'Day': 'Tue', 'HeartRate': 85},
+        11: {'PatientID': 'P05', 'Day': 'Wed', 'HeartRate': 90}
+    }
     
     Returns: None
     """
 
-Method 2: read_data
+Method 2: clean_records
 -----------
-def read_data(self, file_path: str) -> None:
-    """
-    Load patient health logs from a CSV file into self.records.
-    
-    Parameters:
-        file_path (str): Path to the CSV file
-    
-    Returns: None
-    
-    Behavior:
-        - Read CSV using standard Python file operations (e.g. csv module).
-        - Convert and store records in self.records as a dictionary mapping index (int, starting at 0) to a dictionary representing the record:
-          {'PatientID': str, 'Day': str, 'HeartRate': int or None}
-        - Empty/missing heart rates should be set as None.
-    """
-
-Method 3: clean_records
------------
-def clean_records(self) -> int:
+def clean_records(self) -> None:
     """
     Drop all records from self.records where 'HeartRate' is None.
     Update the internal dictionary in place.
+    Print: "Removed Records: {count}" (where count is the number of records removed).
     
-    Returns:
-        int: Number of records removed from the dictionary
+    Returns: None
     """
 
-Method 4: find_highest_rate
+Method 3: find_highest_rate
 -----------
-def find_highest_rate(self) -> int:
+def find_highest_rate(self) -> None:
     """
-    Find the maximum heart rate value across all cleaned records.
+    Find the maximum heart rate value across all cleaned records and print it.
+    Print: "Highest Heart Rate: {rate}" (or "No heart rate records found" if empty).
     
-    Returns:
-        int: The maximum heart rate (or 0 if self.records is None or empty)
+    Returns: None
     """
 
-Method 5: patient_averages
+Method 4: patient_averages
 -----------
-def patient_averages(self) -> dict:
+def patient_averages(self) -> None:
     """
     Calculate the mean HeartRate for each unique PatientID in the records.
+    For each patient (sorted alphabetically by PatientID), print the average heart rate:
+    "{PatientID}: {average:.2f}"
     
-    Returns:
-        dict: A dictionary mapping PatientID (str) to average heart rate (float, rounded to 2 decimal places)
-        Format: {'PatientID': float}
+    Returns: None
     """
 
-Method 6: high_risk
+Method 5: high_risk
 -----------
-def high_risk(self, threshold: int) -> list:
+def high_risk(self, threshold: int) -> None:
     """
     Identify unique PatientID values who have at least one reading strictly greater than the threshold.
+    Sort the list alphabetically and print:
+    "High Risk Patients: {comma-separated sorted patient IDs}"
     
     Parameters:
         threshold (int): Heart rate threshold value
     
-    Returns:
-        list: Sorted list of unique PatientIDs (strings) exceeding the threshold
+    Returns: None
     """
 
-Method 7: count_high_risk
+Method 6: count_high_risk
 -----------
-def count_high_risk(self, threshold: int) -> int:
+def count_high_risk(self, threshold: int) -> None:
     """
-    Count the number of unique high-risk patients meeting the threshold criteria.
+    Count the number of unique high-risk patients meeting the threshold criteria and print it.
+    Print: "High Risk Patient Count: {count}"
     
     Parameters:
         threshold (int): Heart rate threshold value
         
-    Returns:
-        int: Count of unique patients with a heart rate strictly greater than the threshold
+    Returns: None
     """
 
 ================================================================================
@@ -118,77 +115,50 @@ Total Marks: 20 marks
 
 TC1: Verify initial state (Sample)
 ---
-Description: Check that self.records is None upon class initialization.
+Description: Check that self.records is correctly initialized with the 12 default records.
 Method: __init__()
-Expected Output: None (when accessing self.records)
+Expected Output: Default records dictionary structure
 Marks: 0
 
-TC2: Verify data loading (Sample)
+TC2: Verify removal of missing value records
 ---
-Description: Load the sample data from health.csv into self.records and verify the total record count (12 records initially).
-Method: read_data()
-Expected Output: 12
-Marks: 0
-
-TC3: Verify removal of missing value records
----
-Description: Remove records where HeartRate is None and return count of deleted records (2 records removed).
+Description: Remove records where HeartRate is None and print count of deleted records.
 Method: clean_records()
-Expected Output: 2
+Expected Output: Removed Records: 2
 Marks: 4
 
-TC4: Identify the highest recorded heart rate
+TC3: Identify the highest recorded heart rate
 ---
 Description: Find the peak heart rate across all records.
 Method: find_highest_rate()
-Expected Output: 110
+Expected Output: Highest Heart Rate: 110
 Marks: 4
 
-TC5: Calculate health averages for each patient
+TC4: Calculate health averages for each patient
 ---
 Description: Calculate mean HeartRate for each patient rounded to 2 decimal places.
 Method: patient_averages()
-Expected Output: Patient averages mapping (e.g. 'P01' averages to 72.33)
+Expected Output: 
+P01: 72.33
+P02: 85.00
+P03: 107.50
+P04: 71.50
+P05: 85.00
 Marks: 4
 
-TC6: Identify patients exceeding threshold
+TC5: Identify patients exceeding threshold
 ---
 Description: Find patients with heart rate exceeding 100 BPM.
 Method: high_risk(100)
-Expected Output: ['P03']
+Expected Output: High Risk Patients: P03
 Marks: 4
 
-TC7: Count unique high-risk individuals
+TC6: Count unique high-risk individuals
 ---
 Description: Count unique patients exceeding 100 BPM.
 Method: count_high_risk(100)
-Expected Output: 1
+Expected Output: High Risk Patient Count: 1
 Marks: 4
-
-================================================================================
-MARKS DISTRIBUTION
-================================================================================
-
-TC1: Initial State             0 marks (Sample)
-TC2: Data Loading             0 marks (Sample)
-TC3: Clean Records             4 marks
-TC4: Find Highest Rate         4 marks
-TC5: Patient Averages          4 marks
-TC6: High Risk Identification  4 marks
-TC7: Count High Risk Patients  4 marks
----
-TOTAL                         20 marks
-
-================================================================================
-SAMPLE DATA STRUCTURE
-================================================================================
-
-Patient Health Record Dictionary Format:
-{
-    0: {'PatientID': 'P01', 'Day': 'Mon', 'HeartRate': 72},
-    1: {'PatientID': 'P02', 'Day': 'Mon', 'HeartRate': None},
-    ...
-}
 
 ================================================================================
 TECHNICAL REQUIREMENTS
@@ -196,19 +166,5 @@ TECHNICAL REQUIREMENTS
 
 1. Language: Python 3.x
 2. Data Structure: Dictionary (dict)
-3. No external libraries required (use standard libraries like csv)
-4. Type hints required for all methods
-5. Return type specifications required
-
-================================================================================
-IMPORTANT NOTES
-================================================================================
-
-1. Each test case must use a fresh instance of HealthMonitor
-2. Test cases are independent - no shared state between tests
-3. Average calculations must be rounded to exactly 2 decimal places
-4. Patient IDs are strings (e.g., "P01")
-5. High-risk patient list must be sorted alphabetically
-6. Missing values in csv (like empty HeartRate values) must be represented as None internally
-7. Case sensitivity should match original patient keys (e.g., 'PatientID', 'Day', 'HeartRate')
-================================================================================
+3. Type hints required for all methods
+4. Return type specifications required

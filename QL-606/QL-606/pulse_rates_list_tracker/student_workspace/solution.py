@@ -2,29 +2,26 @@ class HealthMonitor:
     """Health Monitoring System using Python Lists."""
     
     def __init__(self):
-        """Initialize with records set to None."""
-        pass
-    
-    def read_data(self, file_path: str):
-        """Load CSV into self.records list of lists."""
+        """Initialize with default records."""
+        # TODO: Initialize self.records with default records list
         pass
     
     def clean_records(self) -> int:
-        """Drop all rows where 'HeartRate' (index 2) is None and return count of dropped rows."""
-        pass
+        """Drop all rows where the HeartRate is None."""
+        return 0
     
     def find_highest_rate(self) -> int:
-        """Return maximum heart rate."""
-        pass
+        """Find the maximum heart rate value across all cleaned records."""
+        return 0
     
     def patient_averages(self) -> dict:
-        """Return dict of {PatientID: mean_heart_rate} rounded to 2 decimal places."""
-        pass
+        """Calculate the mean HeartRate for each unique PatientID in the records."""
+        return {}
     
     def high_risk(self, threshold: int) -> list:
-        """Return sorted list of unique PatientIDs above threshold."""
-        pass
+        """Identify unique PatientID values who have at least one reading strictly greater than the threshold."""
+        return []
     
     def count_high_risk(self, threshold: int) -> int:
-        """Return count of high-risk patients."""
-        pass
+        """Count the number of unique high-risk patients meeting the threshold criteria."""
+        return 0

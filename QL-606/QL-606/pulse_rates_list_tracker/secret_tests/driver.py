@@ -1,43 +1,70 @@
+import importlib.util
 import os
 import sys
-import importlib.util
 import random
 import copy
 
-def resolve_health_csv_path():
-    paths = [
-        os.path.join(os.path.dirname(__file__), "..", "data", "health.csv"),
-        os.path.join(os.path.dirname(__file__), "health.csv")
-    ]
-    for p in paths:
-        if os.path.exists(p): return p
-    return None
+def validate_method_exists(obj, method_name):
+    """Check if method exists and is callable."""
+    if not hasattr(obj, method_name):
+        return False, f"Method '{method_name}' not found. Please implement this method."
+    if not callable(getattr(obj, method_name)):
+        return False, f"'{method_name}' exists but is not callable."
+    return True, None
+
+# Embedded Reference Logic for Grading (Oracle)
+class _GradingLogic:
+    @staticmethod
+    def patient_averages(records):
+        if not records:
+            return {}
+        groups = {}
+        for r in records:
+            if r[2] is not None:
+                pid = r[0]
+                groups.setdefault(pid, []).append(r[2])
+        
+        averages = {}
+        for pid, rates in groups.items():
+            averages[pid] = round(sum(rates) / len(rates), 2)
+        return averages
+
+    @staticmethod
+    def high_risk(records, threshold):
+        if not records:
+            return []
+        high_risk_pts = set()
+        for r in records:
+            if r[2] is not None and r[2] > threshold:
+                high_risk_pts.add(r[0])
+        return sorted(list(high_risk_pts))
 
 def test_student_code(solution_path):
     report_dir = os.path.dirname(solution_path)
     report_path = os.path.join(report_dir, "report.txt")
     
+    # Load Student Solution
     spec = importlib.util.spec_from_file_location("solution", solution_path)
     solution = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(solution)
     except Exception as e:
-        print(f"IMPORT ERROR: {e}")
+        msg = f"IMPORT ERROR: {e}"
+        print(msg)
+        with open(report_path, "w", encoding="utf-8") as f: f.write(msg + "\n")
         return
-    
+
     print("Running Tests for: Pulse Rates List Tracker\n")
     report_lines = ["Running Tests for: Pulse Rates List Tracker\n"]
-    
+
     if not hasattr(solution, "HealthMonitor"):
-        print("ERROR: HealthMonitor class not found")
+        msg = "ERROR: HealthMonitor class not found in solution.py"
+        print(msg); report_lines.append(msg)
+        with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
         return
-    
-    HealthMonitor = solution.HealthMonitor
-    health_csv = resolve_health_csv_path()
-    
-    # Load base data for injection
-    # In list: records is list of lists
-    raw_records = [
+
+    # Default base records for reference
+    default_records = [
         ['P01', 'Mon', 72],
         ['P02', 'Mon', None],
         ['P01', 'Tue', 75],
@@ -51,127 +78,90 @@ def test_student_code(solution_path):
         ['P02', 'Tue', 85],
         ['P05', 'Wed', 90]
     ]
-    
-    cleaned_records = [copy.deepcopy(r) for r in raw_records if r[2] is not None]
 
-    tc_configs = [
-        ("Initial State", 0),
-        ("Data Loading", 0),
-        ("Clean Records", 4),
-        ("Find Highest Rate", 4),
-        ("Patient Averages", 4),
-        ("High Risk Identification", 4),
-        ("Count High Risk Patients", 4)
+    test_cases = [
+        {
+            "desc": "Verification of list initialization",
+            "func": "__init__",
+            "setup": lambda: solution.HealthMonitor(),
+            "call": lambda obj: obj.records,
+            "check": lambda res: res == default_records,
+            "expected_output": "Should initialize self.records with default records list.",
+            "marks": 0
+        },
+        {
+            "desc": "Strategic cleaning of null records",
+            "func": "clean_records",
+            "setup": lambda: solution.HealthMonitor(),
+            "call": lambda obj: (obj.clean_records(), len(obj.records)),
+            "check": lambda res: res == (2, 10),
+            "expected_output": "Should drop 2 records containing None values in HeartRate.",
+            "marks": 4
+        },
+        {
+            "desc": "Identify the highest recorded heart rate",
+            "func": "find_highest_rate",
+            "setup": lambda: solution.HealthMonitor(),
+            "call": lambda obj: (obj.clean_records(), obj.find_highest_rate())[1],
+            "check": lambda res: res == 110,
+            "expected_output": "Expected peak heart rate 110.",
+            "marks": 4
+        },
+        {
+            "desc": "Calculate averages per patient ID",
+            "func": "patient_averages",
+            "setup": lambda: solution.HealthMonitor(),
+            "call": lambda obj: (obj.clean_records(), obj.patient_averages())[1],
+            "check": lambda res: res == _GradingLogic.patient_averages([r for r in default_records if r[2] is not None]),
+            "expected_output": "Should calculate average heart rate per patient.",
+            "marks": 4
+        },
+        {
+            "desc": "Identify patients exceeding threshold",
+            "func": "high_risk",
+            "setup": lambda: solution.HealthMonitor(),
+            "call": lambda obj: (obj.clean_records(), obj.high_risk(100))[1],
+            "check": lambda res: res == _GradingLogic.high_risk([r for r in default_records if r[2] is not None], 100),
+            "expected_output": "Should find ['P03'] exceeding 100.",
+            "marks": 4
+        },
+        {
+            "desc": "Count unique high-risk patients",
+            "func": "count_high_risk",
+            "setup": lambda: solution.HealthMonitor(),
+            "call": lambda obj: (obj.clean_records(), obj.count_high_risk(100))[1],
+            "check": lambda res: res == len(_GradingLogic.high_risk([r for r in default_records if r[2] is not None], 100)),
+            "expected_output": "Expected 1 unique patient exceeding 100.",
+            "marks": 4
+        }
     ]
 
     total_score = 0
-    for i, (desc, marks) in enumerate(tc_configs, 1):
+    for idx, case in enumerate(test_cases, 1):
+        marks = case["marks"]
         try:
-            def run_t(idx, current_obj, current_records=None):
-                if idx == 1: 
-                    return current_obj.records
-                if idx == 2: 
-                    current_obj.read_data(health_csv)
-                    return len(current_obj.records) if current_obj.records is not None else 0
-                if idx == 3: 
-                    if current_records is not None:
-                        current_obj.records = copy.deepcopy(current_records)
-                    return current_obj.clean_records()
-                if idx == 4: 
-                    if current_records is not None:
-                        current_obj.records = copy.deepcopy(current_records)
-                    return current_obj.find_highest_rate()
-                if idx == 5: 
-                    if current_records is not None:
-                        current_obj.records = copy.deepcopy(current_records)
-                    res = current_obj.patient_averages()
-                    return res
-                if idx == 6: 
-                    if current_records is not None:
-                        current_obj.records = copy.deepcopy(current_records)
-                    return current_obj.high_risk(100)
-                if idx == 7: 
-                    if current_records is not None:
-                        current_obj.records = copy.deepcopy(current_records)
-                    return current_obj.count_high_risk(100)
-                return None
+            obj = case["setup"]()
+            valid, err = validate_method_exists(obj, case["func"])
+            if not valid:
+                msg = f"FAIL TC{idx} [{case['desc']}]: {err}"
+                print(msg); report_lines.append(msg); continue
 
-            p_ok, h_det, none_ret = False, False, False
-            
-            if i <= 2: # Samples
-                res2 = run_t(i, HealthMonitor())
-                exp2 = None if i == 1 else 12
-                if i == 1:
-                    p_ok = (res2 is None or res2 == [])
-                else:
-                    p_ok = (res2 == exp2)
-            else:
-                rv = random.randint(115, 150)
-                
-                # Setup obj1 (base run)
-                obj1 = HealthMonitor()
-                if i == 3:
-                    res1 = run_t(i, obj1, raw_records)
-                else:
-                    res1 = run_t(i, obj1, cleaned_records)
-                
-                # Setup obj2 (dynamic run)
-                obj2 = HealthMonitor()
-                if i == 3:
-                    # In dyn_raw, we make one more record None
-                    dyn_raw = copy.deepcopy(raw_records)
-                    for r in dyn_raw:
-                        if r[2] is not None:
-                            r[2] = None
-                            break
-                    res2 = run_t(i, obj2, dyn_raw)
-                    exp2 = 3
-                else:
-                    dyn_records = copy.deepcopy(cleaned_records)
-                    for r in dyn_records:
-                        if r[0] == 'P01':
-                            r[2] = rv
-                            break
-                    res2 = run_t(i, obj2, dyn_records)
-                    
-                    if i == 4:
-                        exp2 = rv
-                    elif i == 5:
-                        p01_vals = [r[2] for r in dyn_records if r[0] == 'P01' and r[2] is not None]
-                        exp2 = {
-                            'P01': round(sum(p01_vals) / len(p01_vals), 2),
-                            'P03': 107.5,
-                            'P04': 71.5,
-                            'P05': 85.0,
-                            'P02': 85.0
-                        }
-                    elif i == 6:
-                        exp2 = ['P01', 'P03']
-                    elif i == 7:
-                        exp2 = 2
-                
-                if res2 == exp2:
-                    p_ok = True
-                elif res2 is None:
-                    none_ret = True
-                elif res1 == res2:
-                    h_det = True
-            
-            if p_ok:
+            result = case["call"](obj)
+            passed = case["check"](result)
+
+            if passed:
                 total_score += marks
-                msg = f"PASS TC{i} [{desc}] ({marks if marks > 0 else 'Sample'})"
-            elif none_ret:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Method not implemented / No return value"
-            elif h_det:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Hardcoded. Dynamic check failed."
+                msg = f"PASS TC{idx} [{case['desc']}] ({marks}/{marks})"
             else:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Incorrect Output. Expected: {exp2} | Actual: {res2}"
+                msg = f"FAIL TC{idx} [{case['desc']}] (0/{marks})\n  Expected: {case['expected_output']}\n  Got: {repr(result)}"
         except Exception as e:
-            msg = f"FAIL TC{i} [{desc}] | Error: {e}"
-        print(msg)
-        report_lines.append(msg)
+            msg = f"FAIL TC{idx} [{case['desc']}] (0/{marks}) | Error: {type(e).__name__}: {e}"
+        print(msg); report_lines.append(msg)
 
-    print(f"\nSCORE: {total_score}/20.0")
-    report_lines.append(f"\nSCORE: {total_score}/20.0")
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(report_lines) + "\n")
+    score_line = f"\nSCORE: {total_score}/20.0"
+    print(score_line); report_lines.append(score_line)
+    with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
+
+if __name__ == "__main__":
+    sol_file = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
+    test_student_code(sol_file)

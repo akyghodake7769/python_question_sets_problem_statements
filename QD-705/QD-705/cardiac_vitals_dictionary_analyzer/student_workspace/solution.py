@@ -1,80 +1,27 @@
-import csv
-
 class HealthMonitor:
-    """
-    Health Monitoring System using Python Dictionaries.
-    Manages patient health data with dict operations.
-    """
+    """Health Monitoring System using Python Dictionaries."""
     
     def __init__(self):
-        """Initialize with records set to None."""
-        self.records = None
+        """Initialize with default records."""
+        # TODO: Initialize self.records with default records dict
+        pass
     
-    def read_data(self, file_path: str):
-        """Load CSV into self.records dictionary."""
-        self.records = {}
-        with open(file_path, mode='r', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            try:
-                header = next(reader)
-            except StopIteration:
-                return
-            for idx, row in enumerate(reader):
-                if len(row) < 3:
-                    continue
-                patient_id, day, heart_rate = row[0], row[1], row[2]
-                hr_val = None
-                if heart_rate and heart_rate.strip():
-                    try:
-                        hr_val = int(heart_rate.strip())
-                    except ValueError:
-                        hr_val = None
-                self.records[idx] = {
-                    'PatientID': patient_id,
-                    'Day': day,
-                    'HeartRate': hr_val
-                }
+    def clean_records(self) -> None:
+        """Drop all rows where 'HeartRate' is None and print removed count."""
+        pass
     
-    def clean_records(self) -> int:
-        """Drop all rows where 'HeartRate' is None."""
-        if self.records is None:
-            return 0
-        initial_count = len(self.records)
-        self.records = {k: v for k, v in self.records.items() if v['HeartRate'] is not None}
-        return initial_count - len(self.records)
+    def find_highest_rate(self) -> None:
+        """Find the maximum heart rate and print it."""
+        pass
     
-    def find_highest_rate(self) -> int:
-        """Return maximum heart rate."""
-        if self.records is None or not self.records:
-            return 0
-        rates = [v['HeartRate'] for v in self.records.values() if v['HeartRate'] is not None]
-        return max(rates) if rates else 0
+    def patient_averages(self) -> None:
+        """Calculate and print average heart rate per patient sorted alphabetically."""
+        pass
     
-    def patient_averages(self) -> dict:
-        """Return dict of {PatientID: mean_heart_rate} rounded to 2 decimal places."""
-        if self.records is None or not self.records:
-            return {}
-        groups = {}
-        for v in self.records.values():
-            if v['HeartRate'] is not None:
-                pid = v['PatientID']
-                groups.setdefault(pid, []).append(v['HeartRate'])
-        
-        averages = {}
-        for pid, rates in groups.items():
-            averages[pid] = round(sum(rates) / len(rates), 2)
-        return averages
+    def high_risk(self, threshold: int) -> None:
+        """Identify and print sorted list of unique PatientIDs above threshold."""
+        pass
     
-    def high_risk(self, threshold: int) -> list:
-        """Return sorted list of unique PatientIDs above threshold."""
-        if self.records is None or not self.records:
-            return []
-        high_risk_pts = set()
-        for v in self.records.values():
-            if v['HeartRate'] is not None and v['HeartRate'] > threshold:
-                high_risk_pts.add(v['PatientID'])
-        return sorted(list(high_risk_pts))
-    
-    def count_high_risk(self, threshold: int) -> int:
-        """Return count of high-risk patients."""
-        return len(self.high_risk(threshold))
+    def count_high_risk(self, threshold: int) -> None:
+        """Count and print unique high-risk patients meeting threshold."""
+        pass
