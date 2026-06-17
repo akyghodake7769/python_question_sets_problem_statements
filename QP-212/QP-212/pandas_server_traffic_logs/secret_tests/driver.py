@@ -84,14 +84,9 @@ def test_student_code(solution_path):
     ]
 
     total_score = 0
-    max_score = 0
-
     for idx, case in enumerate(test_cases, 1):
         marks = case.get("marks", 2)
-        is_hidden = case.get("is_hidden", False)
-        
-        if not is_hidden:
-            max_score += marks
+        desc = case["desc"]
         
         try:
             obj = case["setup"]()
@@ -100,8 +95,7 @@ def test_student_code(solution_path):
             func = getattr(obj, case["func"])
             src = inspect.getsource(func).replace(" ", "").replace("\n", "").lower()
             if 'pass' in src and len(src) < 80:
-                test_type = "Hidden" if is_hidden else "Visible"
-                msg = f"FAIL {test_type} Test Case {idx} Failed: {case['desc']} | Reason: Contains only 'pass'"
+                msg = f"FAIL TC{idx} [{desc}] (0/{marks}) - Contains only 'pass'"
                 report_lines.append(msg)
                 print(msg)
                 continue
@@ -111,28 +105,24 @@ def test_student_code(solution_path):
             passed = case["check"](result)
             
             if passed:
-                test_type = "Hidden" if is_hidden else "Visible"
-                msg = f"PASS {test_type} Test Case {idx} Passed: {case['desc']}"
-                if not is_hidden:
-                    total_score += marks
+                total_score += marks
+                msg = f"PASS TC{idx} [{desc}] ({marks})"
             else:
-                test_type = "Hidden" if is_hidden else "Visible"
-                msg = f"FAIL {test_type} Test Case {idx} Failed: {case['desc']} | Reason: Output mismatch"
+                msg = f"FAIL TC{idx} [{desc}] (0/{marks}) - Output mismatch"
             
             print(msg)
             report_lines.append(msg)
         
         except Exception as e:
-            test_type = "Hidden" if is_hidden else "Visible"
-            msg = f"FAIL {test_type} Test Case {idx} Crashed: {case['desc']} | Error: {str(e)}"
+            msg = f"FAIL TC{idx} [{desc}] (0/{marks}) - Error: {str(e)}"
             print(msg)
             report_lines.append(msg)
 
-    score_line = f"\nSCORE: {total_score}/20.0 (Visible)"
+    score_line = f"\nSCORE: {total_score}/20.0"
     print(score_line)
     report_lines.append(score_line)
 
-    with open(report_path, "a", encoding="utf-8") as f:
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(report_lines) + "\n")
 
 
