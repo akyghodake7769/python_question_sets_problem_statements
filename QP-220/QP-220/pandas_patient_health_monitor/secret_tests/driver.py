@@ -18,11 +18,14 @@ def test_student_code(solution_path):
     report_dir = os.path.dirname(solution_path)
     report_path = os.path.join(report_dir, "report.txt")
     
+    import traceback
     spec = importlib.util.spec_from_file_location("solution", solution_path)
     solution = importlib.util.module_from_spec(spec)
     try: spec.loader.exec_module(solution)
     except Exception as e:
-        print(f"IMPORT ERROR: {e}"); return
+        print(f"IMPORT ERROR: {e}")
+        traceback.print_exc()
+        return
     
     print("Running Tests for: Patient Health Monitor\n")
     report_lines = ["Running Tests for: Patient Health Monitor\n"]
@@ -34,10 +37,18 @@ def test_student_code(solution_path):
     csv_file = resolve_csv_path()
     
     try:
-        raw_df = pd.read_csv(csv_file)
+        if csv_file and os.path.exists(csv_file):
+            raw_df = pd.read_csv(csv_file)
+        else:
+            raw_df = pd.DataFrame({
+                'PatientID': ['P01', 'P02', 'P01', 'P03', 'P04', 'P05', 'P06', 'P01', 'P03', 'P04', 'P02', 'P05'],
+                'Day': ['Mon', 'Mon', 'Tue', 'Mon', 'Tue', 'Mon', 'Mon', 'Wed', 'Tue', 'Wed', 'Tue', 'Wed'],
+                'HeartRate': [72.0, np.nan, 75.0, 105.0, 68.0, 80.0, np.nan, 70.0, 110.0, 75.0, 85.0, 90.0]
+            })
         cleaned_df = raw_df.dropna(subset=['HeartRate']).copy()
     except Exception as e:
         print(f"ERROR: Failed to load raw data: {e}")
+        traceback.print_exc()
         return
 
     tc_configs = [
@@ -137,7 +148,8 @@ def test_student_code(solution_path):
                 msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Hardcoded. Dynamic check failed."
             else:
                 msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Incorrect Output. Expected: {exp2} | Actual: {res2}"
-        except Exception as e: msg = f"FAIL TC{i} [{desc}] | Error: {e}"
+        except Exception as e:
+            msg = f"FAIL TC{i} [{desc}] | Error: {e}\n{traceback.format_exc()}"
         print(msg); report_lines.append(msg)
 
     print(f"\nSCORE: {total_score}/20.0")
