@@ -37,7 +37,7 @@ class TrafficAnalyzer:
         
         outlier_count = len(self.df[self.df['ResponseTime'] > 10.0])
         # Keep rows where ResponseTime <= 10.0 OR ResponseTime is NaN
-        self.df = self.df[(self.df['ResponseTime'] <= 10.0) | (self.df['ResponseTime'].isna())]
+        self.df = self.df[(self.df['ResponseTime'] <= 10.0) | (self.df['ResponseTime'].isna())].copy()
         return outlier_count
     
     def fix_missing_records(self):
