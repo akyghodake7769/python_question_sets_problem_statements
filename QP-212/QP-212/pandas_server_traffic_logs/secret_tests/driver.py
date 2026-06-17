@@ -37,35 +37,32 @@ def test_student_code(solution_path):
 
     csv_file = resolve_csv_path()
     
-    # Load raw data and fallback in-memory if needed
+    # Always use a guaranteed correct in-memory DataFrame to isolate logic test cases from CSV file loading/correctness issues
     try:
-        if csv_file and os.path.exists(csv_file):
-            raw_df = pd.read_csv(csv_file)
-        else:
-            raw_df = pd.DataFrame({
-                'Timestamp': [
-                    '2024-01-15 10:05:10', '2024-01-15 10:05:11', '2024-01-15 10:05:12', '2024-01-15 10:05:13',
-                    '2024-01-15 10:05:14', '2024-01-15 10:05:15', '2024-01-15 10:05:16', '2024-01-15 10:05:17',
-                    '2024-01-15 10:05:18', '2024-01-15 10:05:19', '2024-01-15 10:05:20', '2024-01-15 10:05:21',
-                    '2024-01-15 10:05:22', '2024-01-15 10:05:23', '2024-01-15 10:05:24', '2024-01-15 10:05:25',
-                    '2024-01-15 10:05:26', '2024-01-15 10:05:27', '2024-01-15 10:05:28', '2024-01-15 10:05:29'
-                ],
-                'Endpoint': [
-                    '/api/users', '/profile', '/api/posts', '/profile', '/api/users', '/search', '/profile',
-                    '/api/posts', '/api/users', '/search', '/profile', '/api/users', '/api/posts', '/search',
-                    '/profile', '/api/users', '/api/posts', '/search', '/api/users', '/profile'
-                ],
-                'StatusCode': [200, 200, 200, 200, 200, 200, 200, 404, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 404, 200],
-                'ResponseTime': [0.35, 0.92, 0.45, np.nan, 0.28, 0.67, 0.95, np.nan, 0.33, 0.71, 0.89, 0.31, 0.48, 0.65, 0.98, 0.36, 0.52, 12.5, 0.29, 15.2],
-                'RequestSize': [1024, 512, 2048, 256, 1024, 512, 128, 1024, 2048, 256, 512, 1024, 2048, 512, 256, 1024, 2048, 512, 256, 1024],
-                'ResponseSize': [2048, 1024, 4096, 512, 2048, 8192, 256, 128, 4096, 4096, 1024, 2048, 4096, 8192, 512, 2048, 4096, 8192, 128, 2048]
-            })
+        raw_df = pd.DataFrame({
+            'Timestamp': [
+                '2024-01-15 10:05:10', '2024-01-15 10:05:11', '2024-01-15 10:05:12', '2024-01-15 10:05:13',
+                '2024-01-15 10:05:14', '2024-01-15 10:05:15', '2024-01-15 10:05:16', '2024-01-15 10:05:17',
+                '2024-01-15 10:05:18', '2024-01-15 10:05:19', '2024-01-15 10:05:20', '2024-01-15 10:05:21',
+                '2024-01-15 10:05:22', '2024-01-15 10:05:23', '2024-01-15 10:05:24', '2024-01-15 10:05:25',
+                '2024-01-15 10:05:26', '2024-01-15 10:05:27', '2024-01-15 10:05:28', '2024-01-15 10:05:29'
+            ],
+            'Endpoint': [
+                '/api/users', '/profile', '/api/posts', '/profile', '/api/users', '/search', '/profile',
+                '/api/posts', '/api/users', '/search', '/profile', '/api/users', '/api/posts', '/search',
+                '/profile', '/api/users', '/api/posts', '/search', '/api/users', '/profile'
+            ],
+            'StatusCode': [200, 200, 200, 200, 200, 200, 200, 404, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 404, 200],
+            'ResponseTime': [0.35, 0.92, 0.45, np.nan, 0.28, 0.67, 0.95, np.nan, 0.33, 0.71, 0.89, 0.31, 0.48, 0.65, 0.98, 0.36, 0.52, 12.5, 0.29, 15.2],
+            'RequestSize': [1024, 512, 2048, 256, 1024, 512, 128, 1024, 2048, 256, 512, 1024, 2048, 512, 256, 1024, 2048, 512, 256, 1024],
+            'ResponseSize': [2048, 1024, 4096, 512, 2048, 8192, 256, 128, 4096, 4096, 1024, 2048, 4096, 8192, 512, 2048, 4096, 8192, 128, 2048]
+        })
         sanitized_df = raw_df[(raw_df['ResponseTime'] <= 10.0) | (raw_df['ResponseTime'].isna())].copy()
         fixed_df = sanitized_df.copy()
         mean_rt = fixed_df['ResponseTime'].mean()
         fixed_df['ResponseTime'] = fixed_df['ResponseTime'].fillna(mean_rt)
     except Exception as e:
-        print(f"ERROR: Failed to load dataset: {e}")
+        print(f"ERROR: Failed to initialize reference datasets: {e}")
         return
 
     if not csv_file:
