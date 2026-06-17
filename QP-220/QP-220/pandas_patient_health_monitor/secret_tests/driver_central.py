@@ -1,37 +1,64 @@
+from datetime import datetime, timezone, timedelta
 import pandas as pd
 import numpy as np
 import os
 import sys
 import importlib.util
 import random
+import re
 
-def resolve_csv_path():
-    paths = [
-        os.path.join(os.path.dirname(__file__), "..", "data", "health_old.csv"),
-        os.path.join(os.path.dirname(__file__), "health_old.csv")
-    ]
-    for p in paths:
-        if os.path.exists(p): return p
-    return None
+# Global IST offset for consistent reporting
+ist_offset = timezone(timedelta(hours=5, minutes=30))
 
-def test_student_code(solution_path):
-    report_dir = os.path.dirname(solution_path)
-    report_path = os.path.join(report_dir, "report.txt")
+def get_timestamp():
+    """Returns timestamp in YYYYMMDD_HHMMSS format (IST assumption)"""
+    return datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")
+
+def test_student_code(solution_path, vm_tag="DEFAULT"):
+    problem_code = "pandas_patient_health_monitor"
     
-    spec = importlib.util.spec_from_file_location("solution", solution_path)
-    solution = importlib.util.module_from_spec(spec)
-    try: spec.loader.exec_module(solution)
+    if vm_tag is None:
+        vm_tag = "DEFAULT"
+        
+    # Extract username and timestamp from vm_tag if it's in the server structure
+    match = re.search(r'TRIAL_([^_]+)_(\d{8}_\d{6})', vm_tag)
+    if match:
+        username, timestamp = match.groups()
+    else:
+        username = vm_tag
+        timestamp = get_timestamp()
+
+    # Reporting setup for central server
+    report_base = f"/home/ubuntu/central_server/reports/{problem_code}/{username}"
+    os.makedirs(report_base, exist_ok=True)
+    report_path = os.path.join(report_base, f"{username}_{timestamp}.txt")
+    
+    # Fallback for local testing
+    if not os.path.exists("/home/ubuntu/central_server"):
+        report_dir = os.path.join(os.path.dirname(__file__), "..", "student_workspace")
+        os.makedirs(report_dir, exist_ok=True)
+        report_path = os.path.join(report_dir, f"{username}_{timestamp}.txt")
+
+    csv_file = "/home/ubuntu/central_server/data/health_old.csv"
+    if not os.path.exists(csv_file):
+        csv_file = os.path.join(os.path.dirname(__file__), "..", "data", "health_old.csv")
+
+    results = [f">> Testing solution for {username} at {timestamp}"]
+    report_items = []
+    total_score = 0
+    fail_count = 0
+    
+    try:
+        spec = importlib.util.spec_from_file_location("solution", solution_path)
+        solution = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(solution)
+        HealthMonitor = solution.HealthMonitor
     except Exception as e:
-        print(f"IMPORT ERROR: {e}"); return
-    
-    print("Running Tests for: Patient Health Monitor\n")
-    report_lines = ["Running Tests for: Patient Health Monitor\n"]
-    
-    if not hasattr(solution, "HealthMonitor"):
-        print("ERROR: HealthMonitor class not found"); return
-    
-    HealthMonitor = solution.HealthMonitor
-    csv_file = resolve_csv_path()
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write(f"IMPORT ERROR: {e}\n")
+        print(f"IMPORT ERROR: {e}")
+        return
+
     
     try:
         raw_df = pd.read_csv(csv_file)
@@ -49,8 +76,13 @@ def test_student_code(solution_path):
         ("High Risk Identification", 4),
         ("Count High Risk Patients", 4)
     ]
-
-    total_score = 0
+    
+    total_tc = len(tc_configs)
+    print(f"Running Evaluation for: {problem_code}\n")
+    print(f"{'Test Case':<15} | {'Status':<10} | {'Marks'}")
+    print("-" * 50)
+    
+    random.seed(None)
     for i, (desc, marks) in enumerate(tc_configs, 1):
         try:
             def run_t(idx, current_obj, current_df=None):
@@ -74,8 +106,7 @@ def test_student_code(solution_path):
                 return None
 
             p_ok, h_det, none_ret = False, False, False
-            
-            if i <= 2: # Samples
+            if i <= 2:
                 res2 = run_t(i, HealthMonitor())
                 exp2 = None if i == 1 else 12
                 p_ok = (res2 is None or res2 == exp2 or (i==2 and res2 > 0))
@@ -123,27 +154,50 @@ def test_student_code(solution_path):
                         exp2 = ['P01', 'P03'] if rv > 100 else ['P03']
                     elif i == 7:
                         exp2 = 2 if rv > 100 else 1
-
+                
                 if res2 == exp2: p_ok = True
                 elif res2 is None: none_ret = True
                 elif res1 == res2: h_det = True
-
+ 
+            tc_name = f"TC{i} [{desc}]"
+            report_items.append(tc_name)
+            
             if p_ok:
                 total_score += marks
-                msg = f"PASS TC{i} [{desc}] ({marks if marks > 0 else 'Sample'})"
-            elif none_ret:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Method not implemented / No return value"
-            elif h_det:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Hardcoded. Dynamic check failed."
+                status = "PASSED"
+                results.append(f"✓ {tc_name}: PASSED ({marks if marks > 0 else 'Sample'})")
             else:
-                msg = f"FAIL TC{i} [{desc}] (0/{marks}) - Incorrect Output. Expected: {exp2} | Actual: {res2}"
-        except Exception as e: msg = f"FAIL TC{i} [{desc}] | Error: {e}"
-        print(msg); report_lines.append(msg)
+                status = "FAILED"
+                fail_count += 1
+                if none_ret:
+                    reason = "Method not implemented / No return value"
+                elif h_det:
+                    reason = "Hardcoded. Dynamic check failed."
+                else:
+                    reason = f"Incorrect Output. Expected: {exp2} | Actual: {res2}"
+                results.append(f"✗ {tc_name}: FAILED (0/{marks}) | {reason}")
+                
+            print(f"TC{i:02d} [{desc[:30]:<30}] | {status:<10} | {marks if status == 'PASSED' else 0}/{marks}")
+ 
+        except Exception as e:
+            status = "FAILED"
+            fail_count += 1
+            results.append(f"✗ TC{i} [{desc}]: FAILED (0/{marks}) | Error: {e}")
+            print(f"TC{i:02d} [{desc[:30]:<30}] | {status:<10} | 0/{marks}")
 
-    print(f"\nSCORE: {total_score}/20.0")
-    report_lines.append(f"\nSCORE: {total_score}/20.0")
-    with open(report_path, "w", encoding="utf-8") as f: f.write("\n".join(report_lines) + "\n")
+    print("-" * 50)
+    print(f"{'TOTAL SCORE':<15} | {'':<10} | {total_score}/20")
+    results.append(f"\n🎯 TOTAL SCORE: {total_score}/20")
+
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(results) + "\n")
+
+    # Final Standardized CSV Output (8-Column Format)
+    date_str = datetime.now(ist_offset).strftime("%d-%m-%Y")
+    csv_report = f"{date_str},{problem_code},{username},{timestamp},{total_tc}: {'; '.join(report_items)},,{fail_count},{total_score}"
+    print(f"\n[REPORT_CSV]: {csv_report}")
 
 if __name__ == "__main__":
-    sol_file = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
-    test_student_code(sol_file)
+    vm = sys.argv[1] if len(sys.argv) > 1 else "DEFAULT"
+    sol = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
+    test_student_code(sol, vm)
