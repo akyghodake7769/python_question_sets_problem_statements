@@ -53,14 +53,12 @@ def run_test(input_str, harness_class_name):
     except Exception as e: return str(e), False
 
 def compile_java(harness_dir, solution_path):
-    solution_dir = os.path.dirname(solution_path)
-    harness_files = [os.path.join(harness_dir, f) for f in os.listdir(harness_dir) if f.endswith(".java")]
-    solution_files = [os.path.join(solution_dir, f) for f in os.listdir(solution_dir) if f.endswith(".java")]
-    harness_main_file = next((f for f in harness_files if os.path.basename(f) == "Harness.java"), None)
-    if not harness_main_file:
-        return False, f"Main Harness.java not found in {harness_dir}"
+    harness_files = [f for f in os.listdir(harness_dir) if f.endswith(".java") and f != os.path.basename(solution_path)]
+    if not harness_files:
+        return False, f"Harness file not found in {harness_dir}"
     
-    all_files = list(set(harness_files + solution_files))
+    harness_path = os.path.join(harness_dir, harness_files[0])
+    all_files = [solution_path, harness_path]
     javac_bin = get_java_cmd('javac')
     
     env = os.environ.copy()
@@ -69,7 +67,7 @@ def compile_java(harness_dir, solution_path):
         env["PATH"] = bin_dir + os.pathsep + env.get("PATH", "")
 
     result = subprocess.run([javac_bin, '-d', '.'] + all_files, capture_output=True, text=True, cwd=".", env=env)
-    harness_class = "Harness"
+    harness_class = os.path.splitext(harness_files[0])[0]
     return result.returncode == 0, (harness_class if result.returncode == 0 else result.stderr)
 
 def test_student_code(solution_path, vm_tag="DEFAULT"):
@@ -77,7 +75,7 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
     if match: username, timestamp = match.groups()
     else: username, timestamp = vm_tag, get_ist_time()
 
-    slug = "java_smart_home_energy_monitor"
+    slug = "java_e_commerce_cart_manager"
     report_base = f"/home/ubuntu/central_server/reports/{slug}/{username}"
     os.makedirs(report_base, exist_ok=True)
     report_path = os.path.join(report_base, f"{username}_{timestamp}.txt")
@@ -91,58 +89,67 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
         print(f"❌ Compilation failed: {output}")
         return
 
+    # In Repo/J01 structure, harness_class_name is resolved from the filename (e.g. Harness -> which expects Harness.class).
+    # Since our Harness file is Harness.java, harness_class_name here resolves to "Harness". 
+    # To run successfully on systems where the class inside Harness.java is HarnessJ06:
+    # We will run HarnessJ06 if the resolved class name is "Harness" but the class inside Harness.java is HarnessJ06.
+    # We can handle this by checking if the harness class name resolved is "Harness", but the compiled class is HarnessJ06.
+    # In Repo, on the grading server they might compile and rename the file or run it differently, 
+    # but to remain robust locally and globally, let's keep the dynamic harness_class_name detection.
     harness_class_name = output
+    if harness_class_name == "Harness":
+        harness_class_name = "HarnessJ06"
 
     test_cases = [
         { 
-            "name": "Sample Case 0 - Standard Overload", 
-            "input": "3\nConstant Fridge 150.0\nVariable AC 2000.0 0.6\nVariable TV 100.0 0.3\n24 2200.0", 
-            "expected": "Total Consumption: 33120.00 Wh\nPeak Device: AC\nError: Overload detected: Current load is 2250.0W, which exceeds limit of 2200.0W." 
+            "name": "Sample Case 0 - Percentage Discount", 
+            "input": "3\nLaptop 1000.00 1 true\nMouse 50.00 2 false\nNotebook 5.00 5 true\nPercentage SAVE10 10.0", 
+            "expected": "Subtotal: 1125.00\nDiscount: 112.50\nTax: 102.50\nTotal: 1115.00" 
         },
         { 
-            "name": "No Overload Success", 
-            "input": "3\nConstant Fridge 150.0\nVariable AC 2000.0 0.6\nVariable TV 100.0 0.3\n24 2500.0", 
-            "expected": "Total Consumption: 33120.00 Wh\nPeak Device: AC" 
+            "name": "Flat Discount Success", 
+            "input": "2\nShirt 40.00 2 true\nJeans 60.00 1 true\nFlat FLAT15 15.0", 
+            "expected": "Subtotal: 140.00\nDiscount: 15.00\nTax: 14.00\nTotal: 139.00" 
         },
         { 
-            "name": "Constant Only Load", 
-            "input": "2\nConstant Bulb 60.0\nConstant Router 15.0\n10 100.0", 
-            "expected": "Total Consumption: 750.00 Wh\nPeak Device: Bulb" 
+            "name": "Flat Discount Greater than Subtotal", 
+            "input": "1\nBook 12.00 1 false\nFlat SUPERDEAL 20.0", 
+            "expected": "Subtotal: 12.00\nDiscount: 12.00\nTax: 0.00\nTotal: 0.00" 
         },
         { 
-            "name": "Variable Only Load", 
-            "input": "2\nVariable Heater 1500.0 0.5\nVariable Fan 80.0 0.8\n5 2000.0", 
-            "expected": "Total Consumption: 4070.00 Wh\nPeak Device: Heater" 
+            "name": "No Coupon Applied", 
+            "input": "2\nBread 2.50 4 false\nMilk 1.50 2 true\nNone", 
+            "expected": "Subtotal: 13.00\nDiscount: 0.00\nTax: 0.30\nTotal: 13.30" 
         },
         { 
-            "name": "Zero Hours Monitoring", 
-            "input": "2\nConstant Fridge 150.0\nVariable AC 2000.0 0.6\n0 2500.0", 
-            "expected": "Total Consumption: 0.00 Wh\nPeak Device: Fridge" 
+            "name": "Empty Coupon Code Exception", 
+            "input": "1\nPhone 500.00 1 true\nPercentage   10.0", 
+            "expected": "Error: Coupon code cannot be empty." 
         },
         { 
-            "name": "Single Device Overload", 
-            "input": "1\nConstant Microwave 1200.0\n1 1000.0", 
-            "expected": "Total Consumption: 1200.00 Wh\nPeak Device: Microwave\nError: Overload detected: Current load is 1200.0W, which exceeds limit of 1000.0W." 
+            "name": "Negative Percentage Coupon Exception", 
+            "input": "1\nPhone 500.00 1 true\nPercentage INVALID -5.0", 
+            "expected": "Error: Invalid discount value." 
         },
         { 
-            "name": "Empty Device List", 
-            "input": "0\n24 2000.0", 
-            "expected": "Total Consumption: 0.00 Wh\nPeak Device: None" 
+            "name": "Greater Than 100% Coupon Exception", 
+            "input": "1\nPhone 500.00 1 true\nPercentage INVALID 105.0", 
+            "expected": "Error: Invalid discount value." 
         },
         { 
-            "name": "Tie in Peak Device", 
-            "input": "2\nConstant Bulb1 60.0\nConstant Bulb2 60.0\n10 200.0", 
-            "expected": "Total Consumption: 1200.00 Wh\nPeak Device: Bulb1" 
+            "name": "Negative Flat Coupon Exception", 
+            "input": "1\nPhone 500.00 1 true\nFlat INVALID -10.0", 
+            "expected": "Error: Invalid discount value." 
         },
         { 
-            "name": "High Load No Overload Boundary", 
-            "input": "2\nConstant DeviceA 1000.0\nVariable DeviceB 500.0 0.5\n10 1500.0", 
-            "expected": "Total Consumption: 12500.00 Wh\nPeak Device: DeviceA" 
+            "name": "Empty Cart Total Immediately 0", 
+            "input": "0\nPercentage INVALID 150.0", 
+            "expected": "Subtotal: 0.00\nDiscount: 0.00\nTax: 0.00\nTotal: 0.00" 
         },
         { 
-            "name": "Overload Boundary Failure", 
-            "input": "2\nConstant DeviceA 1000.0\nVariable DeviceB 500.0 0.5\n10 1499.9", 
-            "expected": "Total Consumption: 12500.00 Wh\nPeak Device: DeviceA\nError: Overload detected: Current load is 1500.0W, which exceeds limit of 1499.9W." 
+            "name": "Zero Price Item Valid Checkout", 
+            "input": "2\nGiftItem 0.00 1 true\nFreebie 0.00 5 false\nPercentage SAVE20 20.0", 
+            "expected": "Subtotal: 0.00\nDiscount: 0.00\nTax: 0.00\nTotal: 0.00" 
         }
     ]
 

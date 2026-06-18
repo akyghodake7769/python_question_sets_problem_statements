@@ -3,17 +3,14 @@ import os
 import sys
 
 def get_java_cmd(cmd_name):
-    # Check if the command in PATH actually works
     try:
         res = subprocess.run([cmd_name, '-version'], capture_output=True, text=True)
-        # On some systems, java -version outputs to stderr
         output = (res.stdout or "") + (res.stderr or "")
         if res.returncode == 0 and len(output.strip()) > 0:
             return cmd_name
     except Exception:
         pass
 
-    # Try standard paths on Windows
     paths = [
         r"C:\Program Files\Java_OLD\jdk-20\bin",
         r"C:\Program Files\Java_OLD\jdk-19\bin",
@@ -31,14 +28,13 @@ def run_test(input_str):
     try:
         parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         java_bin = get_java_cmd('java')
-        # We need to make sure that the Java bin directory is in PATH for java to run correctly if it depends on DLLs in bin
         env = os.environ.copy()
         if java_bin != 'java':
             bin_dir = os.path.dirname(java_bin)
             env["PATH"] = bin_dir + os.pathsep + env.get("PATH", "")
 
         process = subprocess.Popen(
-            [java_bin, 'Harness'],
+            [java_bin, 'HarnessJ07'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -55,8 +51,7 @@ def compile_java():
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     solution_path = "student_workspace/Solution.java"
     harness_path = "secret_tests/Harness.java"
-    base_path = "student_workspace/Base.java"
-    files = [solution_path, harness_path, base_path]
+    files = [solution_path, harness_path]
     javac_bin = get_java_cmd('javac')
     
     env = os.environ.copy()
@@ -75,54 +70,54 @@ def execute():
 
     test_cases = [
         { 
-            "name": "Sample Case 0 - Percentage Discount", 
-            "input": "3\nLaptop 1000.00 1 true\nMouse 50.00 2 false\nNotebook 5.00 5 true\nPercentage SAVE10 10.0", 
-            "expected": "Subtotal: 1125.00\nDiscount: 112.50\nTax: 102.50\nTotal: 1115.00" 
+            "name": "Sample Case 0 - Standard Overload", 
+            "input": "3\nConstant Fridge 150.0\nVariable AC 2000.0 0.6\nVariable TV 100.0 0.3\n24 2200.0", 
+            "expected": "Total Consumption: 33120.00 Wh\nPeak Device: AC\nError: Overload detected: Current load is 2250.0W, which exceeds limit of 2200.0W." 
         },
         { 
-            "name": "Flat Discount Success", 
-            "input": "2\nShirt 40.00 2 true\nJeans 60.00 1 true\nFlat FLAT15 15.0", 
-            "expected": "Subtotal: 140.00\nDiscount: 15.00\nTax: 14.00\nTotal: 139.00" 
+            "name": "No Overload Success", 
+            "input": "3\nConstant Fridge 150.0\nVariable AC 2000.0 0.6\nVariable TV 100.0 0.3\n24 2500.0", 
+            "expected": "Total Consumption: 33120.00 Wh\nPeak Device: AC" 
         },
         { 
-            "name": "Flat Discount Greater than Subtotal", 
-            "input": "1\nBook 12.00 1 false\nFlat SUPERDEAL 20.0", 
-            "expected": "Subtotal: 12.00\nDiscount: 12.00\nTax: 0.00\nTotal: 0.00" 
+            "name": "Constant Only Load", 
+            "input": "2\nConstant Bulb 60.0\nConstant Router 15.0\n10 100.0", 
+            "expected": "Total Consumption: 750.00 Wh\nPeak Device: Bulb" 
         },
         { 
-            "name": "No Coupon Applied", 
-            "input": "2\nBread 2.50 4 false\nMilk 1.50 2 true\nNone", 
-            "expected": "Subtotal: 13.00\nDiscount: 0.00\nTax: 0.30\nTotal: 13.30" 
+            "name": "Variable Only Load", 
+            "input": "2\nVariable Heater 1500.0 0.5\nVariable Fan 80.0 0.8\n5 2000.0", 
+            "expected": "Total Consumption: 4070.00 Wh\nPeak Device: Heater" 
         },
         { 
-            "name": "Empty Coupon Code Exception", 
-            "input": "1\nPhone 500.00 1 true\nPercentage   10.0", 
-            "expected": "Error: Coupon code cannot be empty." 
+            "name": "Zero Hours Monitoring", 
+            "input": "2\nConstant Fridge 150.0\nVariable AC 2000.0 0.6\n0 2500.0", 
+            "expected": "Total Consumption: 0.00 Wh\nPeak Device: Fridge" 
         },
         { 
-            "name": "Negative Percentage Coupon Exception", 
-            "input": "1\nPhone 500.00 1 true\nPercentage INVALID -5.0", 
-            "expected": "Error: Invalid discount value." 
+            "name": "Single Device Overload", 
+            "input": "1\nConstant Microwave 1200.0\n1 1000.0", 
+            "expected": "Total Consumption: 1200.00 Wh\nPeak Device: Microwave\nError: Overload detected: Current load is 1200.0W, which exceeds limit of 1000.0W." 
         },
         { 
-            "name": "Greater Than 100% Coupon Exception", 
-            "input": "1\nPhone 500.00 1 true\nPercentage INVALID 105.0", 
-            "expected": "Error: Invalid discount value." 
+            "name": "Empty Device List", 
+            "input": "0\n24 2000.0", 
+            "expected": "Total Consumption: 0.00 Wh\nPeak Device: None" 
         },
         { 
-            "name": "Negative Flat Coupon Exception", 
-            "input": "1\nPhone 500.00 1 true\nFlat INVALID -10.0", 
-            "expected": "Error: Invalid discount value." 
+            "name": "Tie in Peak Device", 
+            "input": "2\nConstant Bulb1 60.0\nConstant Bulb2 60.0\n10 200.0", 
+            "expected": "Total Consumption: 1200.00 Wh\nPeak Device: Bulb1" 
         },
         { 
-            "name": "Empty Cart Total Immediately 0", 
-            "input": "0\nPercentage INVALID 150.0", 
-            "expected": "Subtotal: 0.00\nDiscount: 0.00\nTax: 0.00\nTotal: 0.00" 
+            "name": "High Load No Overload Boundary", 
+            "input": "2\nConstant DeviceA 1000.0\nVariable DeviceB 500.0 0.5\n10 1500.0", 
+            "expected": "Total Consumption: 12500.00 Wh\nPeak Device: DeviceA" 
         },
         { 
-            "name": "Zero Price Item Valid Checkout", 
-            "input": "2\nGiftItem 0.00 1 true\nFreebie 0.00 5 false\nPercentage SAVE20 20.0", 
-            "expected": "Subtotal: 0.00\nDiscount: 0.00\nTax: 0.00\nTotal: 0.00" 
+            "name": "Overload Boundary Failure", 
+            "input": "2\nConstant DeviceA 1000.0\nVariable DeviceB 500.0 0.5\n10 1499.9", 
+            "expected": "Total Consumption: 12500.00 Wh\nPeak Device: DeviceA\nError: Overload detected: Current load is 1500.0W, which exceeds limit of 1499.9W." 
         }
     ]
 
