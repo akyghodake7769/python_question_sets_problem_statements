@@ -1,6 +1,6 @@
 import java.util.*;
 
-class Item {
+public class Item {
     private String name;
     private double price;
     private int quantity;
@@ -30,7 +30,7 @@ class Item {
     }
 }
 
-abstract class DiscountCoupon {
+public abstract class DiscountCoupon {
     protected String code;
 
     public DiscountCoupon(String code) {
@@ -44,13 +44,13 @@ abstract class DiscountCoupon {
     public abstract double getDiscount(double subtotal);
 }
 
-class InvalidCouponException extends Exception {
+public class InvalidCouponException extends Exception {
     public InvalidCouponException(String message) {
         super(message);
     }
 }
 
-class PercentageDiscount extends DiscountCoupon {
+public class PercentageDiscount extends DiscountCoupon {
     private double percentage;
 
     public PercentageDiscount(String code, double percentage) {
@@ -68,7 +68,7 @@ class PercentageDiscount extends DiscountCoupon {
     }
 }
 
-class FlatDiscount extends DiscountCoupon {
+public class FlatDiscount extends DiscountCoupon {
     private double amount;
 
     public FlatDiscount(String code, double amount) {
@@ -86,7 +86,7 @@ class FlatDiscount extends DiscountCoupon {
     }
 }
 
-class CartService {
+public class CartService {
 
     public double calculateTotal(List<Item> items, DiscountCoupon coupon)
             throws InvalidCouponException {
