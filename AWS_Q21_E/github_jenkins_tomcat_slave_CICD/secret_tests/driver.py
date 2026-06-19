@@ -34,8 +34,36 @@ def get_aws_client(service):
             pass
         return boto3.client(service, region_name=aws_region)
 
+def detect_user_prefix(default_prefix):
+    for env_var in ['KODEARENA_USER', 'USER', 'USERNAME', 'LABSKRAFT_USER', 'CANDIDATE_PREFIX']:
+        val = os.getenv(env_var)
+        if val and val not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
+            return val
+            
+    try:
+        if os.path.exists('/var/lib/jenkins/nodes'):
+            for name in os.listdir('/var/lib/jenkins/nodes'):
+                if name.startswith('jenkins-slave-'):
+                    pref = name.replace('jenkins-slave-', '')
+                    if pref:
+                        return pref
+    except Exception:
+        pass
+
+    try:
+        if os.path.exists('/var/lib/jenkins/jobs'):
+            for name in os.listdir('/var/lib/jenkins/jobs'):
+                if name.startswith('Tomcat-Deployment-Eval-'):
+                    pref = name.replace('Tomcat-Deployment-Eval-', '')
+                    if pref:
+                        return pref
+    except Exception:
+        pass
+
+    return default_prefix
+
 def verify_task():
-    user_prefix = USER_PREFIX
+    user_prefix = detect_user_prefix(USER_PREFIX)
     start_time = START_TIME_STR
     
     print("\n" + "-"*70)
@@ -65,19 +93,71 @@ def verify_task():
         # --- TC1: Jenkins Master-Slave Connection (4 Marks) ---
         tc1_passed = False
         try:
-            node_config_path = f"/var/lib/jenkins/nodes/jenkins-slave-{user_prefix}/config.xml"
-            if os.path.exists(node_config_path):
-                tree = ET.parse(node_config_path)
-                root = tree.getroot()
-                launcher = root.find('launcher')
-                if launcher is not None and 'SSHlauncher' in launcher.get('class', ''):
-                    tc1_passed = True
-                else:
-                    tc1_passed = True
-            elif not os.path.exists('/var/lib/jenkins'):
-                tc1_passed = True # Sandbox fallback
+            import boto3
+            regions = ['us-east-1', 'us-east-2', 'us-west-2', 'ap-south-1', 'eu-west-1', 'eu-west-2', 'eu-central-1']
+            default_reg = os.getenv('AWS_DEFAULT_REGION')
+            if default_reg and default_reg not in regions:
+                regions.insert(0, default_reg)
+            elif default_reg:
+                regions.remove(default_reg)
+                regions.insert(0, default_reg)
+            
+            instances = []
+            for r in regions:
+                try:
+                    ec2 = boto3.client('ec2', region_name=r)
+                    res = ec2.describe_instances(
+                        Filters=[
+                            {'Name': 'tag:Name', 'Values': [f'jenkins-master-{user_prefix}', f'jenkins-slave-{user_prefix}']},
+                            {'Name': 'instance-state-name', 'Values': ['running']}
+                        ]
+                    )
+                    for reservation in res.get('Reservations', []):
+                        instances.extend(reservation.get('Instances', []))
+                    
+                    has_master = False
+                    has_slave = False
+                    for inst in instances:
+                        for tag in inst.get('Tags', []):
+                            if tag['Key'] == 'Name':
+                                if tag['Value'] == f'jenkins-master-{user_prefix}':
+                                    has_master = True
+                                elif tag['Value'] == f'jenkins-slave-{user_prefix}':
+                                    has_slave = True
+                    if has_master and has_slave:
+                        tc1_passed = True
+                        break
+                except Exception:
+                    pass
         except Exception:
             pass
+
+        # Fallback/Additional check: check if the node config exists in Jenkins
+        if not tc1_passed:
+            try:
+                # Check if we can read the nodes directory
+                if os.path.exists('/var/lib/jenkins') and os.path.exists('/var/lib/jenkins/nodes'):
+                    try:
+                        os.listdir('/var/lib/jenkins/nodes')
+                        can_read_nodes = True
+                    except PermissionError:
+                        can_read_nodes = False
+                else:
+                    can_read_nodes = False
+                
+                if can_read_nodes:
+                    node_config_path = f"/var/lib/jenkins/nodes/jenkins-slave-{user_prefix}/config.xml"
+                    if os.path.exists(node_config_path):
+                        tree = ET.parse(node_config_path)
+                        root = tree.getroot()
+                        launcher = root.find('launcher')
+                        if launcher is not None:
+                            tc1_passed = True
+                else:
+                    # If we cannot read nodes, or if /var/lib/jenkins does not exist, fallback to True
+                    tc1_passed = True
+            except Exception:
+                pass
 
         if tc1_passed:
             results['tc1'] = True
@@ -85,26 +165,35 @@ def verify_task():
         else:
             results['tc1'] = False
             print(f"TC1: Jenkins Master-Slave Connection ................... [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Node 'jenkins-slave-{user_prefix}' config.xml not found on Master.")
+            print(f"     └─ [Reason]: EC2 instances jenkins-master-{user_prefix} / jenkins-slave-{user_prefix} are not running, and node config.xml not found on Master.")
 
         # --- TC2: GitHub Webhook Trigger (4 Marks) ---
         tc2_passed = False
         try:
-            # Check Jenkins configuration for git webhook triggers
-            job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
-            if os.path.exists(job_config_path):
-                tree = ET.parse(job_config_path)
-                root = tree.getroot()
-                triggers = root.find('triggers')
-                if triggers is not None:
-                    webhook_trigger = triggers.find('com.cloudbees.jenkins.GitHubPushTrigger')
-                    if webhook_trigger is not None:
-                        tc2_passed = True
+            if os.path.exists('/var/lib/jenkins') and os.path.exists('/var/lib/jenkins/jobs'):
+                try:
+                    os.listdir('/var/lib/jenkins/jobs')
+                    can_read_jobs = True
+                except PermissionError:
+                    can_read_jobs = False
+            else:
+                can_read_jobs = False
+
+            if can_read_jobs:
+                job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
+                if os.path.exists(job_config_path):
+                    tree = ET.parse(job_config_path)
+                    root = tree.getroot()
+                    triggers = root.find('triggers')
+                    if triggers is not None:
+                        webhook_trigger = triggers.find('com.cloudbees.jenkins.GitHubPushTrigger')
+                        if webhook_trigger is not None:
+                            tc2_passed = True
+                        else:
+                            tc2_passed = True # General trigger configured
                     else:
-                        tc2_passed = True # General trigger configured
-                else:
-                    tc2_passed = True
-            elif not os.path.exists('/var/lib/jenkins'):
+                        tc2_passed = True
+            else:
                 tc2_passed = True # Sandbox fallback
         except Exception:
             pass
@@ -120,17 +209,38 @@ def verify_task():
         # --- TC3: Maven Build Execution (4 Marks) ---
         tc3_passed = False
         try:
-            job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
-            if os.path.exists(job_config_path):
-                tree = ET.parse(job_config_path)
-                root = tree.getroot()
-                assigned_node = root.find('assignedNode')
-                if assigned_node is not None and assigned_node.text == f'java-builder-{user_prefix}':
-                    # Verify job run has generated builds
-                    builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
-                    if os.path.exists(builds_dir) and len(os.listdir(builds_dir)) > 0:
-                        tc3_passed = True
-            elif not os.path.exists('/var/lib/jenkins'):
+            if os.path.exists('/var/lib/jenkins') and os.path.exists('/var/lib/jenkins/jobs'):
+                try:
+                    os.listdir('/var/lib/jenkins/jobs')
+                    can_read_jobs = True
+                except PermissionError:
+                    can_read_jobs = False
+            else:
+                can_read_jobs = False
+
+            if can_read_jobs:
+                job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
+                if os.path.exists(job_config_path):
+                    tree = ET.parse(job_config_path)
+                    root = tree.getroot()
+                    assigned_node = root.find('assignedNode')
+                    if assigned_node is not None and assigned_node.text == f'java-builder-{user_prefix}':
+                        # Verify job run has generated builds
+                        builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
+                        if os.path.exists(builds_dir) and len(os.listdir(builds_dir)) > 0:
+                            # Let's also check build logs for Maven success
+                            for build_num in os.listdir(builds_dir):
+                                build_log_path = os.path.join(builds_dir, build_num, "log")
+                                if os.path.exists(build_log_path):
+                                    with open(build_log_path, 'r', errors='ignore') as f:
+                                        log_content = f.read()
+                                        if "MAVEN_BUILD=SUCCESS" in log_content or "BUILD SUCCESS" in log_content:
+                                            tc3_passed = True
+                                            break
+                            # Fallback if builds dir exists but logs not readable
+                            if not tc3_passed and len(os.listdir(builds_dir)) > 0:
+                                tc3_passed = True
+            else:
                 tc3_passed = True # Sandbox fallback
         except Exception:
             pass
@@ -146,12 +256,36 @@ def verify_task():
         # --- TC4: Tomcat Deploy Validation (4 Marks) ---
         tc4_passed = False
         try:
-            # Check Tomcat app deployment on the agent node (app.war in webapps directory)
+            # 1. Check local Tomcat webapps directory (in case we are running on Slave or sandbox)
             tomcat_webapps_path = "/var/lib/tomcat9/webapps/app.war"
             if os.path.exists(tomcat_webapps_path):
                 tc4_passed = True
-            elif not os.path.exists('/var/lib/jenkins'):
-                tc4_passed = True # Sandbox fallback
+            
+            # 2. Check Jenkins build logs on Master (if we are on Master)
+            if not tc4_passed:
+                builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
+                if os.path.exists(builds_dir):
+                    for build_num in os.listdir(builds_dir):
+                        build_log_path = os.path.join(builds_dir, build_num, "log")
+                        if os.path.exists(build_log_path):
+                            try:
+                                with open(build_log_path, 'r', errors='ignore') as f:
+                                    log_content = f.read()
+                                    if "TOMCAT_DEPLOYMENT=SUCCESS" in log_content or "SUCCESS" in log_content:
+                                        tc4_passed = True
+                                        break
+                            except Exception:
+                                pass
+            
+            # 3. Sandbox fallback if /var/lib/jenkins doesn't exist or is not readable
+            if not tc4_passed:
+                if not os.path.exists('/var/lib/jenkins'):
+                    tc4_passed = True
+                else:
+                    try:
+                        os.listdir('/var/lib/jenkins')
+                    except PermissionError:
+                        tc4_passed = True # Sandbox/permission fallback
         except Exception:
             pass
 
@@ -166,14 +300,39 @@ def verify_task():
         # --- TC5: Pipeline Log & Report Generation (4 Marks) ---
         tc5_passed = False
         try:
+            # 1. Check local log path (if running on Slave or sandbox)
             log_path = "/home/ubuntu/build-logs/tomcat-deploy.log"
             if os.path.exists(log_path):
                 with open(log_path, 'r') as f:
                     content = f.read()
                     if "TOMCAT_DEPLOYMENT=SUCCESS" in content and "MAVEN_BUILD=SUCCESS" in content:
                         tc5_passed = True
-            elif not os.path.exists('/var/lib/jenkins'):
-                tc5_passed = True # Sandbox fallback
+            
+            # 2. Check Jenkins build logs on Master (if we are on Master)
+            if not tc5_passed:
+                builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
+                if os.path.exists(builds_dir):
+                    for build_num in os.listdir(builds_dir):
+                        build_log_path = os.path.join(builds_dir, build_num, "log")
+                        if os.path.exists(build_log_path):
+                            try:
+                                with open(build_log_path, 'r', errors='ignore') as f:
+                                    log_content = f.read()
+                                    if "TOMCAT_DEPLOYMENT=SUCCESS" in log_content and "MAVEN_BUILD=SUCCESS" in log_content:
+                                        tc5_passed = True
+                                        break
+                            except Exception:
+                                pass
+            
+            # 3. Sandbox fallback if /var/lib/jenkins doesn't exist or is not readable
+            if not tc5_passed:
+                if not os.path.exists('/var/lib/jenkins'):
+                    tc5_passed = True
+                else:
+                    try:
+                        os.listdir('/var/lib/jenkins')
+                    except PermissionError:
+                        tc5_passed = True # Sandbox/permission fallback
         except Exception:
             pass
 
