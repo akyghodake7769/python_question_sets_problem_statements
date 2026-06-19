@@ -35,26 +35,26 @@ To set up this high-availability web architecture, you must perform the followin
 
 ### 1. EC2 Microservice Instances
 - **Instance 1 (Service A):**
-  - **Name Tag:** `service-a-host`
+  - **Name Tag:** `service-a-host-<your-labskraft-username>`
   - **Availability Zone:** AZ1 (e.g., `us-east-1a`)
   - **Service Path:** `http://<private-ip>/app1/` (Should return a simple message like "Product Catalog Service")
 - **Instance 2 (Service B):**
-  - **Name Tag:** `service-b-host`
+  - **Name Tag:** `service-b-host-<your-labskraft-username>`
   - **Availability Zone:** AZ2 (e.g., `us-east-1b`)
   - **Service Path:** `http://<private-ip>/app2/` (Should return a simple message like "Order Management Service")
 - **Instance 3 (Service C):**
-  - **Name Tag:** `service-c-host`
+  - **Name Tag:** `service-c-host-<your-labskraft-username>`
   - **Availability Zone:** AZ3 (e.g., `us-east-1c`)
   - **Service Path:** `http://<private-ip>/app3/` (Should return a simple message like "User Profile Service")
 
 ### 2. Application Load Balancer (ALB)
-- **ALB Name:** `app-services-alb`
+- **ALB Name:** `app-services-alb-<your-labskraft-username>`
 - **Scheme:** Internet-facing
 - **Listener:** Port `80` (HTTP)
 - **Target Groups:**
-  - `target-group-app1` (containing `service-a-host` on port 80)
-  - `target-group-app2` (containing `service-b-host` on port 80)
-  - `target-group-app3` (containing `service-c-host` on port 80)
+  - `target-group-app1-<your-labskraft-username>` (containing `service-a-host-<your-labskraft-username>` on port 80)
+  - `target-group-app2-<your-labskraft-username>` (containing `service-b-host-<your-labskraft-username>` on port 80)
+  - `target-group-app3-<your-labskraft-username>` (containing `service-c-host-<your-labskraft-username>` on port 80)
 
 ### 3. Security & Access Control
 - **ALB Security Group:** Allows inbound HTTP (`80`) from Anywhere (`0.0.0.0/0`).
@@ -107,10 +107,10 @@ The final implementation must consist of:
 
 | Deliverable | Description |
 | :--- | :--- |
-| **Three Running Instances** | EC2 instances named `service-a-host`, `service-b-host`, and `service-c-host` placed in three distinct Availability Zones. |
+| **Three Running Instances** | EC2 instances named `service-a-host-<your-labskraft-username>`, `service-b-host-<your-labskraft-username>`, and `service-c-host-<your-labskraft-username>` placed in three distinct Availability Zones. |
 | **Three Web Applications** | HTTP servers serving the correct content under `/app1/`, `/app2/`, and `/app3/` on the respective hosts. |
-| **Application Load Balancer** | Active ALB named `app-services-alb` configured with target routing rules. |
-| **Three Target Groups** | Target groups configured on port 80 with passing health check metrics. |
+| **Application Load Balancer** | Active ALB named `app-services-alb-<your-labskraft-username>` configured with target routing rules. |
+| **Three Target Groups** | Target groups named `target-group-app1-<your-labskraft-username>`, `target-group-app2-<your-labskraft-username>`, and `target-group-app3-<your-labskraft-username>` configured on port 80 with passing health check metrics. |
 | **Secure Instance Security Group** | Instance firewall rules that block direct internet access and permit traffic only from the ALB. |
 
 ---
@@ -133,9 +133,9 @@ Your infrastructure configuration will be automatically graded based on the foll
 
 | Test Case | Requirement | Validation Method | Marks |
 | :--- | :--- | :--- | :--- |
-| **TC1** | **EC2 Instances Provisioning** | Verifies three EC2 instances exist (`service-a-host`, `service-b-host`, `service-c-host`), are running, and are spread across three distinct AZs. | 4 Marks |
-| **TC2** | **Application Load Balancer Setup** | Verifies `app-services-alb` is active, has a public DNS name, and is listening on port 80. | 4 Marks |
-| **TC3** | **Target Groups & Path Routing** | Verifies three target groups are configured with path-based listener rules forwarding `/app1*`, `/app2*`, and `/app3*` correctly. | 4 Marks |
+| **TC1** | **EC2 Instances Provisioning** | Verifies three EC2 instances exist (`service-a-host-<your-labskraft-username>`, `service-b-host-<your-labskraft-username>`, `service-c-host-<your-labskraft-username>`), are running, and are spread across three distinct AZs. | 4 Marks |
+| **TC2** | **Application Load Balancer Setup** | Verifies `app-services-alb-<your-labskraft-username>` is active, has a public DNS name, and is listening on port 80. | 4 Marks |
+| **TC3** | **Target Groups & Path Routing** | Verifies three target groups (`target-group-app1-<your-labskraft-username>`, `target-group-app2-<your-labskraft-username>`, `target-group-app3-<your-labskraft-username>`) are configured with path-based listener rules forwarding `/app1*`, `/app2*`, and `/app3*` correctly. | 4 Marks |
 | **TC4** | **Security Group Restrictions** | Verifies instances block direct internet access and only allow inbound HTTP port 80 traffic from the ALB. | 4 Marks |
 | **TC5** | **End-to-End Routing & Health Status** | Verifies targets show as healthy and requesting the paths on the ALB DNS name returns successful service responses. | 4 Marks |
 

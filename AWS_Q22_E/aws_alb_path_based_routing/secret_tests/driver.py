@@ -67,7 +67,7 @@ def verify_task():
             ec2 = get_aws_client('ec2')
             res = ec2.describe_instances(
                 Filters=[
-                    {'Name': 'tag:Name', 'Values': ['service-a-host', 'service-b-host', 'service-c-host']},
+                    {'Name': 'tag:Name', 'Values': [f'service-a-host-{user_prefix}', f'service-b-host-{user_prefix}', f'service-c-host-{user_prefix}']},
                     {'Name': 'instance-state-name', 'Values': ['running']}
                 ]
             )
@@ -98,14 +98,14 @@ def verify_task():
         else:
             results['tc1'] = False
             print(f"TC1: EC2 Instances Provisioning ....................... [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Could not verify 3 running EC2 hosts spread across 3 different AZs.")
+            print(f"     └─ [Reason]: Could not verify 3 running EC2 hosts spread across 3 different AZs named service-[a/b/c]-host-{user_prefix}.")
 
         # --- TC2: Application Load Balancer Setup (4 Marks) ---
         tc2_passed = False
         alb_arn = None
         try:
             elbv2 = get_aws_client('elbv2')
-            res = elbv2.describe_load_balancers(Names=['app-services-alb'])
+            res = elbv2.describe_load_balancers(Names=[f'app-services-alb-{user_prefix}'])
             if len(res.get('LoadBalancers', [])) > 0:
                 alb = res['LoadBalancers'][0]
                 if alb.get('State', {}).get('Code') in ['active', 'provisioning']:
@@ -127,14 +127,14 @@ def verify_task():
         else:
             results['tc2'] = False
             print(f"TC2: Application Load Balancer Setup .................. [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Active ALB named 'app-services-alb' with port 80 HTTP listener not found.")
+            print(f"     └─ [Reason]: Active ALB named 'app-services-alb-{user_prefix}' with port 80 HTTP listener not found.")
 
         # --- TC3: Target Groups & Path Routing (4 Marks) ---
         tc3_passed = False
         try:
             elbv2 = get_aws_client('elbv2')
             # Check target groups
-            tg_names = ['target-group-app1', 'target-group-app2', 'target-group-app3']
+            tg_names = [f'target-group-app1-{user_prefix}', f'target-group-app2-{user_prefix}', f'target-group-app3-{user_prefix}']
             tg_res = elbv2.describe_target_groups(Names=tg_names)
             if len(tg_res.get('TargetGroups', [])) == 3:
                 # If target groups exist, check listener rules for path routing
@@ -152,7 +152,7 @@ def verify_task():
         else:
             results['tc3'] = False
             print(f"TC3: Target Groups & Path Routing ...................... [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Could not verify target groups target-group-app[1-3] or path listener rules.")
+            print(f"     └─ [Reason]: Could not verify target groups target-group-app[1-3]-{user_prefix} or path listener rules.")
 
         # --- TC4: Security Group Restrictions (4 Marks) ---
         tc4_passed = False
@@ -186,7 +186,7 @@ def verify_task():
         tc5_passed = False
         try:
             elbv2 = get_aws_client('elbv2')
-            tg_res = elbv2.describe_target_groups(Names=['target-group-app1'])
+            tg_res = elbv2.describe_target_groups(Names=[f'target-group-app1-{user_prefix}'])
             if len(tg_res.get('TargetGroups', [])) > 0:
                 tg_arn = tg_res['TargetGroups'][0]['TargetGroupArn']
                 health_res = elbv2.describe_target_health(TargetGroupArn=tg_arn)

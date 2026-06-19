@@ -30,7 +30,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 4
     else:
         report_items.append("TC1 [EC2 Instances Provisioning] (0/4)")
-        file_results.append("✗ TC1 [EC2 Instances Provisioning]: FAILED (0/4) | Running EC2 hosts spread across 3 different AZs not verified.")
+        file_results.append(f"✗ TC1 [EC2 Instances Provisioning]: FAILED (0/4) | Running EC2 hosts named service-[a/b/c]-host-{username} spread across 3 different AZs not verified.")
         fail_count += 1
 
     # --- TC2: Application Load Balancer Setup ---
@@ -41,7 +41,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 4
     else:
         report_items.append("TC2 [Application Load Balancer Setup] (0/4)")
-        file_results.append("✗ TC2 [Application Load Balancer Setup]: FAILED (0/4) | Active ALB 'app-services-alb' with listener not found.")
+        file_results.append(f"✗ TC2 [Application Load Balancer Setup]: FAILED (0/4) | Active ALB 'app-services-alb-{username}' with listener not found.")
         fail_count += 1
 
     # --- TC3: Target Groups & Path Routing ---
@@ -52,7 +52,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 4
     else:
         report_items.append("TC3 [Target Groups & Path Routing] (0/4)")
-        file_results.append("✗ TC3 [Target Groups & Path Routing]: FAILED (0/4) | Target groups not configured or path routing rules missing.")
+        file_results.append(f"✗ TC3 [Target Groups & Path Routing]: FAILED (0/4) | Target groups target-group-app[1-3]-{username} not configured or path routing rules missing.")
         fail_count += 1
 
     # --- TC4: Security Group Restrictions ---

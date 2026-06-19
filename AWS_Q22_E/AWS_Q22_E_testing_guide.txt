@@ -7,37 +7,41 @@ the AWS_Q22_E (AWS Application Load Balancer Path-Based Routing) lab in KodeAren
 on your AWS environment. Following these steps ensures 100% compliance with the 
 real-time driver audit.
 
+IMPORTANT: To avoid resource name collisions, always append your unique LabsKraft 
+username/candidate prefix (e.g., `<your-labskraft-username>`) to the end of all 
+provisioned EC2 instances, Application Load Balancers, Security Groups, and Target Groups.
+
 --------------------------------------------------------------------------------
 PHASE 1: PROVISION EC2 INSTANCES & CONFIGURE WEB SERVERS (Satisfies TC1 & TC5)
 --------------------------------------------------------------------------------
 1. Launch Three EC2 Instances (Ubuntu 22.04 LTS):
    - Instance 1:
-     * Name Tag: `service-a-host`
+     * Name Tag: `service-a-host-<your-labskraft-username>`
      * Availability Zone: Zone 1 (e.g., `us-east-1a`)
    - Instance 2:
-     * Name Tag: `service-b-host`
+     * Name Tag: `service-b-host-<your-labskraft-username>`
      * Availability Zone: Zone 2 (e.g., `us-east-1b`)
    - Instance 3:
-     * Name Tag: `service-c-host`
+     * Name Tag: `service-c-host-<your-labskraft-username>`
      * Availability Zone: Zone 3 (e.g., `us-east-1c`)
    
    Ensure that all three instances are running and spread across three distinct 
    Availability Zones (AZs) in the same region.
 
 2. Install Nginx and Configure Content on Each Instance:
-   - Connect to `service-a-host` via SSH:
+   - Connect to `service-a-host-<your-labskraft-username>` via SSH:
      sudo apt update && sudo apt install nginx -y
      sudo mkdir -p /var/www/html/app1
      echo "Product Catalog Service - Status: OK" | sudo tee /var/www/html/app1/index.html
      sudo systemctl restart nginx
      
-   - Connect to `service-b-host` via SSH:
+   - Connect to `service-b-host-<your-labskraft-username>` via SSH:
      sudo apt update && sudo apt install nginx -y
      sudo mkdir -p /var/www/html/app2
      echo "Order Management Service - Status: OK" | sudo tee /var/www/html/app2/index.html
      sudo systemctl restart nginx
      
-   - Connect to `service-c-host` via SSH:
+   - Connect to `service-c-host-<your-labskraft-username>` via SSH:
      sudo apt update && sudo apt install nginx -y
      sudo mkdir -p /var/www/html/app3
      echo "User Profile Service - Status: OK" | sudo tee /var/www/html/app3/index.html
@@ -48,7 +52,7 @@ PHASE 2: SECURE PORT 80 VIA SECURITY GROUPS (Satisfies TC4)
 --------------------------------------------------------------------------------
 1. Create the Application Load Balancer Security Group:
    - In the EC2 console, go to Network & Security -> Security Groups -> Create Security Group.
-   - Security Group Name: `app-alb-sg`
+   - Security Group Name: `app-alb-sg-<your-labskraft-username>`
    - Description: Security group for Application Load Balancer.
    - Inbound Rules:
      * Add Rule: Type: HTTP (Port 80), Source: Anywhere-IPv4 (0.0.0.0/0).
@@ -56,13 +60,13 @@ PHASE 2: SECURE PORT 80 VIA SECURITY GROUPS (Satisfies TC4)
 
 2. Create/Update the EC2 Instances Security Group:
    - Go to Network & Security -> Security Groups -> Create Security Group.
-   - Security Group Name: `app-instances-sg`
+   - Security Group Name: `app-instances-sg-<your-labskraft-username>`
    - Description: Security group for microservice instances.
    - Inbound Rules:
-     * Add Rule: Type: HTTP (Port 80), Source: Custom -> Select the Security Group ID of `app-alb-sg`.
+     * Add Rule: Type: HTTP (Port 80), Source: Custom -> Select the Security Group ID of `app-alb-sg-<your-labskraft-username>`.
      * Add Rule: Type: SSH (Port 22), Source: My IP (for administrative SSH access).
    - Click Create Security Group.
-   - Associate this `app-instances-sg` security group with all three EC2 instances (`service-a-host`, `service-b-host`, and `service-c-host`). Remove any default security group that allows public port 80 traffic.
+   - Associate this `app-instances-sg-<your-labskraft-username>` security group with all three EC2 instances. Remove any default security group that allows public port 80 traffic.
 
 --------------------------------------------------------------------------------
 PHASE 3: CREATE TARGET GROUPS (Satisfies TC3)
@@ -70,61 +74,61 @@ PHASE 3: CREATE TARGET GROUPS (Satisfies TC3)
 1. Create Target Group for Service A:
    - Go to EC2 -> Target Groups -> Create target group.
    - Target type: Instances.
-   - Target Group Name: `target-group-app1`
+   - Target Group Name: `target-group-app1-<your-labskraft-username>`
    - Protocol: HTTP, Port: 80.
    - Health checks:
      * Protocol: HTTP.
      * Health check path: `/app1/` (or `/app1/index.html`).
-   - Click Next. Select `service-a-host`, click "Include as pending below", and click "Create target group".
+   - Click Next. Select `service-a-host-<your-labskraft-username>`, click "Include as pending below", and click "Create target group".
 
 2. Create Target Group for Service B:
    - Go to EC2 -> Target Groups -> Create target group.
    - Target type: Instances.
-   - Target Group Name: `target-group-app2`
+   - Target Group Name: `target-group-app2-<your-labskraft-username>`
    - Protocol: HTTP, Port: 80.
    - Health checks:
      * Protocol: HTTP.
      * Health check path: `/app2/` (or `/app2/index.html`).
-   - Click Next. Select `service-b-host`, click "Include as pending below", and click "Create target group".
+   - Click Next. Select `service-b-host-<your-labskraft-username>`, click "Include as pending below", and click "Create target group".
 
 3. Create Target Group for Service C:
    - Go to EC2 -> Target Groups -> Create target group.
    - Target type: Instances.
-   - Target Group Name: `target-group-app3`
+   - Target Group Name: `target-group-app3-<your-labskraft-username>`
    - Protocol: HTTP, Port: 80.
    - Health checks:
      * Protocol: HTTP.
      * Health check path: `/app3/` (or `/app3/index.html`).
-   - Click Next. Select `service-c-host`, click "Include as pending below", and click "Create target group".
+   - Click Next. Select `service-c-host-<your-labskraft-username>`, click "Include as pending below", and click "Create target group".
 
 --------------------------------------------------------------------------------
 PHASE 4: PROVISION ALB & CONFIGURE PATH LISTENER RULES (Satisfies TC2 & TC3)
 --------------------------------------------------------------------------------
 1. Create the Application Load Balancer:
    - Go to EC2 -> Load Balancers -> Create load balancer -> Application Load Balancer.
-   - Name: `app-services-alb`
+   - Name: `app-services-alb-<your-labskraft-username>`
    - Scheme: Internet-facing
    - IP address type: IPv4
    - Network mapping: Select your VPC and check at least three Availability Zones (matching the AZs where the instances are deployed).
-   - Security groups: Select `app-alb-sg`.
+   - Security groups: Select `app-alb-sg-<your-labskraft-username>`.
    - Listeners and routing:
      * Protocol: HTTP, Port: 80.
-     * Default action: Forward to `target-group-app1` (or return fixed text response).
+     * Default action: Forward to `target-group-app1-<your-labskraft-username>`.
    - Click Create load balancer. Wait for the state to transition to Active.
 
 2. Configure Path-Based Routing Rules:
-   - Select the `app-services-alb` load balancer.
+   - Select the `app-services-alb-<your-labskraft-username>` load balancer.
    - Go to the Listeners tab, select the HTTP:80 listener, and click "View/edit rules" (or "Manage listener" -> "Edit rules").
    - Click "+" or "Add rules". Define rules with these path patterns:
      * Rule 1:
        - Condition: Path is `/app1*`
-       - Action: Forward to `target-group-app1`
+       - Action: Forward to `target-group-app1-<your-labskraft-username>`
      * Rule 2:
        - Condition: Path is `/app2*`
-       - Action: Forward to `target-group-app2`
+       - Action: Forward to `target-group-app2-<your-labskraft-username>`
      * Rule 3:
        - Condition: Path is `/app3*`
-       - Action: Forward to `target-group-app3`
+       - Action: Forward to `target-group-app3-<your-labskraft-username>`
    - Click Save to apply listener rules.
 
 --------------------------------------------------------------------------------
