@@ -94,13 +94,7 @@ def verify_task():
         tc1_passed = False
         try:
             import boto3
-            regions = ['us-east-1', 'us-east-2', 'us-west-2', 'ap-south-1', 'eu-west-1', 'eu-west-2', 'eu-central-1']
-            default_reg = os.getenv('AWS_DEFAULT_REGION')
-            if default_reg and default_reg not in regions:
-                regions.insert(0, default_reg)
-            elif default_reg:
-                regions.remove(default_reg)
-                regions.insert(0, default_reg)
+            regions = ['eu-west-1', 'eu-west-2', 'eu-west-3']
             
             instances = []
             for r in regions:
