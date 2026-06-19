@@ -51,7 +51,7 @@ def verify_task():
 
         now = datetime.now(timezone.utc)
         elapsed_minutes = (now - START_TIME).total_seconds() / 60
-        max_duration = 30  # 30 Min assessment for AWS_Q22_E
+        max_duration = 120  # 120 Min assessment for AWS_Q22_E
 
         if elapsed_minutes > max_duration + 10:
             print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")

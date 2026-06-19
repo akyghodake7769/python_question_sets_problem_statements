@@ -1,7 +1,7 @@
 # DevOps Lab: AWS Application Load Balancer (ALB) Path-Based Routing
 
 **Difficulty Level:** Medium
-**Duration:** 30 Minutes
+**Duration:** 120 Minutes
 
 ## Scenario
 

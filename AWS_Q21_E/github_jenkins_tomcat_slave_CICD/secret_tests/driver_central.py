@@ -30,7 +30,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 4
     else:
         report_items.append("TC1 [Jenkins Master-Slave Connection] (0/4)")
-        file_results.append("✗ TC1 [Jenkins Master-Slave Connection]: FAILED (0/4) | Permanent agent node 'jenkins-slave' not connected or offline.")
+        file_results.append(f"✗ TC1 [Jenkins Master-Slave Connection]: FAILED (0/4) | Permanent agent node 'jenkins-slave-{username}' not connected or offline.")
         fail_count += 1
 
     # --- TC2: GitHub Webhook Trigger ---
@@ -41,7 +41,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 4
     else:
         report_items.append("TC2 [GitHub Webhook Trigger] (0/4)")
-        file_results.append("✗ TC2 [GitHub Webhook Trigger]: FAILED (0/4) | GitHub Webhook trigger not configured on Jenkins Job.")
+        file_results.append(f"✗ TC2 [GitHub Webhook Trigger]: FAILED (0/4) | GitHub Webhook trigger not configured on Jenkins Job Tomcat-Deployment-Eval-{username}.")
         fail_count += 1
 
     # --- TC3: Maven Build Execution ---
@@ -52,7 +52,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 4
     else:
         report_items.append("TC3 [Maven Build Execution] (0/4)")
-        file_results.append("✗ TC3 [Maven Build Execution]: FAILED (0/4) | Maven build failed or job has not run on agent 'java-builder'.")
+        file_results.append(f"✗ TC3 [Maven Build Execution]: FAILED (0/4) | Maven build failed or job has not run on agent 'java-builder-{username}'.")
         fail_count += 1
 
     # --- TC4: Tomcat Deploy Validation ---

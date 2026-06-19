@@ -7,14 +7,18 @@ the AWS_Q21_E (AWS Distributed Jenkins Master-Slave Java Tomcat Setup) lab in
 KodeArena on your Ubuntu instances. Following these steps ensures 100% compliance 
 with the real-time driver audit.
 
+IMPORTANT: To avoid resource name collisions, always append your unique LabsKraft 
+username/candidate prefix (e.g., `<your-labskraft-username>`) to the end of all 
+provisioned EC2 instances, Jenkins node names, Jenkins jobs, and agent labels.
+
 --------------------------------------------------------------------------------
 PHASE 1: PROVISION EC2 INSTANCES & SET UP MASTER (Satisfies TC1 & TC2)
 --------------------------------------------------------------------------------
 1. Launch two EC2 Instances (Ubuntu 22.04 LTS):
-   - Instance 1: Name it `jenkins-master`. Open ports 22 (SSH) and 8080 (Custom TCP).
-   - Instance 2: Name it `jenkins-slave`. Open port 22 (SSH) allowing traffic from `jenkins-master`.
+   - Instance 1: Name it `jenkins-master-<your-labskraft-username>`. Open ports 22 (SSH) and 8080 (Custom TCP).
+   - Instance 2: Name it `jenkins-slave-<your-labskraft-username>`. Open port 22 (SSH) allowing traffic from `jenkins-master-<your-labskraft-username>`.
 
-2. Install Java 17 and Jenkins on `jenkins-master`:
+2. Install Java 17 and Jenkins on `jenkins-master-<your-labskraft-username>`:
    sudo apt update
    sudo apt install openjdk-17-jdk -y
    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
@@ -35,29 +39,29 @@ PHASE 1: PROVISION EC2 INSTANCES & SET UP MASTER (Satisfies TC1 & TC2)
 --------------------------------------------------------------------------------
 PHASE 2: PREPARE SSH CONNECTIVITY & SLAVE (Satisfies TC3)
 --------------------------------------------------------------------------------
-1. Generate SSH Keys on `jenkins-master`:
-   - Log into `jenkins-master` via SSH.
+1. Generate SSH Keys on `jenkins-master-<your-labskraft-username>`:
+   - Log into `jenkins-master-<your-labskraft-username>` via SSH.
    - Switch to the jenkins user:
      sudo su - jenkins
      ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
      (Ensure permissions are set correctly on the key files: chmod 600 id_rsa)
 
-2. Configure Java, Maven, Tomcat & SSH public key on `jenkins-slave`:
-   - Log into `jenkins-slave` via SSH.
+2. Configure Java, Maven, Tomcat & SSH public key on `jenkins-slave-<your-labskraft-username>`:
+   - Log into `jenkins-slave-<your-labskraft-username>` via SSH.
    - Install Java 17, Maven, and Tomcat 9:
      sudo apt update && sudo apt install openjdk-17-jdk maven tomcat9 -y
    - Set Tomcat9 permissions to allow the default 'ubuntu' user to deploy WAR files:
      sudo chown -R ubuntu:ubuntu /var/lib/tomcat9/webapps/
      sudo chmod -R 775 /var/lib/tomcat9/webapps/
-   - Open `/home/ubuntu/.ssh/authorized_keys` and append the public key generated on `jenkins-master` (`/var/lib/jenkins/.ssh/id_rsa.pub`).
+   - Open `/home/ubuntu/.ssh/authorized_keys` and append the public key generated on `jenkins-master-<your-labskraft-username>` (`/var/lib/jenkins/.ssh/id_rsa.pub`).
    - Test passwordless SSH from the master:
      sudo -u jenkins ssh -o StrictHostKeyChecking=no ubuntu@<jenkins-slave-private-ip>
 
 3. Register the Slave Node in Jenkins:
    - On the Jenkins Dashboard, navigate to: Manage Jenkins -> Nodes -> New Node.
-   - Node Name: `jenkins-slave` (Select "Permanent Agent").
+   - Node Name: `jenkins-slave-<your-labskraft-username>` (Select "Permanent Agent").
    - Remote Root Directory: `/home/ubuntu/jenkins-slave` (Ensure this directory exists on the slave: `mkdir -p /home/ubuntu/jenkins-slave`).
-   - Labels: `java-builder`
+   - Labels: `java-builder-<your-labskraft-username>`
    - Launch Method: Launch agents via SSH.
    - Host: `<jenkins-slave-private-ip>`
    - Credentials: Add a new SSH Username with Private Key credential. Username: `ubuntu`, Private Key: Paste the master's private key (`/var/lib/jenkins/.ssh/id_rsa`).
@@ -68,9 +72,9 @@ PHASE 2: PREPARE SSH CONNECTIVITY & SLAVE (Satisfies TC3)
 PHASE 3: CREATE AND EXECUTE MAVEN BUILD & DEPLOYMENT JOB (Satisfies TC4 & TC5)
 --------------------------------------------------------------------------------
 1. Create Freestyle Project:
-   - Click "New Item", enter "Tomcat-Deployment-Eval" as the item name, and select "Freestyle project".
+   - Click "New Item", enter "Tomcat-Deployment-Eval-<your-labskraft-username>" as the item name, and select "Freestyle project".
    - Under "General", check "Restrict where this project can be run".
-   - Enter `java-builder` as the Label Expression.
+   - Enter `java-builder-<your-labskraft-username>` as the Label Expression.
 
 2. Configure Source Control & Trigger:
    - Under "Source Code Management", select "Git" and specify your Java web app repository.
@@ -96,7 +100,7 @@ PHASE 3: CREATE AND EXECUTE MAVEN BUILD & DEPLOYMENT JOB (Satisfies TC4 & TC5)
      echo "GIT_CLONE=SUCCESS" > /home/ubuntu/build-logs/tomcat-deploy.log
      echo "MAVEN_BUILD=SUCCESS" >> /home/ubuntu/build-logs/tomcat-deploy.log
      echo "TOMCAT_DEPLOYMENT=SUCCESS" >> /home/ubuntu/build-logs/tomcat-deploy.log
-     echo "PIPELINE_NAME=Tomcat-Deployment-Eval" >> /home/ubuntu/build-logs/tomcat-deploy.log
+     echo "PIPELINE_NAME=Tomcat-Deployment-Eval-<your-labskraft-username>" >> /home/ubuntu/build-logs/tomcat-deploy.log
      echo "BUILD_NUMBER=${BUILD_NUMBER}" >> /home/ubuntu/build-logs/tomcat-deploy.log
      echo "FINAL_STATUS=SUCCESS" >> /home/ubuntu/build-logs/tomcat-deploy.log
      echo "TIMESTAMP=$(date -u)" >> /home/ubuntu/build-logs/tomcat-deploy.log

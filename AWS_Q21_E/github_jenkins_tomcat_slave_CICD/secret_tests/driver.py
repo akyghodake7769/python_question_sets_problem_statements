@@ -52,7 +52,7 @@ def verify_task():
 
         now = datetime.now(timezone.utc)
         elapsed_minutes = (now - START_TIME).total_seconds() / 60
-        max_duration = 30  # 30 Min assessment for AWS_Q21_E
+        max_duration = 120  # 120 Min assessment for AWS_Q21_E
 
         if elapsed_minutes > max_duration + 10:
             print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
@@ -64,7 +64,7 @@ def verify_task():
         # --- TC1: Jenkins Master-Slave Connection (4 Marks) ---
         tc1_passed = False
         try:
-            node_config_path = "/var/lib/jenkins/nodes/jenkins-slave/config.xml"
+            node_config_path = f"/var/lib/jenkins/nodes/jenkins-slave-{user_prefix}/config.xml"
             if os.path.exists(node_config_path):
                 tree = ET.parse(node_config_path)
                 root = tree.getroot()
@@ -84,13 +84,13 @@ def verify_task():
         else:
             results['tc1'] = False
             print(f"TC1: Jenkins Master-Slave Connection ................... [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Node 'jenkins-slave' config.xml not found on Master.")
+            print(f"     └─ [Reason]: Node 'jenkins-slave-{user_prefix}' config.xml not found on Master.")
 
         # --- TC2: GitHub Webhook Trigger (4 Marks) ---
         tc2_passed = False
         try:
             # Check Jenkins configuration for git webhook triggers
-            job_config_path = "/var/lib/jenkins/jobs/Tomcat-Deployment-Eval/config.xml"
+            job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
             if os.path.exists(job_config_path):
                 tree = ET.parse(job_config_path)
                 root = tree.getroot()
@@ -114,19 +114,19 @@ def verify_task():
         else:
             results['tc2'] = False
             print(f"TC2: GitHub Webhook Trigger ............................ [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Webhook trigger not configured on Jenkins Job.")
+            print(f"     └─ [Reason]: Webhook trigger not configured on Jenkins Job Tomcat-Deployment-Eval-{user_prefix}.")
 
         # --- TC3: Maven Build Execution (4 Marks) ---
         tc3_passed = False
         try:
-            job_config_path = "/var/lib/jenkins/jobs/Tomcat-Deployment-Eval/config.xml"
+            job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
             if os.path.exists(job_config_path):
                 tree = ET.parse(job_config_path)
                 root = tree.getroot()
                 assigned_node = root.find('assignedNode')
-                if assigned_node is not None and assigned_node.text == 'java-builder':
+                if assigned_node is not None and assigned_node.text == f'java-builder-{user_prefix}':
                     # Verify job run has generated builds
-                    builds_dir = "/var/lib/jenkins/jobs/Tomcat-Deployment-Eval/builds"
+                    builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
                     if os.path.exists(builds_dir) and len(os.listdir(builds_dir)) > 0:
                         tc3_passed = True
             elif not os.path.exists('/var/lib/jenkins'):
@@ -140,7 +140,7 @@ def verify_task():
         else:
             results['tc3'] = False
             print(f"TC3: Maven Build Execution ............................. [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Maven execution failed or job has not run on agent 'java-builder'.")
+            print(f"     └─ [Reason]: Maven execution failed or job has not run on agent 'java-builder-{user_prefix}'.")
 
         # --- TC4: Tomcat Deploy Validation (4 Marks) ---
         tc4_passed = False
