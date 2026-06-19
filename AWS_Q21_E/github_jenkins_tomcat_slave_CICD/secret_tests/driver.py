@@ -46,12 +46,13 @@ def verify_task():
     results = {}
 
     try:
-        if not START_TIME:
-            START_TIME = datetime.now(timezone.utc)
-            start_time = START_TIME.isoformat()
+        session_start = START_TIME
+        if not session_start:
+            session_start = datetime.now(timezone.utc)
+            start_time = session_start.isoformat()
 
         now = datetime.now(timezone.utc)
-        elapsed_minutes = (now - START_TIME).total_seconds() / 60
+        elapsed_minutes = (now - session_start).total_seconds() / 60
         max_duration = 120  # 120 Min assessment for AWS_Q21_E
 
         if elapsed_minutes > max_duration + 10:
