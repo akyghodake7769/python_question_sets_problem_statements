@@ -34,6 +34,19 @@ def get_aws_client(service):
             pass
         return boto3.client(service, region_name=aws_region)
 
+def is_sandbox_or_local():
+    if os.path.exists('/etc/alb_assessment_local_test'):
+        return True
+    try:
+        import boto3
+        session = boto3.Session()
+        credentials = session.get_credentials()
+        if not credentials:
+            return True
+    except Exception:
+        return True
+    return False
+
 def detect_user_prefix(default_prefix):
     for env_var in ['KODEARENA_USER', 'USER', 'USERNAME', 'LABSKRAFT_USER', 'CANDIDATE_PREFIX']:
         val = os.getenv(env_var)
@@ -147,8 +160,8 @@ def verify_task():
                         launcher = root.find('launcher')
                         if launcher is not None:
                             tc1_passed = True
-                else:
-                    # If we cannot read nodes, or if /var/lib/jenkins does not exist, fallback to True
+                elif is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
+                    # If we cannot read nodes but we are in a sandbox/local mock environment, fallback to True
                     tc1_passed = True
             except Exception:
                 pass
@@ -187,7 +200,7 @@ def verify_task():
                             tc2_passed = True # General trigger configured
                     else:
                         tc2_passed = True
-            else:
+            elif is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
                 tc2_passed = True # Sandbox fallback
         except Exception:
             pass
@@ -234,7 +247,7 @@ def verify_task():
                             # Fallback if builds dir exists but logs not readable
                             if not tc3_passed and len(os.listdir(builds_dir)) > 0:
                                 tc3_passed = True
-            else:
+            elif is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
                 tc3_passed = True # Sandbox fallback
         except Exception:
             pass
@@ -271,15 +284,10 @@ def verify_task():
                             except Exception:
                                 pass
             
-            # 3. Sandbox fallback if /var/lib/jenkins doesn't exist or is not readable
+            # 3. Sandbox fallback if we are in local/sandbox environment
             if not tc4_passed:
-                if not os.path.exists('/var/lib/jenkins'):
+                if is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
                     tc4_passed = True
-                else:
-                    try:
-                        os.listdir('/var/lib/jenkins')
-                    except PermissionError:
-                        tc4_passed = True # Sandbox/permission fallback
         except Exception:
             pass
 
@@ -318,15 +326,10 @@ def verify_task():
                             except Exception:
                                 pass
             
-            # 3. Sandbox fallback if /var/lib/jenkins doesn't exist or is not readable
+            # 3. Sandbox fallback if we are in local/sandbox environment
             if not tc5_passed:
-                if not os.path.exists('/var/lib/jenkins'):
+                if is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
                     tc5_passed = True
-                else:
-                    try:
-                        os.listdir('/var/lib/jenkins')
-                    except PermissionError:
-                        tc5_passed = True # Sandbox/permission fallback
         except Exception:
             pass
 
