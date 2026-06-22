@@ -67,12 +67,31 @@ def run_ssm_command(ssm, instance_id, command):
     except Exception as e:
         return False, "", str(e)
 
+def get_iam_username():
+    try:
+        import boto3
+        sts = boto3.client('sts')
+        arn = sts.get_caller_identity().get('Arn', '')
+        if ':user/' in arn:
+            return arn.split(':user/')[-1].strip()
+        elif ':assumed-role/' in arn:
+            role_part = arn.split(':assumed-role/')[-1].strip()
+            if '/' in role_part:
+                return role_part.split('/')[-1].strip()
+            return role_part.strip()
+        else:
+            if '/' in arn:
+                return arn.split('/')[-1].strip()
+    except Exception:
+        pass
+    return None
+
 def find_instances_and_region(user_prefix):
     import boto3
     regions = ['eu-west-1', 'eu-west-2', 'eu-west-3']
         
-    master_name = f"jenkins-master-{user_prefix}"
-    slave_name = f"jenkins-slave-{user_prefix}"
+    master_name = f"{user_prefix}-jenkins-master"
+    slave_name = f"{user_prefix}-jenkins-slave"
     
     for r in regions:
         try:
@@ -101,6 +120,10 @@ def find_instances_and_region(user_prefix):
     return None, None, None
 
 def detect_user_prefix(default_prefix):
+    iam_user = get_iam_username()
+    if iam_user and iam_user not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
+        return iam_user
+
     for env_var in ['KODEARENA_USER', 'USER', 'USERNAME', 'LABSKRAFT_USER', 'CANDIDATE_PREFIX']:
         val = os.getenv(env_var)
         if val and val not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
@@ -109,8 +132,8 @@ def detect_user_prefix(default_prefix):
     try:
         if os.path.exists('/var/lib/jenkins/nodes'):
             for name in os.listdir('/var/lib/jenkins/nodes'):
-                if name.startswith('jenkins-slave-'):
-                    pref = name.replace('jenkins-slave-', '')
+                if name.endswith('-jenkins-slave'):
+                    pref = name.replace('-jenkins-slave', '')
                     if pref:
                         return pref
     except Exception:
@@ -119,8 +142,8 @@ def detect_user_prefix(default_prefix):
     try:
         if os.path.exists('/var/lib/jenkins/jobs'):
             for name in os.listdir('/var/lib/jenkins/jobs'):
-                if name.startswith('Tomcat-Deployment-Eval-'):
-                    pref = name.replace('Tomcat-Deployment-Eval-', '')
+                if name.endswith('-Tomcat-Deployment-Eval'):
+                    pref = name.replace('-Tomcat-Deployment-Eval', '')
                     if pref:
                         return pref
     except Exception:
@@ -189,7 +212,7 @@ def verify_task():
                 except Exception:
                     pass
             
-            expected_names = [f"jenkins-master-{user_prefix}", f"jenkins-slave-{user_prefix}"]
+            expected_names = [f"{user_prefix}-jenkins-master", f"{user_prefix}-jenkins-slave"]
             found_expected = 0
             has_wrong_names = False
             
@@ -207,7 +230,7 @@ def verify_task():
                 tc1_passed = True
                 tc1_msg = "VM found and name matches expected convention."
             elif len(running_instances) > 0 and (found_expected < 2 or has_wrong_names):
-                tc1_msg = "VM name does not match expected naming convention. Please check the VM name."
+                tc1_msg = "VM name does not match expected naming convention. Make sure the VM is prefixed with your AWS IAM username (e.g., <iam-username>-jenkins-master and <iam-username>-jenkins-slave), NOT your VM's OS user prefix (e.g. LabsKraft)."
             else:
                 tc1_msg = "VM not found."
         except Exception:
@@ -228,9 +251,9 @@ def verify_task():
         
         # 1. SSM Check (on Master VM config.xml)
         if master_id and ssm_client:
-            node_cmd = f"test -d /var/lib/jenkins/nodes/jenkins-slave-{user_prefix} && cat /var/lib/jenkins/nodes/jenkins-slave-{user_prefix}/config.xml"
+            node_cmd = f"test -d /var/lib/jenkins/nodes/{user_prefix}-jenkins-slave && cat /var/lib/jenkins/nodes/{user_prefix}-jenkins-slave/config.xml"
             ok, out, _ = run_ssm_command(ssm_client, master_id, node_cmd)
-            if ok and f"jenkins-slave-{user_prefix}" in out:
+            if ok and f"{user_prefix}-jenkins-slave" in out:
                 tc2_passed = True
                 
         # 2. Local File / AWS Fallback
@@ -247,7 +270,7 @@ def verify_task():
                     can_read_nodes = False
                 
                 if can_read_nodes:
-                    node_config_path = f"/var/lib/jenkins/nodes/jenkins-slave-{user_prefix}/config.xml"
+                    node_config_path = f"/var/lib/jenkins/nodes/{user_prefix}-jenkins-slave/config.xml"
                     if os.path.exists(node_config_path):
                         tree = ET.parse(node_config_path)
                         root = tree.getroot()
@@ -265,14 +288,14 @@ def verify_task():
         else:
             results['tc2'] = False
             print(f"TC2: Jenkins Master-Slave Connection ................... [FAILED] (0/3)")
-            print(f"     └─ [Reason]: EC2 instances jenkins-master-{user_prefix} / jenkins-slave-{user_prefix} are not running, and node config.xml not found on Master.")
+            print(f"     └─ [Reason]: EC2 instances {user_prefix}-jenkins-master / {user_prefix}-jenkins-slave are not running, and node config.xml not found on Master.")
  
         # --- TC3: GitHub Webhook Trigger (3 Marks) ---
         tc3_passed = False
         
         # 1. SSM Check
         if master_id and ssm_client:
-            job_cmd = f"test -d /var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix} && cat /var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
+            job_cmd = f"test -d /var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval && cat /var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/config.xml"
             ok, out, _ = run_ssm_command(ssm_client, master_id, job_cmd)
             if ok:
                 if "com.cloudbees.jenkins.GitHubPushTrigger" in out or "GitHubPushTrigger" in out:
@@ -293,7 +316,7 @@ def verify_task():
                     can_read_jobs = False
  
                 if can_read_jobs:
-                    job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
+                    job_config_path = f"/var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/config.xml"
                     if os.path.exists(job_config_path):
                         tree = ET.parse(job_config_path)
                         root = tree.getroot()
@@ -317,18 +340,18 @@ def verify_task():
         else:
             results['tc3'] = False
             print(f"TC3: GitHub Webhook Trigger ............................ [FAILED] (0/3)")
-            print(f"     └─ [Reason]: Webhook trigger not configured on Jenkins Job Tomcat-Deployment-Eval-{user_prefix}.")
+            print(f"     └─ [Reason]: Webhook trigger not configured on Jenkins Job {user_prefix}-Tomcat-Deployment-Eval.")
 
         # --- TC4: Maven Build Execution (4 Marks) ---
         tc4_passed = False
         # 1. SSM Check
         if master_id and ssm_client:
             # Check builds directory and builds log
-            build_cmd = f"ls /var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
+            build_cmd = f"ls /var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/builds"
             ok, builds_out, _ = run_ssm_command(ssm_client, master_id, build_cmd)
             if ok and len(builds_out.strip()) > 0:
                 # Check log of build
-                log_cmd = f"cat /var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds/*/log 2>/dev/null"
+                log_cmd = f"cat /var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/builds/*/log 2>/dev/null"
                 log_ok, log_out, _ = run_ssm_command(ssm_client, master_id, log_cmd)
                 if log_ok and ("MAVEN_BUILD=SUCCESS" in log_out or "BUILD SUCCESS" in log_out):
                     tc4_passed = True
@@ -348,13 +371,13 @@ def verify_task():
                     can_read_jobs = False
  
                 if can_read_jobs:
-                    job_config_path = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/config.xml"
+                    job_config_path = f"/var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/config.xml"
                     if os.path.exists(job_config_path):
                         tree = ET.parse(job_config_path)
                         root = tree.getroot()
                         assigned_node = root.find('assignedNode')
-                        if assigned_node is not None and assigned_node.text == f'java-builder-{user_prefix}':
-                            builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
+                        if assigned_node is not None and assigned_node.text == f'{user_prefix}-java-builder':
+                            builds_dir = f"/var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/builds"
                             if os.path.exists(builds_dir) and len(os.listdir(builds_dir)) > 0:
                                 for build_num in os.listdir(builds_dir):
                                     build_log_path = os.path.join(builds_dir, build_num, "log")
@@ -377,7 +400,7 @@ def verify_task():
         else:
             results['tc4'] = False
             print(f"TC4: Maven Build Execution ............................. [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Maven execution failed or job has not run on agent 'java-builder-{user_prefix}'.")
+            print(f"     └─ [Reason]: Maven execution failed or job has not run on agent '{user_prefix}-java-builder'.")
  
         # --- TC5: Tomcat Deploy Validation (4 Marks) ---
         tc5_passed = False
@@ -398,7 +421,7 @@ def verify_task():
                 
                 # Check Jenkins build logs on Master (if we are on Master)
                 if not tc5_passed:
-                    builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
+                    builds_dir = f"/var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/builds"
                     if os.path.exists(builds_dir):
                         for build_num in os.listdir(builds_dir):
                             build_log_path = os.path.join(builds_dir, build_num, "log")
@@ -447,7 +470,7 @@ def verify_task():
                 
                 # Check Jenkins build logs on Master
                 if not tc6_passed:
-                    builds_dir = f"/var/lib/jenkins/jobs/Tomcat-Deployment-Eval-{user_prefix}/builds"
+                    builds_dir = f"/var/lib/jenkins/jobs/{user_prefix}-Tomcat-Deployment-Eval/builds"
                     if os.path.exists(builds_dir):
                         for build_num in os.listdir(builds_dir):
                             build_log_path = os.path.join(builds_dir, build_num, "log")
