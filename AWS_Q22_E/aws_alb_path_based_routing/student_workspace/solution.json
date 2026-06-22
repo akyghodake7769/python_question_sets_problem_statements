@@ -1,6 +1,6 @@
 {
     "candidate_prefix": "labs-kraft-demo106",
-    "assessment_start_time": "2026-06-19T11:50:13Z",
+    "assessment_start_time": "2026-06-22T11:14:11Z",
     "evaluation_type": "REAL_TIME_API",
     "score": 20,
     "results": {
@@ -8,6 +8,7 @@
         "tc2": true,
         "tc3": true,
         "tc4": true,
-        "tc5": true
+        "tc5": true,
+        "tc6": true
     }
 }

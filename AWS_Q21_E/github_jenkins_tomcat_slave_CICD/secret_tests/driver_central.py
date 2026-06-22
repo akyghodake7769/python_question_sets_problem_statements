@@ -22,59 +22,70 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
             
     results = solution_data.get('results', {}) if solution_data else {}
     
-    # --- TC1: Jenkins Master-Slave Connection ---
+    # --- TC1: VM Creation and Naming ---
     tc1_passed = results.get('tc1', True) if solution_data else False
     if tc1_passed:
-        report_items.append("TC1 [Jenkins Master-Slave Connection] (4/4)")
-        file_results.append("✓ TC1 [Jenkins Master-Slave Connection]: PASSED (4/4)")
-        total_score += 4
+        report_items.append("TC1 [VM Creation and Naming] (2/2)")
+        file_results.append("✓ TC1 [VM Creation and Naming]: PASSED (2/2)")
+        total_score += 2
     else:
-        report_items.append("TC1 [Jenkins Master-Slave Connection] (0/4)")
-        file_results.append(f"✗ TC1 [Jenkins Master-Slave Connection]: FAILED (0/4) | Permanent agent node 'jenkins-slave-{username}' not connected or offline.")
+        report_items.append("TC1 [VM Creation and Naming] (0/2)")
+        file_results.append(f"✗ TC1 [VM Creation and Naming]: FAILED (0/2) | Running EC2 instances named jenkins-master-{username} and jenkins-slave-{username} not found or name doesn't match convention.")
         fail_count += 1
 
-    # --- TC2: GitHub Webhook Trigger ---
+    # --- TC2: Jenkins Master-Slave Connection ---
     tc2_passed = results.get('tc2', True) if solution_data else False
     if tc2_passed:
-        report_items.append("TC2 [GitHub Webhook Trigger] (4/4)")
-        file_results.append("✓ TC2 [GitHub Webhook Trigger]: PASSED (4/4)")
-        total_score += 4
+        report_items.append("TC2 [Jenkins Master-Slave Connection] (3/3)")
+        file_results.append("✓ TC2 [Jenkins Master-Slave Connection]: PASSED (3/3)")
+        total_score += 3
     else:
-        report_items.append("TC2 [GitHub Webhook Trigger] (0/4)")
-        file_results.append(f"✗ TC2 [GitHub Webhook Trigger]: FAILED (0/4) | GitHub Webhook trigger not configured on Jenkins Job Tomcat-Deployment-Eval-{username}.")
+        report_items.append("TC2 [Jenkins Master-Slave Connection] (0/3)")
+        file_results.append(f"✗ TC2 [Jenkins Master-Slave Connection]: FAILED (0/3) | Permanent agent node 'jenkins-slave-{username}' not connected or offline.")
         fail_count += 1
 
-    # --- TC3: Maven Build Execution ---
+    # --- TC3: GitHub Webhook Trigger ---
     tc3_passed = results.get('tc3', True) if solution_data else False
     if tc3_passed:
-        report_items.append("TC3 [Maven Build Execution] (4/4)")
-        file_results.append("✓ TC3 [Maven Build Execution]: PASSED (4/4)")
-        total_score += 4
+        report_items.append("TC3 [GitHub Webhook Trigger] (3/3)")
+        file_results.append("✓ TC3 [GitHub Webhook Trigger]: PASSED (3/3)")
+        total_score += 3
     else:
-        report_items.append("TC3 [Maven Build Execution] (0/4)")
-        file_results.append(f"✗ TC3 [Maven Build Execution]: FAILED (0/4) | Maven build failed or job has not run on agent 'java-builder-{username}'.")
+        report_items.append("TC3 [GitHub Webhook Trigger] (0/3)")
+        file_results.append(f"✗ TC3 [GitHub Webhook Trigger]: FAILED (0/3) | GitHub Webhook trigger not configured on Jenkins Job Tomcat-Deployment-Eval-{username}.")
         fail_count += 1
 
-    # --- TC4: Tomcat Deploy Validation ---
+    # --- TC4: Maven Build Execution ---
     tc4_passed = results.get('tc4', True) if solution_data else False
     if tc4_passed:
-        report_items.append("TC4 [Tomcat Deploy Validation] (4/4)")
-        file_results.append("✓ TC4 [Tomcat Deploy Validation]: PASSED (4/4)")
+        report_items.append("TC4 [Maven Build Execution] (4/4)")
+        file_results.append("✓ TC4 [Maven Build Execution]: PASSED (4/4)")
         total_score += 4
     else:
-        report_items.append("TC4 [Tomcat Deploy Validation] (0/4)")
-        file_results.append("✗ TC4 [Tomcat Deploy Validation]: FAILED (0/4) | Packaged WAR file not deployed to Tomcat webapps directory on Slave.")
+        report_items.append("TC4 [Maven Build Execution] (0/4)")
+        file_results.append(f"✗ TC4 [Maven Build Execution]: FAILED (0/4) | Maven build failed or job has not run on agent 'java-builder-{username}'.")
         fail_count += 1
 
-    # --- TC5: Pipeline Log & Report Generation ---
+    # --- TC5: Tomcat Deploy Validation ---
     tc5_passed = results.get('tc5', True) if solution_data else False
     if tc5_passed:
-        report_items.append("TC5 [Pipeline Log & Report Generation] (4/4)")
-        file_results.append("✓ TC5 [Pipeline Log & Report Generation]: PASSED (4/4)")
+        report_items.append("TC5 [Tomcat Deploy Validation] (4/4)")
+        file_results.append("✓ TC5 [Tomcat Deploy Validation]: PASSED (4/4)")
         total_score += 4
     else:
-        report_items.append("TC5 [Pipeline Log & Report Generation] (0/4)")
-        file_results.append("✗ TC5 [Pipeline Log & Report Generation]: FAILED (0/4) | Log file not generated or missing success properties at /home/ubuntu/build-logs/tomcat-deploy.log.")
+        report_items.append("TC5 [Tomcat Deploy Validation] (0/4)")
+        file_results.append("✗ TC5 [Tomcat Deploy Validation]: FAILED (0/4) | Packaged WAR file not deployed to Tomcat webapps directory on Slave.")
+        fail_count += 1
+
+    # --- TC6: Pipeline Log & Report Generation ---
+    tc6_passed = results.get('tc6', True) if solution_data else False
+    if tc6_passed:
+        report_items.append("TC6 [Pipeline Log & Report Generation] (4/4)")
+        file_results.append("✓ TC6 [Pipeline Log & Report Generation]: PASSED (4/4)")
+        total_score += 4
+    else:
+        report_items.append("TC6 [Pipeline Log & Report Generation] (0/4)")
+        file_results.append("✗ TC6 [Pipeline Log & Report Generation]: FAILED (0/4) | Log file not generated or missing success properties at /home/ubuntu/build-logs/tomcat-deploy.log.")
         fail_count += 1
 
     file_results.append("-" * 50)

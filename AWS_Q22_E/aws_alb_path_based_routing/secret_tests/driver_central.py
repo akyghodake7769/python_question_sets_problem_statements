@@ -22,59 +22,70 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
             
     results = solution_data.get('results', {}) if solution_data else {}
     
-    # --- TC1: EC2 Instances Provisioning ---
+    # --- TC1: VM Creation and Naming ---
     tc1_passed = results.get('tc1', True) if solution_data else False
     if tc1_passed:
-        report_items.append("TC1 [EC2 Instances Provisioning] (4/4)")
-        file_results.append("✓ TC1 [EC2 Instances Provisioning]: PASSED (4/4)")
-        total_score += 4
+        report_items.append("TC1 [VM Creation and Naming] (2/2)")
+        file_results.append("✓ TC1 [VM Creation and Naming]: PASSED (2/2)")
+        total_score += 2
     else:
-        report_items.append("TC1 [EC2 Instances Provisioning] (0/4)")
-        file_results.append(f"✗ TC1 [EC2 Instances Provisioning]: FAILED (0/4) | Running EC2 hosts named service-[a/b/c]-host-{username} spread across 3 different AZs not verified.")
+        report_items.append("TC1 [VM Creation and Naming] (0/2)")
+        file_results.append(f"✗ TC1 [VM Creation and Naming]: FAILED (0/2) | Running EC2 hosts named service-a-host-{username}, service-b-host-{username}, and service-c-host-{username} not found or name doesn't match convention.")
         fail_count += 1
 
-    # --- TC2: Application Load Balancer Setup ---
+    # --- TC2: EC2 Instances Provisioning ---
     tc2_passed = results.get('tc2', True) if solution_data else False
     if tc2_passed:
-        report_items.append("TC2 [Application Load Balancer Setup] (4/4)")
-        file_results.append("✓ TC2 [Application Load Balancer Setup]: PASSED (4/4)")
-        total_score += 4
+        report_items.append("TC2 [EC2 Instances Provisioning] (3/3)")
+        file_results.append("✓ TC2 [EC2 Instances Provisioning]: PASSED (3/3)")
+        total_score += 3
     else:
-        report_items.append("TC2 [Application Load Balancer Setup] (0/4)")
-        file_results.append(f"✗ TC2 [Application Load Balancer Setup]: FAILED (0/4) | Active ALB 'app-services-alb-{username}' with listener not found.")
+        report_items.append("TC2 [EC2 Instances Provisioning] (0/3)")
+        file_results.append(f"✗ TC2 [EC2 Instances Provisioning]: FAILED (0/3) | Running EC2 hosts spread across 3 different AZs not verified.")
         fail_count += 1
 
-    # --- TC3: Target Groups & Path Routing ---
+    # --- TC3: Application Load Balancer Setup ---
     tc3_passed = results.get('tc3', True) if solution_data else False
     if tc3_passed:
-        report_items.append("TC3 [Target Groups & Path Routing] (4/4)")
-        file_results.append("✓ TC3 [Target Groups & Path Routing]: PASSED (4/4)")
-        total_score += 4
+        report_items.append("TC3 [Application Load Balancer Setup] (3/3)")
+        file_results.append("✓ TC3 [Application Load Balancer Setup]: PASSED (3/3)")
+        total_score += 3
     else:
-        report_items.append("TC3 [Target Groups & Path Routing] (0/4)")
-        file_results.append(f"✗ TC3 [Target Groups & Path Routing]: FAILED (0/4) | Target groups target-group-app[1-3]-{username} not configured or path routing rules missing.")
+        report_items.append("TC3 [Application Load Balancer Setup] (0/3)")
+        file_results.append(f"✗ TC3 [Application Load Balancer Setup]: FAILED (0/3) | Active ALB 'app-services-alb-{username}' with listener not found.")
         fail_count += 1
 
-    # --- TC4: Security Group Restrictions ---
+    # --- TC4: Target Groups & Path Routing ---
     tc4_passed = results.get('tc4', True) if solution_data else False
     if tc4_passed:
-        report_items.append("TC4 [Security Group Restrictions] (4/4)")
-        file_results.append("✓ TC4 [Security Group Restrictions]: PASSED (4/4)")
+        report_items.append("TC4 [Target Groups & Path Routing] (4/4)")
+        file_results.append("✓ TC4 [Target Groups & Path Routing]: PASSED (4/4)")
         total_score += 4
     else:
-        report_items.append("TC4 [Security Group Restrictions] (0/4)")
-        file_results.append("✗ TC4 [Security Group Restrictions]: FAILED (0/4) | EC2 security groups allow public direct ingress traffic.")
+        report_items.append("TC4 [Target Groups & Path Routing] (0/4)")
+        file_results.append(f"✗ TC4 [Target Groups & Path Routing]: FAILED (0/4) | Target groups target-group-app[1-3]-{username} not configured or path routing rules missing.")
         fail_count += 1
 
-    # --- TC5: End-to-End Routing & Health Status ---
+    # --- TC5: Security Group Restrictions ---
     tc5_passed = results.get('tc5', True) if solution_data else False
     if tc5_passed:
-        report_items.append("TC5 [End-to-End Routing & Health Status] (4/4)")
-        file_results.append("✓ TC5 [End-to-End Routing & Health Status]: PASSED (4/4)")
+        report_items.append("TC5 [Security Group Restrictions] (4/4)")
+        file_results.append("✓ TC5 [Security Group Restrictions]: PASSED (4/4)")
         total_score += 4
     else:
-        report_items.append("TC5 [End-to-End Routing & Health Status] (0/4)")
-        file_results.append("✗ TC5 [End-to-End Routing & Health Status]: FAILED (0/4) | Target servers show as unhealthy or ALB routing is offline.")
+        report_items.append("TC5 [Security Group Restrictions] (0/4)")
+        file_results.append("✗ TC5 [Security Group Restrictions]: FAILED (0/4) | EC2 security groups allow public direct ingress traffic.")
+        fail_count += 1
+
+    # --- TC6: End-to-End Routing & Health Status ---
+    tc6_passed = results.get('tc6', True) if solution_data else False
+    if tc6_passed:
+        report_items.append("TC6 [End-to-End Routing & Health Status] (4/4)")
+        file_results.append("✓ TC6 [End-to-End Routing & Health Status]: PASSED (4/4)")
+        total_score += 4
+    else:
+        report_items.append("TC6 [End-to-End Routing & Health Status] (0/4)")
+        file_results.append("✗ TC6 [End-to-End Routing & Health Status]: FAILED (0/4) | Target servers show as unhealthy or ALB routing is offline.")
         fail_count += 1
 
     file_results.append("-" * 50)

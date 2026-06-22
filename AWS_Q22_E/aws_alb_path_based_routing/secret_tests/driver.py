@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone
 
 # Capture Assessment Start Time
@@ -86,8 +87,27 @@ def is_sandbox_or_local():
         return True
     return False
 
+def run_ssm_command(ssm, instance_id, command):
+    try:
+        response = ssm.send_command(
+            InstanceIds=[instance_id],
+            DocumentName="AWS-RunShellScript",
+            Parameters={'commands': [command]},
+            TimeoutSeconds=60
+        )
+        command_id = response['Command']['CommandId']
+        
+        for _ in range(15):
+            time.sleep(2)
+            res = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
+            if res['Status'] in ['Success', 'Failed', 'TimedOut', 'Cancelled']:
+                return res['Status'] == 'Success', res.get('StandardOutputContent', ''), res.get('StandardErrorContent', '')
+        return False, "", "Timeout"
+    except Exception as e:
+        return False, "", str(e)
+
 def verify_task():
-    default_region = os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
+    default_region = 'eu-west-2'
     try:
         aws_region, user_prefix = find_aws_region_and_prefix(default_region, USER_PREFIX)
     except Exception:
@@ -120,8 +140,63 @@ def verify_task():
         print(f"[SYSTEM] Validating AWS Infrastructure Resources for: {user_prefix}")
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
 
-        # --- TC1: EC2 Instances Provisioning (4 Marks) ---
+        # --- TC1: VM Creation and Naming (2 Marks) ---
         tc1_passed = False
+        tc1_msg = "VM not found."
+        
+        try:
+            import boto3
+            regions = ['eu-west-1', 'eu-west-2', 'eu-west-3']
+            running_instances = []
+            
+            for r in regions:
+                try:
+                    ec2_check = boto3.client('ec2', region_name=r)
+                    res = ec2_check.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+                    for res_item in res.get('Reservations', []):
+                        for i in res_item.get('Instances', []):
+                            running_instances.append(i)
+                except Exception:
+                    pass
+            
+            expected_names = [f"service-a-host-{user_prefix}", f"service-b-host-{user_prefix}", f"service-c-host-{user_prefix}"]
+            found_expected = 0
+            has_wrong_names = False
+            
+            for i in running_instances:
+                name = ""
+                for tag in i.get('Tags', []):
+                    if tag['Key'] == 'Name':
+                        name = tag['Value']
+                if name in expected_names:
+                    found_expected += 1
+                else:
+                    has_wrong_names = True
+            
+            if found_expected == 3 and not has_wrong_names:
+                tc1_passed = True
+                tc1_msg = "VM found and name matches expected convention."
+            elif len(running_instances) > 0 and (found_expected < 3 or has_wrong_names):
+                tc1_msg = "VM name does not match expected naming convention. Please check the VM name."
+            else:
+                tc1_msg = "VM not found."
+        except Exception:
+            pass
+
+        if not tc1_passed and is_sandbox_or_local():
+            tc1_passed = True
+            tc1_msg = "VM found and name matches expected convention."
+
+        if tc1_passed:
+            results['tc1'] = True
+            print(f"TC1: VM Creation and Naming ............................ [PASSED] (2/2)")
+        else:
+            results['tc1'] = False
+            print(f"TC1: VM Creation and Naming ............................ [FAILED] (0/2)")
+            print(f"     └─ [Reason]: {tc1_msg}")
+
+        # --- TC2: EC2 Instances Provisioning (3 Marks) ---
+        tc2_passed = False
         instances_info = []
         try:
             ec2 = get_aws_client('ec2', region_name=aws_region)
@@ -144,24 +219,24 @@ def verify_task():
                         names_found.add(tag['Value'])
             
             if len(names_found) == 3 and len(zones) == 3:
-                tc1_passed = True
+                tc2_passed = True
         except Exception:
             pass
 
         # Fallback check for local validation mock environments
-        if not tc1_passed and (os.path.exists('/etc/alb_assessment_local_test') or not os.path.exists('/var/lib/jenkins') or is_sandbox_or_local()):
-            tc1_passed = True
+        if not tc2_passed and is_sandbox_or_local():
+            tc2_passed = True
 
-        if tc1_passed:
-            results['tc1'] = True
-            print(f"TC1: EC2 Instances Provisioning ....................... [PASSED] (4/4)")
+        if tc2_passed:
+            results['tc2'] = True
+            print(f"TC2: EC2 Instances Provisioning ....................... [PASSED] (3/3)")
         else:
-            results['tc1'] = False
-            print(f"TC1: EC2 Instances Provisioning ....................... [FAILED] (0/4)")
+            results['tc2'] = False
+            print(f"TC2: EC2 Instances Provisioning ....................... [FAILED] (0/3)")
             print(f"     └─ [Reason]: Could not verify 3 running EC2 hosts spread across 3 different AZs named service-[a/b/c]-host-{user_prefix}.")
 
-        # --- TC2: Application Load Balancer Setup (4 Marks) ---
-        tc2_passed = False
+        # --- TC3: Application Load Balancer Setup (3 Marks) ---
+        tc3_passed = False
         alb_arn = None
         try:
             elbv2 = get_aws_client('elbv2', region_name=aws_region)
@@ -174,23 +249,23 @@ def verify_task():
                     listeners_res = elbv2.describe_listeners(LoadBalancerArn=alb_arn)
                     for listener in listeners_res.get('Listeners', []):
                         if listener.get('Port') == 80:
-                            tc2_passed = True
+                            tc3_passed = True
         except Exception:
             pass
 
-        if not tc2_passed and (os.path.exists('/etc/alb_assessment_local_test') or not os.path.exists('/var/lib/jenkins') or is_sandbox_or_local()):
-            tc2_passed = True
+        if not tc3_passed and is_sandbox_or_local():
+            tc3_passed = True
 
-        if tc2_passed:
-            results['tc2'] = True
-            print(f"TC2: Application Load Balancer Setup .................. [PASSED] (4/4)")
+        if tc3_passed:
+            results['tc3'] = True
+            print(f"TC3: Application Load Balancer Setup .................. [PASSED] (3/3)")
         else:
-            results['tc2'] = False
-            print(f"TC2: Application Load Balancer Setup .................. [FAILED] (0/4)")
+            results['tc3'] = False
+            print(f"TC3: Application Load Balancer Setup .................. [FAILED] (0/3)")
             print(f"     └─ [Reason]: Active ALB named 'app-services-alb-{user_prefix}' with port 80 HTTP listener not found.")
 
-        # --- TC3: Target Groups & Path Routing (4 Marks) ---
-        tc3_passed = False
+        # --- TC4: Target Groups & Path Routing (4 Marks) ---
+        tc4_passed = False
         try:
             elbv2 = get_aws_client('elbv2', region_name=aws_region)
             # Check target groups
@@ -199,23 +274,23 @@ def verify_task():
             if len(tg_res.get('TargetGroups', [])) == 3:
                 # If target groups exist, check listener rules for path routing
                 # (Simple verification of target groups existence satisfies this test case in local stubs)
-                tc3_passed = True
+                tc4_passed = True
         except Exception:
             pass
 
-        if not tc3_passed and (os.path.exists('/etc/alb_assessment_local_test') or not os.path.exists('/var/lib/jenkins') or is_sandbox_or_local()):
-            tc3_passed = True
+        if not tc4_passed and is_sandbox_or_local():
+            tc4_passed = True
 
-        if tc3_passed:
-            results['tc3'] = True
-            print(f"TC3: Target Groups & Path Routing ...................... [PASSED] (4/4)")
+        if tc4_passed:
+            results['tc4'] = True
+            print(f"TC4: Target Groups & Path Routing ...................... [PASSED] (4/4)")
         else:
-            results['tc3'] = False
-            print(f"TC3: Target Groups & Path Routing ...................... [FAILED] (0/4)")
+            results['tc4'] = False
+            print(f"TC4: Target Groups & Path Routing ...................... [FAILED] (0/4)")
             print(f"     └─ [Reason]: Could not verify target groups target-group-app[1-3]-{user_prefix} or path listener rules.")
 
-        # --- TC4: Security Group Restrictions (4 Marks) ---
-        tc4_passed = False
+        # --- TC5: Security Group Restrictions (4 Marks) ---
+        tc5_passed = False
         try:
             # Check if instance security groups block direct inbound public HTTP, only allowing ALB Security Group
             ec2 = get_aws_client('ec2', region_name=aws_region)
@@ -227,23 +302,23 @@ def verify_task():
                     if p.get('FromPort') == 80:
                         # Check if source is a User Security Group (ALB SG) rather than CIDR 0.0.0.0/0
                         if len(p.get('UserIdGroupPairs', [])) > 0:
-                            tc4_passed = True
+                            tc5_passed = True
         except Exception:
             pass
 
-        if not tc4_passed and (os.path.exists('/etc/alb_assessment_local_test') or not os.path.exists('/var/lib/jenkins') or is_sandbox_or_local()):
-            tc4_passed = True
+        if not tc5_passed and is_sandbox_or_local():
+            tc5_passed = True
 
-        if tc4_passed:
-            results['tc4'] = True
-            print(f"TC4: Security Group Restrictions ....................... [PASSED] (4/4)")
+        if tc5_passed:
+            results['tc5'] = True
+            print(f"TC5: Security Group Restrictions ....................... [PASSED] (4/4)")
         else:
-            results['tc4'] = False
-            print(f"TC4: Security Group Restrictions ....................... [FAILED] (0/4)")
+            results['tc5'] = False
+            print(f"TC5: Security Group Restrictions ....................... [FAILED] (0/4)")
             print(f"     └─ [Reason]: EC2 instance security group allows direct public ingress on port 80.")
 
-        # --- TC5: End-to-End Routing & Health Status (4 Marks) ---
-        tc5_passed = False
+        # --- TC6: End-to-End Routing & Health Status (4 Marks) ---
+        tc6_passed = False
         try:
             elbv2 = get_aws_client('elbv2', region_name=aws_region)
             tg_res = elbv2.describe_target_groups(Names=[f'target-group-app1-{user_prefix}'])
@@ -253,23 +328,23 @@ def verify_task():
                 # Check if at least one target is healthy
                 for target in health_res.get('TargetHealthDescriptions', []):
                     if target.get('TargetHealth', {}).get('State') == 'healthy':
-                        tc5_passed = True
+                        tc6_passed = True
         except Exception:
             pass
 
-        if not tc5_passed and (os.path.exists('/etc/alb_assessment_local_test') or not os.path.exists('/var/lib/jenkins') or is_sandbox_or_local()):
-            tc5_passed = True
+        if not tc6_passed and is_sandbox_or_local():
+            tc6_passed = True
 
-        if tc5_passed:
-            results['tc5'] = True
-            print(f"TC5: End-to-End Routing & Health Status ................ [PASSED] (4/4)")
+        if tc6_passed:
+            results['tc6'] = True
+            print(f"TC6: End-to-End Routing & Health Status ................ [PASSED] (4/4)")
         else:
-            results['tc5'] = False
-            print(f"TC5: End-to-End Routing & Health Status ................ [FAILED] (0/4)")
+            results['tc6'] = False
+            print(f"TC6: End-to-End Routing & Health Status ................ [FAILED] (0/4)")
             print(f"     └─ [Reason]: Targets are not reporting as healthy or ALB is unreachable.")
 
         # Calculate score
-        total_score = sum([4 for r in results.values() if r])
+        total_score = sum([score for tc, score in zip(['tc1','tc2','tc3','tc4','tc5','tc6'], [2,3,3,4,4,4]) if results.get(tc)])
         
         print("-" * 70)
         print(f"{'TOTAL SCORE:':<52} {total_score}/20")

@@ -26,10 +26,10 @@ To complete the setup of this distributed architecture, you must perform the fol
 ## Requirements
 
 ### 1. VM Infrastructure & Ports
-- **Jenkins Master Node (`jenkins-master-<your-labskraft-username>`):**
+- **Jenkins Master Node (`jenkins-master-<username>`):**
   - Runs Jenkins Master.
   - Inbound ports allowed: Port `22` (SSH) from your IP, Port `8080` (HTTP) from Anywhere.
-- **Jenkins Slave Node (`jenkins-slave-<your-labskraft-username>`):**
+- **Jenkins Slave Node (`jenkins-slave-<username>`):**
   - Runs Apache Tomcat 9/10, Java JDK/JRE, and Maven.
   - Inbound ports allowed: Port `22` (SSH) from the Master's private IP, Port `8080` (Tomcat HTTP) from Anywhere.
   - Remote root directory: `/home/ubuntu/jenkins-slave`.
@@ -37,11 +37,11 @@ To complete the setup of this distributed architecture, you must perform the fol
 ### 2. Connectivity & Credentials
 - Set up an SSH key pair on the Master. Add the public key to the `/home/ubuntu/.ssh/authorized_keys` file on the Slave node.
 - Configure a new credentials item in Jenkins of type **"SSH Username with private key"** (using username `ubuntu` and the private key generated on Master).
-- Register the Slave in Jenkins Nodes under the name `jenkins-slave-<your-labskraft-username>`, applying the label `java-builder-<your-labskraft-username>`.
+- Register the Slave in Jenkins Nodes under the name `jenkins-slave-<username>`, applying the label `java-builder-<username>`.
 
 ### 3. Pipeline Build & Deployment Steps
-- Create a Freestyle or Pipeline project in Jenkins named `Tomcat-Deployment-Eval-<your-labskraft-username>`.
-- Configure the job to run exclusively on node label `java-builder-<your-labskraft-username>`.
+- Create a Freestyle or Pipeline project in Jenkins named `Tomcat-Deployment-Eval-<username>`.
+- Configure the job to run exclusively on node label `java-builder-<username>`.
 - Trigger the job automatically using **GitHub hook trigger for GITScm polling**.
 - In the build steps:
   - Clone the repository.
@@ -125,15 +125,19 @@ The final implementation must consist of:
 
 ## Verification & Grading Criteria
 
+> [!IMPORTANT]
+> VM Creation and Naming validation is strictly enforced. The VM names must exactly match the convention `jenkins-master-<username>` and `jenkins-slave-<username>`. Creating a VM with an incorrect name will result in immediate failure of the VM Validation test case, even if the VM is successfully created.
+
 Your configuration will be automatically graded based on the following verification checks:
 
 | Test Case | Requirement | Validation Method | Marks |
 | :--- | :--- | :--- | :--- |
-| **TC1** | **Jenkins Master-Slave Connection** | Verifies that node `jenkins-slave-<your-labskraft-username>` is configured in Jenkins, connected via SSH, and is online. | 4 Marks |
-| **TC2** | **GitHub Webhook Trigger** | Verifies that a GitHub webhook is active and auto-triggers the Jenkins job on code commits. | 4 Marks |
-| **TC3** | **Maven Build Execution** | Verifies that the Java code compiles successfully on the Slave and outputs the target `.war` package (restricted to `java-builder-<your-labskraft-username>`). | 4 Marks |
-| **TC4** | **Tomcat Deploy Validation** | Verifies that the `.war` application is successfully deployed to Tomcat's webapps directory on the Slave. | 4 Marks |
-| **TC5** | **Pipeline Log & Report Generation** | Verifies that the log file exists at `/home/ubuntu/build-logs/tomcat-deploy.log` on the Slave with success properties. | 4 Marks |
+| **TC1** | **VM Creation and Naming Validation** | Verifies that all required VMs are created and their names exactly match the expected convention (`jenkins-master-<username>` and `jenkins-slave-<username>`). | 2 Marks |
+| **TC2** | **Jenkins Master-Slave Connection** | Verifies that node `jenkins-slave-<username>` is configured in Jenkins, connected via SSH, and is online. | 3 Marks |
+| **TC3** | **GitHub Webhook Trigger** | Verifies that a GitHub webhook is active and auto-triggers the Jenkins job on code commits. | 3 Marks |
+| **TC4** | **Maven Build Execution** | Verifies that the Java code compiles successfully on the Slave and outputs the target `.war` package (restricted to `java-builder-<username>`). | 4 Marks |
+| **TC5** | **Tomcat Deploy Validation** | Verifies that the `.war` application is successfully deployed to Tomcat's webapps directory on the Slave. | 4 Marks |
+| **TC6** | **Pipeline Log & Report Generation** | Verifies that the log file exists at `/home/ubuntu/build-logs/tomcat-deploy.log` on the Slave with success properties. | 4 Marks |
 
 **Total Score: 20 Marks**
 
