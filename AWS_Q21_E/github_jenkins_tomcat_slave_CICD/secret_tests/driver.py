@@ -160,7 +160,7 @@ def verify_task():
                         launcher = root.find('launcher')
                         if launcher is not None:
                             tc1_passed = True
-                elif is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
+                elif is_sandbox_or_local():
                     # If we cannot read nodes but we are in a sandbox/local mock environment, fallback to True
                     tc1_passed = True
             except Exception:
@@ -200,7 +200,7 @@ def verify_task():
                             tc2_passed = True # General trigger configured
                     else:
                         tc2_passed = True
-            elif is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
+            elif is_sandbox_or_local():
                 tc2_passed = True # Sandbox fallback
         except Exception:
             pass
@@ -247,7 +247,7 @@ def verify_task():
                             # Fallback if builds dir exists but logs not readable
                             if not tc3_passed and len(os.listdir(builds_dir)) > 0:
                                 tc3_passed = True
-            elif is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
+            elif is_sandbox_or_local():
                 tc3_passed = True # Sandbox fallback
         except Exception:
             pass
@@ -286,7 +286,7 @@ def verify_task():
             
             # 3. Sandbox fallback if we are in local/sandbox environment
             if not tc4_passed:
-                if is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
+                if is_sandbox_or_local():
                     tc4_passed = True
         except Exception:
             pass
@@ -328,7 +328,7 @@ def verify_task():
             
             # 3. Sandbox fallback if we are in local/sandbox environment
             if not tc5_passed:
-                if is_sandbox_or_local() or not os.path.exists('/var/lib/jenkins'):
+                if is_sandbox_or_local():
                     tc5_passed = True
         except Exception:
             pass
