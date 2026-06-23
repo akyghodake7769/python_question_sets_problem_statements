@@ -6,7 +6,10 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
     """
     Central Server Auditor: Verifies AWS ALB Path-Based Routing infrastructure.
     """
-    username = labskraft_username if labskraft_username else candidate_email.split('@')[0]
+    if solution_data and 'candidate_prefix' in solution_data:
+        username = solution_data['candidate_prefix']
+    else:
+        username = labskraft_username if labskraft_username else candidate_email.split('@')[0]
     
     report_items = []
     file_results = []
@@ -30,7 +33,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 2
     else:
         report_items.append("TC1 [VM Creation and Naming] (0/2)")
-        file_results.append(f"✗ TC1 [VM Creation and Naming]: FAILED (0/2) | Running EC2 hosts named service-a-host-{username}, service-b-host-{username}, and service-c-host-{username} not found or name doesn't match convention.")
+        file_results.append(f"✗ TC1 [VM Creation and Naming]: FAILED (0/2) | Running EC2 hosts named {username}-service-a-host, {username}-service-b-host, and {username}-service-c-host not found or name doesn't match convention.")
         fail_count += 1
 
     # --- TC2: EC2 Instances Provisioning ---
@@ -52,7 +55,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 3
     else:
         report_items.append("TC3 [Application Load Balancer Setup] (0/3)")
-        file_results.append(f"✗ TC3 [Application Load Balancer Setup]: FAILED (0/3) | Active ALB 'app-services-alb-{username}' with listener not found.")
+        file_results.append(f"✗ TC3 [Application Load Balancer Setup]: FAILED (0/3) | Active ALB '{username}-services-alb' with listener not found.")
         fail_count += 1
 
     # --- TC4: Target Groups & Path Routing ---
@@ -63,7 +66,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
         total_score += 4
     else:
         report_items.append("TC4 [Target Groups & Path Routing] (0/4)")
-        file_results.append(f"✗ TC4 [Target Groups & Path Routing]: FAILED (0/4) | Target groups target-group-app[1-3]-{username} not configured or path routing rules missing.")
+        file_results.append(f"✗ TC4 [Target Groups & Path Routing]: FAILED (0/4) | Target groups {username}-tg-app[1-3] not configured or path routing rules missing.")
         fail_count += 1
 
     # --- TC5: Security Group Restrictions ---

@@ -1,7 +1,7 @@
 # DevOps Lab: AWS Application Load Balancer (ALB) Path-Based Routing
 
 **Difficulty Level:** Medium
-**Duration:** 30 Minutes
+**Duration:** 250 Minutes
 
 ## Scenario
 
@@ -33,28 +33,34 @@ To set up this high-availability web architecture, you must perform the followin
 
 ## Requirements
 
+> [!WARNING]
+> **CRITICAL NAMING CONVENTION REQUIREMENT:**
+> You must name all resources using your **AWS IAM username** as a **prefix** (e.g. if your AWS IAM username is `ltm-devops-user1`, then your VM must be named `ltm-devops-user1-service-a-host`).
+> Do **NOT** use your platform username (e.g. `LabsKraft`) or the default OS user `labskraft` as the name or suffix. Doing so will cause the VM Validation test case to fail.
+> Note that the ALB and Target Group names must also be prefixed with your AWS IAM username and use the shortened format below to avoid exceeding AWS's 32-character limit (e.g., `<username>-services-alb` and `<username>-tg-app1`).
+
 ### 1. EC2 Microservice Instances
 - **Instance 1 (Service A):**
-  - **Name Tag:** `service-a-host-<username>`
+  - **Name Tag:** `<username>-service-a-host`
   - **Availability Zone:** AZ1 (e.g., `us-east-1a`)
   - **Service Path:** `http://<private-ip>/app1/` (Should return a simple message like "Product Catalog Service")
 - **Instance 2 (Service B):**
-  - **Name Tag:** `service-b-host-<username>`
+  - **Name Tag:** `<username>-service-b-host`
   - **Availability Zone:** AZ2 (e.g., `us-east-1b`)
   - **Service Path:** `http://<private-ip>/app2/` (Should return a simple message like "Order Management Service")
 - **Instance 3 (Service C):**
-  - **Name Tag:** `service-c-host-<username>`
+  - **Name Tag:** `<username>-service-c-host`
   - **Availability Zone:** AZ3 (e.g., `us-east-1c`)
   - **Service Path:** `http://<private-ip>/app3/` (Should return a simple message like "User Profile Service")
 
 ### 2. Application Load Balancer (ALB)
-- **ALB Name:** `app-services-alb-<username>`
+- **ALB Name:** `<username>-services-alb`
 - **Scheme:** Internet-facing
 - **Listener:** Port `80` (HTTP)
 - **Target Groups:**
-- `target-group-app1-<username>` (containing `service-a-host-<username>` on port 80)
-- `target-group-app2-<username>` (containing `service-b-host-<username>` on port 80)
-- `target-group-app3-<username>` (containing `service-c-host-<username>` on port 80)
+  - `<username>-tg-app1` (containing `<username>-service-a-host` on port 80)
+  - `<username>-tg-app2` (containing `<username>-service-b-host` on port 80)
+  - `<username>-tg-app3` (containing `<username>-service-c-host` on port 80)
 
 ### 3. Security & Access Control
 - **ALB Security Group:** Allows inbound HTTP (`80`) from Anywhere (`0.0.0.0/0`).
@@ -107,10 +113,10 @@ The final implementation must consist of:
 
 | Deliverable | Description |
 | :--- | :--- |
-| **Three Running Instances** | EC2 instances named `service-a-host-<your-labskraft-username>`, `service-b-host-<your-labskraft-username>`, and `service-c-host-<your-labskraft-username>` placed in three distinct Availability Zones. |
+| **Three Running Instances** | EC2 instances named `<your-aws-iam-username>-service-a-host`, `<your-aws-iam-username>-service-b-host`, and `<your-aws-iam-username>-service-c-host` placed in three distinct Availability Zones. |
 | **Three Web Applications** | HTTP servers serving the correct content under `/app1/`, `/app2/`, and `/app3/` on the respective hosts. |
-| **Application Load Balancer** | Active ALB named `app-services-alb-<your-labskraft-username>` configured with target routing rules. |
-| **Three Target Groups** | Target groups named `target-group-app1-<your-labskraft-username>`, `target-group-app2-<your-labskraft-username>`, and `target-group-app3-<your-labskraft-username>` configured on port 80 with passing health check metrics. |
+| **Application Load Balancer** | Active ALB named `<your-aws-iam-username>-services-alb` configured with target routing rules. |
+| **Three Target Groups** | Target groups named `<your-aws-iam-username>-tg-app1`, `<your-aws-iam-username>-tg-app2`, and `<your-aws-iam-username>-tg-app3` configured on port 80 with passing health check metrics. |
 | **Secure Instance Security Group** | Instance firewall rules that block direct internet access and permit traffic only from the ALB. |
 
 ---
@@ -130,16 +136,16 @@ The final implementation must consist of:
 ## Verification & Grading Criteria
 
 > [!IMPORTANT]
-> VM Creation and Naming validation is strictly enforced. The VM names must exactly match the convention `service-a-host-<username>`, `service-b-host-<username>`, and `service-c-host-<username>`. Creating a VM with an incorrect name will result in immediate failure of the VM Validation test case, even if the VM is successfully created.
+> VM Creation and Naming validation is strictly enforced. The VM names must exactly match the convention `<username>-service-a-host`, `<username>-service-b-host`, and `<username>-service-c-host`. Creating a VM with an incorrect name or using a suffix/portal username will result in immediate failure of the VM Validation test case, even if the VM is successfully created.
 
 Your infrastructure configuration will be automatically graded based on the following checks:
 
 | Test Case | Requirement | Validation Method | Marks |
 | :--- | :--- | :--- | :--- |
-| **TC1** | **VM Creation and Naming Validation** | Verifies that all required VMs are created and their names exactly match the expected convention (`service-a-host-<username>`, `service-b-host-<username>`, and `service-c-host-<username>`). | 2 Marks |
+| **TC1** | **VM Creation and Naming Validation** | Verifies that all required VMs are created and their names exactly match the expected convention (`<username>-service-a-host`, `<username>-service-b-host`, and `<username>-service-c-host`). | 2 Marks |
 | **TC2** | **EC2 Instances Provisioning** | Verifies three EC2 instances exist, are running, and are spread across three distinct AZs. | 3 Marks |
-| **TC3** | **Application Load Balancer Setup** | Verifies `app-services-alb-<username>` is active, has a public DNS name, and is listening on port 80. | 3 Marks |
-| **TC4** | **Target Groups & Path Routing** | Verifies three target groups (`target-group-app1-<username>`, `target-group-app2-<username>`, `target-group-app3-<username>`) are configured with path-based listener rules forwarding `/app1*`, `/app2*`, and `/app3*` correctly. | 4 Marks |
+| **TC3** | **Application Load Balancer Setup** | Verifies `<username>-services-alb` is active, has a public DNS name, and is listening on port 80. | 3 Marks |
+| **TC4** | **Target Groups & Path Routing** | Verifies three target groups (`<username>-tg-app1`, `<username>-tg-app2`, `<username>-tg-app3`) are configured with path-based listener rules forwarding `/app1*`, `/app2*`, and `/app3*` correctly. | 4 Marks |
 | **TC5** | **Security Group Restrictions** | Verifies instances block direct internet access and only allow inbound HTTP port 80 traffic from the ALB. | 4 Marks |
 | **TC6** | **End-to-End Routing & Health Status** | Verifies targets show as healthy and requesting the paths on the ALB DNS name returns successful service responses. | 4 Marks |
 

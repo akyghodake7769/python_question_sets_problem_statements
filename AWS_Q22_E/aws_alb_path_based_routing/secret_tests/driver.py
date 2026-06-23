@@ -35,10 +35,47 @@ def get_aws_client(service, region_name=None):
             pass
         return boto3.client(service, region_name=region_name)
 
+def get_iam_username():
+    try:
+        import boto3
+        sts = boto3.client('sts')
+        arn = sts.get_caller_identity().get('Arn', '')
+        if ':user/' in arn:
+            return arn.split(':user/')[-1].strip()
+        elif ':assumed-role/' in arn:
+            role_part = arn.split(':assumed-role/')[-1].strip()
+            if '/' in role_part:
+                return role_part.split('/')[-1].strip()
+            return role_part.strip()
+        else:
+            if '/' in arn:
+                return arn.split('/')[-1].strip()
+    except Exception:
+        pass
+    return None
+
 def find_aws_region_and_prefix(default_region, default_prefix):
     import boto3
     regions = ['eu-west-1', 'eu-west-2', 'eu-west-3']
     
+    # Try STS/IAM username first
+    iam_user = get_iam_username()
+    if iam_user and iam_user not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
+        for r in regions:
+            try:
+                ec2 = boto3.client('ec2', region_name=r)
+                res = ec2.describe_instances(
+                    Filters=[
+                        {'Name': 'tag:Name', 'Values': [f'{iam_user}-service-a-host', f'{iam_user}-service-b-host', f'{iam_user}-service-c-host']},
+                        {'Name': 'instance-state-name', 'Values': ['running']}
+                    ]
+                )
+                if any(res.get('Reservations', [])):
+                    return r, iam_user
+            except Exception:
+                pass
+        return default_region, iam_user
+        
     for r in regions:
         try:
             ec2 = boto3.client('ec2', region_name=r)
@@ -52,12 +89,12 @@ def find_aws_region_and_prefix(default_region, default_prefix):
                     for tag in inst.get('Tags', []):
                         if tag['Key'] == 'Name':
                             val = tag['Value']
-                            if val.startswith('service-a-host-'):
-                                return r, val.replace('service-a-host-', '')
-                            elif val.startswith('service-b-host-'):
-                                return r, val.replace('service-b-host-', '')
-                            elif val.startswith('service-c-host-'):
-                                return r, val.replace('service-c-host-', '')
+                            if val.endswith('-service-a-host'):
+                                return r, val.replace('-service-a-host', '')
+                            elif val.endswith('-service-b-host'):
+                                return r, val.replace('-service-b-host', '')
+                            elif val.endswith('-service-c-host'):
+                                return r, val.replace('-service-c-host', '')
         except Exception:
             pass
             
@@ -67,8 +104,8 @@ def find_aws_region_and_prefix(default_region, default_prefix):
             tgs = elbv2.describe_target_groups().get('TargetGroups', [])
             for tg in tgs:
                 name = tg.get('TargetGroupName', '')
-                if name.startswith('target-group-app1-'):
-                    return r, name.replace('target-group-app1-', '')
+                if name.endswith('-tg-app1'):
+                    return r, name.replace('-tg-app1', '')
         except Exception:
             pass
 
@@ -131,7 +168,7 @@ def verify_task():
 
         now = datetime.now(timezone.utc)
         elapsed_minutes = (now - session_start).total_seconds() / 60
-        max_duration = 30  # 30 Min assessment for AWS_Q22_E
+        max_duration = 250  # 250 Min assessment for AWS_Q22_E
 
         if elapsed_minutes > max_duration + 10:
             print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
@@ -159,7 +196,7 @@ def verify_task():
                 except Exception:
                     pass
             
-            expected_names = [f"service-a-host-{user_prefix}", f"service-b-host-{user_prefix}", f"service-c-host-{user_prefix}"]
+            expected_names = [f"{user_prefix}-service-a-host", f"{user_prefix}-service-b-host", f"{user_prefix}-service-c-host"]
             found_expected = 0
             has_wrong_names = False
             
@@ -177,7 +214,7 @@ def verify_task():
                 tc1_passed = True
                 tc1_msg = "VM found and name matches expected convention."
             elif len(running_instances) > 0 and (found_expected < 3 or has_wrong_names):
-                tc1_msg = "VM name does not match expected naming convention. Please check the VM name."
+                tc1_msg = "VM name does not match expected naming convention. Make sure the VM is prefixed with your AWS IAM username (e.g., <iam-username>-service-a-host), NOT your VM's OS user prefix (e.g. LabsKraft)."
             else:
                 tc1_msg = "VM not found."
         except Exception:
@@ -202,7 +239,7 @@ def verify_task():
             ec2 = get_aws_client('ec2', region_name=aws_region)
             res = ec2.describe_instances(
                 Filters=[
-                    {'Name': 'tag:Name', 'Values': [f'service-a-host-{user_prefix}', f'service-b-host-{user_prefix}', f'service-c-host-{user_prefix}']},
+                    {'Name': 'tag:Name', 'Values': [f'{user_prefix}-service-a-host', f'{user_prefix}-service-b-host', f'{user_prefix}-service-c-host']},
                     {'Name': 'instance-state-name', 'Values': ['running']}
                 ]
             )
@@ -233,14 +270,14 @@ def verify_task():
         else:
             results['tc2'] = False
             print(f"TC2: EC2 Instances Provisioning ....................... [FAILED] (0/3)")
-            print(f"     └─ [Reason]: Could not verify 3 running EC2 hosts spread across 3 different AZs named service-[a/b/c]-host-{user_prefix}.")
+            print(f"     └─ [Reason]: Could not verify 3 running EC2 hosts spread across 3 different AZs named {user_prefix}-service-[a/b/c]-host.")
 
         # --- TC3: Application Load Balancer Setup (3 Marks) ---
         tc3_passed = False
         alb_arn = None
         try:
             elbv2 = get_aws_client('elbv2', region_name=aws_region)
-            res = elbv2.describe_load_balancers(Names=[f'app-services-alb-{user_prefix}'])
+            res = elbv2.describe_load_balancers(Names=[f'{user_prefix}-services-alb'])
             if len(res.get('LoadBalancers', [])) > 0:
                 alb = res['LoadBalancers'][0]
                 if alb.get('State', {}).get('Code') in ['active', 'provisioning']:
@@ -262,14 +299,14 @@ def verify_task():
         else:
             results['tc3'] = False
             print(f"TC3: Application Load Balancer Setup .................. [FAILED] (0/3)")
-            print(f"     └─ [Reason]: Active ALB named 'app-services-alb-{user_prefix}' with port 80 HTTP listener not found.")
+            print(f"     └─ [Reason]: Active ALB named '{user_prefix}-services-alb' with port 80 HTTP listener not found.")
 
         # --- TC4: Target Groups & Path Routing (4 Marks) ---
         tc4_passed = False
         try:
             elbv2 = get_aws_client('elbv2', region_name=aws_region)
             # Check target groups
-            tg_names = [f'target-group-app1-{user_prefix}', f'target-group-app2-{user_prefix}', f'target-group-app3-{user_prefix}']
+            tg_names = [f'{user_prefix}-tg-app1', f'{user_prefix}-tg-app2', f'{user_prefix}-tg-app3']
             tg_res = elbv2.describe_target_groups(Names=tg_names)
             if len(tg_res.get('TargetGroups', [])) == 3:
                 # If target groups exist, check listener rules for path routing
@@ -287,7 +324,7 @@ def verify_task():
         else:
             results['tc4'] = False
             print(f"TC4: Target Groups & Path Routing ...................... [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Could not verify target groups target-group-app[1-3]-{user_prefix} or path listener rules.")
+            print(f"     └─ [Reason]: Could not verify target groups {user_prefix}-tg-app[1-3] or path listener rules.")
 
         # --- TC5: Security Group Restrictions (4 Marks) ---
         tc5_passed = False
@@ -302,7 +339,7 @@ def verify_task():
                     if p.get('FromPort') == 80:
                         # Check if source is a User Security Group (ALB SG) rather than CIDR 0.0.0.0/0
                         if len(p.get('UserIdGroupPairs', [])) > 0:
-                            tc5_passed = True
+                             tc5_passed = True
         except Exception:
             pass
 
@@ -321,7 +358,7 @@ def verify_task():
         tc6_passed = False
         try:
             elbv2 = get_aws_client('elbv2', region_name=aws_region)
-            tg_res = elbv2.describe_target_groups(Names=[f'target-group-app1-{user_prefix}'])
+            tg_res = elbv2.describe_target_groups(Names=[f'{user_prefix}-tg-app1'])
             if len(tg_res.get('TargetGroups', [])) > 0:
                 tg_arn = tg_res['TargetGroups'][0]['TargetGroupArn']
                 health_res = elbv2.describe_target_health(TargetGroupArn=tg_arn)
