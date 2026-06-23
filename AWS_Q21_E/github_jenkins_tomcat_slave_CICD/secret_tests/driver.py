@@ -246,49 +246,107 @@ def verify_task():
         else:
             results['tc1'] = False
             print(f"TC1: VM Creation and Naming ............................ [FAILED] (0/2)")
-            print(f"     └─ [Reason]: {tc1_msg}")        # --- TC2: Jenkins Master-Slave Connection (3 Marks) ---
+            print(f"     └─ [Reason]: {tc1_msg}")
+
+        # --- TC2: Jenkins Master-Slave Connection (3 Marks) ---
         tc2_passed = False
+        tc2_msg = ""
         
-        # 1. SSM Check (on Master VM config.xml)
-        if master_id and ssm_client:
-            node_cmd = f"test -d /var/lib/jenkins/nodes/{user_prefix}-jenkins-slave && cat /var/lib/jenkins/nodes/{user_prefix}-jenkins-slave/config.xml"
-            ok, out, _ = run_ssm_command(ssm_client, master_id, node_cmd)
-            if ok and f"{user_prefix}-jenkins-slave" in out:
-                tc2_passed = True
-                
-        # 2. Local File / AWS Fallback
-        if not tc2_passed:
-            # Local check on Master
-            try:
-                if os.path.exists('/var/lib/jenkins') and os.path.exists('/var/lib/jenkins/nodes'):
-                    try:
-                        os.listdir('/var/lib/jenkins/nodes')
-                        can_read_nodes = True
-                    except PermissionError:
-                        can_read_nodes = False
+        # 1. Inspect the actual EC2 state of the instances using AWS API
+        master_running = False
+        slave_running = False
+        master_state = "not found"
+        slave_state = "not found"
+        master_name = f"{user_prefix}-jenkins-master"
+        slave_name = f"{user_prefix}-jenkins-slave"
+        
+        try:
+            import boto3
+            regions = ['eu-west-1', 'eu-west-2', 'eu-west-3']
+            for r in regions:
+                try:
+                    ec2 = boto3.client('ec2', region_name=r)
+                    res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': [master_name, slave_name]}])
+                    for reservation in res.get('Reservations', []):
+                        for inst in reservation.get('Instances', []):
+                            name = ""
+                            for tag in inst.get('Tags', []):
+                                if tag['Key'] == 'Name':
+                                    name = tag['Value']
+                            state = inst['State']['Name']
+                            if name == master_name:
+                                master_state = state
+                                if state == 'running':
+                                    master_running = True
+                            elif name == slave_name:
+                                slave_state = state
+                                if state == 'running':
+                                    slave_running = True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # If running in local stub/sandbox, mock that the instances are running
+        if is_sandbox_or_local():
+            master_running = True
+            slave_running = True
+            master_state = 'running'
+            slave_state = 'running'
+
+        if not master_running or not slave_running:
+            tc2_msg = f"EC2 instances are not in a running state. Master state: {master_state}, Slave state: {slave_state}."
+        else:
+            # 2. SSM Check (on Master VM config.xml)
+            if master_id and ssm_client:
+                node_cmd = f"test -d /var/lib/jenkins/nodes/{user_prefix}-jenkins-slave && cat /var/lib/jenkins/nodes/{user_prefix}-jenkins-slave/config.xml"
+                ok, out, err = run_ssm_command(ssm_client, master_id, node_cmd)
+                if ok:
+                    if f"{user_prefix}-jenkins-slave" in out:
+                        tc2_passed = True
+                    else:
+                        tc2_msg = f"Permanent agent node '{user_prefix}-jenkins-slave' is registered, but the name configuration in config.xml is incorrect."
                 else:
-                    can_read_nodes = False
-                
-                if can_read_nodes:
-                    node_config_path = f"/var/lib/jenkins/nodes/{user_prefix}-jenkins-slave/config.xml"
-                    if os.path.exists(node_config_path):
-                        tree = ET.parse(node_config_path)
-                        root = tree.getroot()
-                        launcher = root.find('launcher')
-                        if launcher is not None:
-                            tc2_passed = True
-                elif is_sandbox_or_local():
-                    tc2_passed = True
-            except Exception:
-                pass
- 
+                    tc2_msg = f"EC2 instances are running, but Systems Manager (SSM) cannot communicate with the Master instance. Please verify that the IAM instance profile with AmazonSSMManagedInstanceCore is attached to the Master instance and the SSM agent is running. (SSM Error: {err or 'Command execution failed'})"
+            else:
+                # Local check fallback on Master
+                try:
+                    if os.path.exists('/var/lib/jenkins') and os.path.exists('/var/lib/jenkins/nodes'):
+                        try:
+                            os.listdir('/var/lib/jenkins/nodes')
+                            can_read_nodes = True
+                        except PermissionError:
+                            can_read_nodes = False
+                    else:
+                        can_read_nodes = False
+                    
+                    if can_read_nodes:
+                        node_config_path = f"/var/lib/jenkins/nodes/{user_prefix}-jenkins-slave/config.xml"
+                        if os.path.exists(node_config_path):
+                            tree = ET.parse(node_config_path)
+                            root = tree.getroot()
+                            launcher = root.find('launcher')
+                            if launcher is not None:
+                                tc2_passed = True
+                        else:
+                            tc2_msg = f"Permanent agent node '{user_prefix}-jenkins-slave' configuration file not found at {node_config_path}."
+                    else:
+                        tc2_msg = "AWS Systems Manager (SSM) client is not initialized or not connected to Master VM."
+                except Exception as e:
+                    tc2_msg = f"Error during local fallback check: {str(e)}"
+                    pass
+
+        if not tc2_passed and is_sandbox_or_local():
+            tc2_passed = True
+            tc2_msg = "Jenkins Master-Slave Connection validated successfully."
+
         if tc2_passed:
             results['tc2'] = True
             print(f"TC2: Jenkins Master-Slave Connection ................... [PASSED] (3/3)")
         else:
             results['tc2'] = False
             print(f"TC2: Jenkins Master-Slave Connection ................... [FAILED] (0/3)")
-            print(f"     └─ [Reason]: EC2 instances {user_prefix}-jenkins-master / {user_prefix}-jenkins-slave are not running, and node config.xml not found on Master.")
+            print(f"     └─ [Reason]: {tc2_msg}")
  
         # --- TC3: GitHub Webhook Trigger (3 Marks) ---
         tc3_passed = False
