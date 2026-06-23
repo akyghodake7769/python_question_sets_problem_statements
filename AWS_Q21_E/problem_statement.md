@@ -1,7 +1,7 @@
 # DevOps Lab: Automated Jenkins Master-Slave Java WAR Deployment to Tomcat
 
 **Difficulty Level:** Medium
-**Duration:** 120 Minutes
+**Duration:** 250 Minutes
 
 ## Scenario
 
@@ -25,11 +25,16 @@ To complete the setup of this distributed architecture, you must perform the fol
 
 ## Requirements
 
+> [!WARNING]
+> **CRITICAL RESOURCE CONFIGURATION & NAMING REQUIREMENT:**
+> 1. You must name all resources using your **AWS IAM username** as a **prefix** (e.g., if your AWS IAM username is `ltm-devops-user1`, then your VM must be named `ltm-devops-user1-jenkins-master` and your slave `ltm-devops-user1-jenkins-slave`). Do **NOT** use your platform username (e.g. `LabsKraft`) or the default OS user `labskraft` as the name or suffix.
+> 2. You **MUST** attach an IAM instance profile with `AmazonSSMManagedInstanceCore` permissions to **both** EC2 instances. This is required for the automated grading tool to verify your local Jenkins configurations and files via AWS Systems Manager (SSM). Without this role attached, test verification checks will fail.
+
 ### 1. VM Infrastructure & Ports
-- **Jenkins Master Node (`jenkins-master-<username>`):**
+- **Jenkins Master Node (`<username>-jenkins-master`):**
   - Runs Jenkins Master.
   - Inbound ports allowed: Port `22` (SSH) from your IP, Port `8080` (HTTP) from Anywhere.
-- **Jenkins Slave Node (`jenkins-slave-<username>`):**
+- **Jenkins Slave Node (`<username>-jenkins-slave`):**
   - Runs Apache Tomcat 9/10, Java JDK/JRE, and Maven.
   - Inbound ports allowed: Port `22` (SSH) from the Master's private IP, Port `8080` (Tomcat HTTP) from Anywhere.
   - Remote root directory: `/home/ubuntu/jenkins-slave`.
@@ -37,11 +42,11 @@ To complete the setup of this distributed architecture, you must perform the fol
 ### 2. Connectivity & Credentials
 - Set up an SSH key pair on the Master. Add the public key to the `/home/ubuntu/.ssh/authorized_keys` file on the Slave node.
 - Configure a new credentials item in Jenkins of type **"SSH Username with private key"** (using username `ubuntu` and the private key generated on Master).
-- Register the Slave in Jenkins Nodes under the name `jenkins-slave-<username>`, applying the label `java-builder-<username>`.
+- Register the Slave in Jenkins Nodes under the name `<username>-jenkins-slave`, applying the label `<username>-java-builder`.
 
 ### 3. Pipeline Build & Deployment Steps
-- Create a Freestyle or Pipeline project in Jenkins named `Tomcat-Deployment-Eval-<username>`.
-- Configure the job to run exclusively on node label `java-builder-<username>`.
+- Create a Freestyle or Pipeline project in Jenkins named `<username>-Tomcat-Deployment-Eval`.
+- Configure the job to run exclusively on node label `<username>-java-builder`.
 - Trigger the job automatically using **GitHub hook trigger for GITScm polling**.
 - In the build steps:
   - Clone the repository.
@@ -87,7 +92,7 @@ Your pipeline should write an audit log to `/home/ubuntu/build-logs/tomcat-deplo
 GIT_CLONE=SUCCESS
 MAVEN_BUILD=SUCCESS
 TOMCAT_DEPLOYMENT=SUCCESS
-PIPELINE_NAME=Tomcat-Deployment-Eval-<your-labskraft-username>
+PIPELINE_NAME=<your-aws-iam-username>-Tomcat-Deployment-Eval
 BUILD_NUMBER=15
 FINAL_STATUS=SUCCESS
 TIMESTAMP=Fri Jun 19 04:30:00 UTC 2026
@@ -102,10 +107,10 @@ The final implementation must consist of:
 | Deliverable | Description |
 | :--- | :--- |
 | **Jenkins Master Setup** | Active Master EC2 instance serving Jenkins on HTTP port 8080. |
-| **Active SSH Agent Node** | Connected permanent node `jenkins-slave-<your-labskraft-username>` showing as "Online" in Jenkins. |
+| **Active SSH Agent Node** | Connected permanent node `<your-aws-iam-username>-jenkins-slave` showing as "Online" in Jenkins. |
 | **Tomcat Web Server** | Active Tomcat service listening on port 8080 on the Slave. |
 | **GitHub Webhook Integration** | Configured repository webhook that automatically triggers Jenkins on push events. |
-| **Maven Deployment Job** | Project named `Tomcat-Deployment-Eval-<your-labskraft-username>` restricted to label `java-builder-<your-labskraft-username>`. |
+| **Maven Deployment Job** | Project named `<your-aws-iam-username>-Tomcat-Deployment-Eval` restricted to label `<your-aws-iam-username>-java-builder`. |
 | **Evaluation Audit Report** | A structured status log at `/home/ubuntu/build-logs/tomcat-deploy.log` on the Slave. |
 
 ---
@@ -126,16 +131,16 @@ The final implementation must consist of:
 ## Verification & Grading Criteria
 
 > [!IMPORTANT]
-> VM Creation and Naming validation is strictly enforced. The VM names must exactly match the convention `jenkins-master-<username>` and `jenkins-slave-<username>`. Creating a VM with an incorrect name will result in immediate failure of the VM Validation test case, even if the VM is successfully created.
+> VM Creation and Naming validation is strictly enforced. The VM names must exactly match the convention `<username>-jenkins-master` and `<username>-jenkins-slave`. Creating a VM with an incorrect name or using a suffix/portal username will result in immediate failure of the VM Validation test case, even if the VM is successfully created.
 
 Your configuration will be automatically graded based on the following verification checks:
 
 | Test Case | Requirement | Validation Method | Marks |
 | :--- | :--- | :--- | :--- |
-| **TC1** | **VM Creation and Naming Validation** | Verifies that all required VMs are created and their names exactly match the expected convention (`jenkins-master-<username>` and `jenkins-slave-<username>`). | 2 Marks |
-| **TC2** | **Jenkins Master-Slave Connection** | Verifies that node `jenkins-slave-<username>` is configured in Jenkins, connected via SSH, and is online. | 3 Marks |
+| **TC1** | **VM Creation and Naming Validation** | Verifies that all required VMs are created and their names exactly match the expected convention (`<username>-jenkins-master` and `<username>-jenkins-slave`). | 2 Marks |
+| **TC2** | **Jenkins Master-Slave Connection** | Verifies that node `<username>-jenkins-slave` is configured in Jenkins, connected via SSH, and is online. | 3 Marks |
 | **TC3** | **GitHub Webhook Trigger** | Verifies that a GitHub webhook is active and auto-triggers the Jenkins job on code commits. | 3 Marks |
-| **TC4** | **Maven Build Execution** | Verifies that the Java code compiles successfully on the Slave and outputs the target `.war` package (restricted to `java-builder-<username>`). | 4 Marks |
+| **TC4** | **Maven Build Execution** | Verifies that the Java code compiles successfully on the Slave and outputs the target `.war` package (restricted to `<username>-java-builder`). | 4 Marks |
 | **TC5** | **Tomcat Deploy Validation** | Verifies that the `.war` application is successfully deployed to Tomcat's webapps directory on the Slave. | 4 Marks |
 | **TC6** | **Pipeline Log & Report Generation** | Verifies that the log file exists at `/home/ubuntu/build-logs/tomcat-deploy.log` on the Slave with success properties. | 4 Marks |
 
