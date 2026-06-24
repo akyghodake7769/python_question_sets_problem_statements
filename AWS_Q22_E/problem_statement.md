@@ -1,7 +1,7 @@
 # DevOps Lab: AWS Application Load Balancer (ALB) Path-Based Routing
 
 **Difficulty Level:** Medium
-**Duration:** 250 Minutes
+**Duration:** 120 Minutes
 
 ## Scenario
 
@@ -34,10 +34,10 @@ To set up this high-availability web architecture, you must perform the followin
 ## Requirements
 
 > [!WARNING]
-> **CRITICAL NAMING CONVENTION REQUIREMENT:**
-> You must name all resources using your **AWS IAM username** as a **prefix** (e.g. if your AWS IAM username is `ltm-devops-user1`, then your VM must be named `ltm-devops-user1-service-a-host`).
-> Do **NOT** use your platform username (e.g. `LabsKraft`) or the default OS user `labskraft` as the name or suffix. Doing so will cause the VM Validation test case to fail.
-> Note that the ALB and Target Group names must also be prefixed with your AWS IAM username and use the shortened format below to avoid exceeding AWS's 32-character limit (e.g., `<username>-services-alb` and `<username>-tg-app1`).
+> **CRITICAL RESOURCE CONFIGURATION & NAMING REQUIREMENT:**
+> 1. You must name all resources using your **AWS IAM username** as a **prefix** (e.g. if your AWS IAM username is `ltm-devops-user1`, then your VM must be named `ltm-devops-user1-service-a-host`). Do **NOT** use your platform username (e.g. `LabsKraft`) or the default OS user `labskraft` as the name or suffix. Doing so will cause the VM Validation test case to fail. Note that the ALB and Target Group names must also be prefixed with your AWS IAM username and use the shortened format below to avoid exceeding AWS's 32-character limit (e.g., `<username>-services-alb` and `<username>-tg-app1`).
+> 2. You **MUST** attach the IAM role **`Ec2_instance_SSM`** to **all** EC2 instances. This is required for the automated grading tool to verify your local configurations and files via AWS Systems Manager (SSM). Without this role attached, test verification checks will fail.
+> 3. You **MUST** use **`t3.micro`** as the instance type for all VMs.
 
 ### 1. EC2 Microservice Instances
 - **Instance 1 (Service A):**

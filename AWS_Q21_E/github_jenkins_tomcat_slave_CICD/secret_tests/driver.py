@@ -58,7 +58,7 @@ def run_ssm_command(ssm, instance_id, command):
         )
         command_id = response['Command']['CommandId']
         
-        for _ in range(15):
+        for _ in range(30):
             time.sleep(2)
             res = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
             if res['Status'] in ['Success', 'Failed', 'TimedOut', 'Cancelled']:

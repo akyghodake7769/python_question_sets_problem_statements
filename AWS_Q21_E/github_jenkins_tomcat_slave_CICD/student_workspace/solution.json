@@ -1,14 +1,9 @@
 {
-    "candidate_prefix": "nandi",
-    "assessment_start_time": "2026-06-23T09:25:06Z",
+    "candidate_prefix": "nandini_j",
+    "assessment_start_time": "2026-06-23T11:31:52Z",
     "evaluation_type": "REAL_TIME_API",
-    "score": 20,
+    "score": 0,
     "results": {
-        "tc1": true,
-        "tc2": true,
-        "tc3": true,
-        "tc4": true,
-        "tc5": true,
-        "tc6": true
+        "tc1": false
     }
 }

@@ -1,7 +1,7 @@
 # DevOps Lab: Automated Jenkins Master-Slave Java WAR Deployment to Tomcat
 
 **Difficulty Level:** Medium
-**Duration:** 250 Minutes
+**Duration:** 120 Minutes
 
 ## Scenario
 
@@ -28,7 +28,8 @@ To complete the setup of this distributed architecture, you must perform the fol
 > [!WARNING]
 > **CRITICAL RESOURCE CONFIGURATION & NAMING REQUIREMENT:**
 > 1. You must name all resources using your **AWS IAM username** as a **prefix** (e.g., if your AWS IAM username is `ltm-devops-user1`, then your VM must be named `ltm-devops-user1-jenkins-master` and your slave `ltm-devops-user1-jenkins-slave`). Do **NOT** use your platform username (e.g. `LabsKraft`) or the default OS user `labskraft` as the name or suffix.
-> 2. You **MUST** attach an IAM instance profile with `AmazonSSMManagedInstanceCore` permissions to **both** EC2 instances. This is required for the automated grading tool to verify your local Jenkins configurations and files via AWS Systems Manager (SSM). Without this role attached, test verification checks will fail.
+> 2. You **MUST** attach the IAM role **`Ec2_instance_SSM`** to **both** EC2 instances. This is required for the automated grading tool to verify your local Jenkins configurations and files via AWS Systems Manager (SSM). Without this role attached, test verification checks will fail.
+> 3. You **MUST** use **`t3.micro`** as the instance type for all VMs.
 
 ### 1. VM Infrastructure & Ports
 - **Jenkins Master Node (`<username>-jenkins-master`):**
