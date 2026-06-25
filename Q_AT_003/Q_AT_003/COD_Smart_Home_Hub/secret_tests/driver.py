@@ -23,17 +23,71 @@ def test_student_code(solution_path):
         print("Warming up Gradle... (Initial run may take several minutes to download dependencies)\n")
         # Run gradle test (dynamically resolve based on OS and availability)
         if os.name == 'nt':
-            local_gradle = r"C:\gradle-9.4.1\bin\gradle.bat"
-            if os.path.exists(local_gradle):
-                gradle_cmd = [local_gradle, "test"]
+            local_gradle_c = r"C:\gradle-9.4.1\bin\gradle.bat"
+            user_home = os.path.expanduser("~")
+            local_gradle_user = os.path.join(user_home, "gradle-9.4.1", "bin", "gradle.bat")
+            
+            if os.path.exists(local_gradle_c):
+                gradle_cmd = [local_gradle_c, "cleanTest", "test"]
+            elif os.path.exists(local_gradle_user):
+                gradle_cmd = [local_gradle_user, "cleanTest", "test"]
             else:
-                gradle_cmd = "gradle test"
+                # Try to download and install Gradle 9.4.1 in user home automatically
+                try:
+                    import urllib.request
+                    import zipfile
+                    
+                    zip_path = os.path.join(user_home, "gradle-9.4.1-bin.zip")
+                    dest_dir = os.path.join(user_home, "gradle-9.4.1")
+                    
+                    if not os.path.exists(dest_dir):
+                        print(f"[SYSTEM] Local Gradle not found. Downloading Gradle 9.4.1 to {zip_path}...")
+                        url = "https://services.gradle.org/distributions/gradle-9.4.1-bin.zip"
+                        
+                        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                        with urllib.request.urlopen(req) as response:
+                            total_size = int(response.headers.get('content-length', 0))
+                            block_size = 1024 * 64
+                            downloaded = 0
+                            with open(zip_path, 'wb') as out_file:
+                                while True:
+                                    chunk = response.read(block_size)
+                                    if not chunk:
+                                        break
+                                    out_file.write(chunk)
+                                    downloaded += len(chunk)
+                                    if total_size > 0:
+                                        percent = min(100, int(downloaded * 100 / total_size))
+                                        print(f"\rDownloading Gradle: {percent}% completed", end="")
+                        
+                        print("\n[SYSTEM] Download finished. Extracting to user home...")
+                        
+                        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                            zip_ref.extractall(user_home)
+                            
+                        if os.path.exists(zip_path):
+                            os.remove(zip_path)
+                            
+                        print("[SYSTEM] Gradle extraction complete!")
+                    
+                    gradle_cmd = [local_gradle_user, "cleanTest", "test"]
+                except Exception as ex:
+                    print(f"[WARNING] Failed to auto-install Gradle: {ex}")
+                    gradle_cmd = "gradle cleanTest test"
             use_shell = True
         else:
-            gradle_cmd = ["gradle", "test"]
+            gradle_cmd = ["gradle", "cleanTest", "test"]
             use_shell = False
             
-        result = subprocess.run(gradle_cmd, capture_output=True, text=True, shell=use_shell, cwd=base_dir)
+        # Ensure JAVA_HOME is correctly set (not pointing to bin subfolder)
+        env = os.environ.copy()
+        if 'JAVA_HOME' in env:
+            java_home = env['JAVA_HOME'].strip()
+            if java_home.lower().endswith('bin') or java_home.lower().endswith('bin\\') or java_home.lower().endswith('bin/'):
+                java_home = os.path.dirname(java_home.rstrip('\\/'))
+                env['JAVA_HOME'] = java_home
+            
+        result = subprocess.run(gradle_cmd, capture_output=True, text=True, shell=use_shell, cwd=base_dir, env=env)
         
         # 4. Parsing (More granular parsing for 7 Test Cases)
         total_score = 0.0
