@@ -21,9 +21,13 @@ def test_student_code(solution_path):
     # 3. Execution: Run Gradle
     try:
         print("Warming up Gradle... (Initial run may take several minutes to download dependencies)\n")
-        # Run gradle test (dynamically resolve based on OS)
+        # Run gradle test (dynamically resolve based on OS and availability)
         if os.name == 'nt':
-            gradle_cmd = [r"C:\gradle-9.4.1\bin\gradle.bat", "test"]
+            local_gradle = r"C:\gradle-9.4.1\bin\gradle.bat"
+            if os.path.exists(local_gradle):
+                gradle_cmd = [local_gradle, "test"]
+            else:
+                gradle_cmd = "gradle test"
             use_shell = True
         else:
             gradle_cmd = ["gradle", "test"]

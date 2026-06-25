@@ -1,1 +1,1 @@
-rootProject.name = "GlobalCryptoWallet"
+rootProject.name = "SmartHomeHub"
