@@ -4,7 +4,7 @@ import os
 # Get paths
 script_dir = os.path.dirname(os.path.abspath(__file__))
 driver_path = os.path.join(script_dir, "..", "secret_tests", "driver.py")
-solution_path = os.path.join(script_dir, "solution.kt")
+solution_path = os.path.join(script_dir, "solution.cpp")
 
 # Load and run driver tests
 spec = importlib.util.spec_from_file_location("driver", driver_path)

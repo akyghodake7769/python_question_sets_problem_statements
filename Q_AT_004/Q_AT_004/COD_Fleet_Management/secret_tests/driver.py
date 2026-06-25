@@ -15,8 +15,8 @@ def test_student_code(solution_path):
     # 2. Preparation: Copy student code to the testable location
     shutil.copy(solution_path, build_dest)
     
-    print("Running Tests for: Global Crypto Wallet (Intermediate LLD)\n")
-    report_lines = ["Running Tests for: Global Crypto Wallet (Intermediate LLD)\n"]
+    print("Running Tests for: Fleet Management System (Intermediate LLD)\n")
+    report_lines = ["Running Tests for: Fleet Management System (Intermediate LLD)\n"]
     
     # 3. Execution: Run Gradle
     try:
@@ -38,17 +38,16 @@ def test_student_code(solution_path):
             print("--- END DEBUG OUTPUT ---")
         
         test_mapping = {
-            "testCreateWallet": ("TC2 [Account Registration Logic]", 1.0),
-            "testReceiveCrypto": ("TC3 [Secure Deposit/Receive Logic]", 2.0),
-            "testSpendCrypto": ("TC4 [Withdrawal/Spend Overdraft Logic]", 3.0),
-            "testGetTransactionLog": ("TC5 [Audit Trail Retrieval]", 1.0),
-            "testTotalLiquidity": ("TC6 [Network Liquidity Summation]", 1.0),
-            "testStakingRewards": ("TC7 [Bulk Interest/Reward Sweep]", 2.0)
+            "testRegisterVehicle": ("TC2 [Vehicle Registration Logic]", 1.0),
+            "testDispatchVehicle": ("TC3 [Dispatch State Logic]", 2.0),
+            "testCompleteTrip": ("TC4 [Trip Completion & Earnings]", 3.0),
+            "testGetVehicleHistory": ("TC5 [Audit Trail Retrieval]", 1.0),
+            "testTotalFleetEarnings": ("TC6 [Network Earnings Summation]", 1.0),
+            "testApplySurgeBonus": ("TC7 [Bulk Bonus Sweep]", 2.0)
         }
         
         for method, (tc_name, marks) in test_mapping.items():
             # Check if the method name appears in the "passed" list of Gradle output
-            # (Note: This is a simplified parser; in real scenarios, we'd parse the XML report)
             if f" > {method}() PASSED" in results_text:
                 msg = f"PASS {tc_name} ({marks}/{marks})"
                 total_score += marks
