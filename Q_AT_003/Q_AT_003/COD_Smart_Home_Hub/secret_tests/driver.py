@@ -21,9 +21,15 @@ def test_student_code(solution_path):
     # 3. Execution: Run Gradle
     try:
         print("Warming up Gradle... (Initial run may take several minutes to download dependencies)\n")
-        # Run gradle test
-        gradle_path = r"C:\gradle-9.4.1\bin\gradle.bat"
-        result = subprocess.run([gradle_path, "test"], capture_output=True, text=True, shell=True, cwd=base_dir)
+        # Run gradle test (dynamically resolve based on OS)
+        if os.name == 'nt':
+            gradle_cmd = [r"C:\gradle-9.4.1\bin\gradle.bat", "test"]
+            use_shell = True
+        else:
+            gradle_cmd = ["gradle", "test"]
+            use_shell = False
+            
+        result = subprocess.run(gradle_cmd, capture_output=True, text=True, shell=use_shell, cwd=base_dir)
         
         # 4. Parsing (More granular parsing for 7 Test Cases)
         total_score = 0.0

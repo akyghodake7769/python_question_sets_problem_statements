@@ -54,8 +54,14 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
         shutil.copy(abs_solution_path, build_dest)
 
         # 5. Execution: Run Gradle test
-        gradle_path = r"C:\gradle-9.4.1\bin\gradle.bat"
-        result = subprocess.run([gradle_path, "test"], capture_output=True, text=True, shell=True, cwd=base_dir)
+        if os.name == 'nt':
+            gradle_cmd = [r"C:\gradle-9.4.1\bin\gradle.bat", "test"]
+            use_shell = True
+        else:
+            gradle_cmd = ["gradle", "test"]
+            use_shell = False
+            
+        result = subprocess.run(gradle_cmd, capture_output=True, text=True, shell=use_shell, cwd=base_dir)
         results_text = result.stdout + result.stderr
 
         # 6. Test Case Configuration & Scoring (Mapping to the LLD Marks Table)
