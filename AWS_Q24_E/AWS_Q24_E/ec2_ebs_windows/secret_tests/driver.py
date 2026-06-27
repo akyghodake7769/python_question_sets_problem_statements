@@ -3,6 +3,8 @@ import os
 import sys
 from datetime import datetime, timezone
 
+# CACHE_INVALIDATION: Decoupled TC2 and TC3 checking blocks
+
 # Capture Assessment Start Time
 START_TIME_STR = os.getenv('KODEARENA_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
@@ -124,13 +126,12 @@ def verify_task():
                 
             if found_volume:
                 tc2_passed = True
-                print(f"TC2: EBS Volume (20 GB io2) Created .............. [PASSED] (5/5)")
+                print(f"TC2 [EBS Volume Created] (5/5) - Success: 20 GB io2 volume found.")
             else:
-                print(f"TC2: EBS Volume (20 GB io2) Created .............. [FAILED] (0/5)")
+                print(f"TC2 [EBS Volume Created] (0/5) - Failed: 20 GB io2 volume not found.")
                 print(f"     └─ [Reason]: No 20 GB io2 volume found in the region.")
         except Exception as e:
-            print(f"TC2: EBS Volume (20 GB io2) Created .............. [FAILED] (0/5)")
-            print(f"     └─ [Reason]: Error retrieving volumes: {e}")
+            print(f"TC2 [EBS Volume Created] (0/5) - Failed: Error retrieving volumes: {e}")
 
         results['tc2'] = tc2_passed
         if tc2_passed:
@@ -150,16 +151,13 @@ def verify_task():
                 
                 if is_attached:
                     tc3_passed = True
-                    print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [PASSED] (5/5)")
+                    print(f"TC3 [EBS Volume Attached & Mounted] (5/5) - Success: NTFS volume F: found.")
                 else:
-                    print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [FAILED] (0/5)")
-                    print(f"     └─ [Reason]: No 20 GB io2 volume is attached to instance '{instance_id}'.")
+                    print(f"TC3 [EBS Volume Attached & Mounted] (0/5) - Failed: No 20 GB io2 volume is attached to instance '{instance_id}'.")
             except Exception as e:
-                print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [FAILED] (0/5)")
-                print(f"     └─ [Reason]: Error verifying attachment: {e}")
+                print(f"TC3 [EBS Volume Attached & Mounted] (0/5) - Failed: Error verifying attachment: {e}")
         else:
-            print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [FAILED] (0/5)")
-            print(f"     └─ [Reason]: Prerequisite TC1 failed.")
+            print(f"TC3 [EBS Volume Attached & Mounted] (0/5) - Failed: Prerequisite TC1 failed.")
 
         results['tc3'] = tc3_passed
         if tc3_passed:
