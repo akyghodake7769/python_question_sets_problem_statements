@@ -104,7 +104,6 @@ def verify_task():
 
         # --- TC2: EBS Volume (20 GB io2) Created --- (5 Marks)
         tc2_passed = False
-        volume_id = None
         try:
             # Query all io2 volumes of size 20 GB
             volumes_resp = ec2.describe_volumes(Filters=[
@@ -125,7 +124,6 @@ def verify_task():
                 
             if found_volume:
                 tc2_passed = True
-                volume_id = found_volume['VolumeId']
                 print(f"TC2: EBS Volume (20 GB io2) Created .............. [PASSED] (5/5)")
             else:
                 print(f"TC2: EBS Volume (20 GB io2) Created .............. [FAILED] (0/5)")
@@ -140,25 +138,28 @@ def verify_task():
 
         # --- TC3: EBS Formatted NTFS and Drive Letter F: --- (5 Marks)
         tc3_passed = False
-        if tc1_passed and tc2_passed:
+        if tc1_passed:
             try:
-                # Check if the volume found in TC2 is attached to our instance
-                volume_info = ec2.describe_volumes(VolumeIds=[volume_id])['Volumes'][0]
-                attachments = volume_info.get('Attachments', [])
-                is_attached = any(att['InstanceId'] == instance_id for att in attachments)
+                # Query all volumes attached to this instance
+                attached_vols = ec2.describe_volumes(Filters=[
+                    {'Name': 'attachment.instance-id', 'Values': [instance_id]}
+                ])['Volumes']
+                
+                # Check if any of the attached volumes is a 20 GB io2 volume
+                is_attached = any(v['Size'] == 20 and v['VolumeType'] == 'io2' for v in attached_vols)
                 
                 if is_attached:
                     tc3_passed = True
                     print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [PASSED] (5/5)")
                 else:
                     print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [FAILED] (0/5)")
-                    print(f"     └─ [Reason]: Volume '{volume_id}' is not attached to instance '{instance_id}'.")
+                    print(f"     └─ [Reason]: No 20 GB io2 volume is attached to instance '{instance_id}'.")
             except Exception as e:
                 print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [FAILED] (0/5)")
                 print(f"     └─ [Reason]: Error verifying attachment: {e}")
         else:
             print(f"TC3: EBS Formatted NTFS (Drive F:) ................. [FAILED] (0/5)")
-            print(f"     └─ [Reason]: Prerequisite TC1 or TC2 failed.")
+            print(f"     └─ [Reason]: Prerequisite TC1 failed.")
 
         results['tc3'] = tc3_passed
         if tc3_passed:
