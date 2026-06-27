@@ -17,17 +17,17 @@ Perform the following actions in the AWS environment:
 - **Instance Type:** `t2.micro`
 - **Region:** `eu-west-2` (Europe - London)
 
-### 2. Create and Attach EBS Volume
+### 2. Create EBS Volume
 
 - **Volume Size:** `20 GB`
 - **Volume Type:** `io2` (Provisioned IOPS SSD) with 500 IOPS
-- **Attach Volume:** Attach the created EBS volume to the Windows EC2 instance created in the previous step.
 
-### 3. Initialize and Format the EBS Volume in Windows
+### 3. Attach, Initialize, and Format the EBS Volume in Windows
 
+- **Attach Volume:** Attach the created EBS volume to the Windows EC2 instance.
 - **Initialization:** Bring the newly attached disk online and initialize it.
 - **File System:** Format the attached volume with the `NTFS` filesystem.
-- **Drive Letter/Mount:** Assign the volume the drive letter `F:` (or mount it to a specific folder if preferred by your DB setup, but for this lab, assigning drive `F:` is expected).
+- **Drive Letter/Mount:** Assign the volume the drive letter `F:`.
 
 ## Verification
 
@@ -40,8 +40,8 @@ Your performance will be evaluated based on the following test cases:
 | Test Case | Requirement                                                                         | Marks   |
 | --------- | ----------------------------------------------------------------------------------- | ------- |
 | **TC1**   | EC2 Instance Existence (`t2.micro`, Windows, named `labskraft-db-server-<username>`)| 5 Marks |
-| **TC2**   | EBS Volume Created (20 GB, `io2` with 500 IOPS) and Attached to EC2                 | 5 Marks |
-| **TC3**   | EBS Volume Formatted as `NTFS` and Assigned Drive Letter `F:`                       | 5 Marks |
+| **TC2**   | EBS Volume Created (20 GB, `io2` with 500 IOPS)                                     | 5 Marks |
+| **TC3**   | EBS Volume Attached to EC2, Formatted as `NTFS` and Assigned Drive Letter `F:`      | 5 Marks |
 
 **Total Score: 15 Marks**
 
