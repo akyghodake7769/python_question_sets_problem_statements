@@ -36,6 +36,8 @@ def get_iam_username():
     return None
 
 def resolve_username(default_prefix):
+    if default_prefix and default_prefix != 'LOCAL_USER':
+        return default_prefix
     iam_user = get_iam_username()
     if iam_user and iam_user not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
         return iam_user

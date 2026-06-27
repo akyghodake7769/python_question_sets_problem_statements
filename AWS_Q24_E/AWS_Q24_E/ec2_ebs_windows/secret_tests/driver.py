@@ -38,6 +38,8 @@ def get_iam_username():
     return None
 
 def resolve_username(default_prefix):
+    if default_prefix and default_prefix != 'LOCAL_USER':
+        return default_prefix
     iam_user = get_iam_username()
     if iam_user and iam_user not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
         return iam_user
@@ -89,16 +91,13 @@ def verify_task():
                 if inst.get('InstanceType') == 't2.micro':
                     tc1_passed = True
                     instance_id = inst['InstanceId']
-                    print(f"TC1: EC2 Instance (Windows t2.micro) ........... [PASSED] (5/5)")
+                    print(f"TC1 [EC2 Instance] (5/5) - Success: Windows EC2 t2.micro found.")
                 else:
-                    print(f"TC1: EC2 Instance (Windows t2.micro) ........... [FAILED] (0/5)")
-                    print(f"     └─ [Reason]: Instance found but type is '{inst.get('InstanceType')}', expected 't2.micro'.")
+                    print(f"TC1 [EC2 Instance] (0/5) - Failed: Instance found but type is '{inst.get('InstanceType')}', expected 't2.micro'.")
             else:
-                print(f"TC1: EC2 Instance (Windows t2.micro) ........... [FAILED] (0/5)")
-                print(f"     └─ [Reason]: Running instance named '{target_instance}' not found in {region}.")
+                print(f"TC1 [EC2 Instance] (0/5) - Failed: Running instance named '{target_instance}' not found in {region}.")
         except Exception as e:
-            print(f"TC1: EC2 Instance (Windows t2.micro) ........... [FAILED] (0/5)")
-            print(f"     └─ [Reason]: Error: {e}")
+            print(f"TC1 [EC2 Instance] (0/5) - Failed: Error: {e}")
 
         results['tc1'] = tc1_passed
         if tc1_passed:
