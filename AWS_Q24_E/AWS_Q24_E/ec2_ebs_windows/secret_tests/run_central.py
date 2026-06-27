@@ -1,22 +1,44 @@
-import subprocess
-import sys
 import os
+import sys
+import json
+import traceback
+
+try:
+    from driver_central import verify_aws_on_server
+except ImportError:
+    from driver import verify_aws_on_server
 
 def main():
-    print("[SYSTEM] Initializing Central AWS Task Verification (Q24)...")
+    if len(sys.argv) != 3:
+        print("Usage: python3 run.py <vm_tag> <solution_filename>")
+        sys.exit(1)
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    driver_path = os.path.normpath(os.path.join(current_dir, "driver_central.py"))
+    vm_tag = sys.argv[1]
+    solution_filename = sys.argv[2]
+    solution_path = os.path.abspath(solution_filename)
 
-    if not os.path.exists(driver_path):
-        print(f"[ERROR] Central driver not found at: {driver_path}")
-        return
+    print("\n🚀 Starting DevOps AWS EC2+EBS Windows Central Evaluation...")
+    print(f"📌 VM Tag       : {vm_tag}")
+    print(f"📄 Solution file: {solution_filename}")
+    print(f"📂 Full path    : {solution_path}")
 
-    args = [sys.executable, driver_path]
-    if len(sys.argv) > 1:
-        args.append(sys.argv[1])
+    if not os.path.exists(solution_path):
+        print(f"❌ Solution file not found at: {solution_path}")
+        sys.exit(1)
 
-    subprocess.run(args, capture_output=False, text=True)
+    try:
+        with open(solution_path, 'r') as f:
+            data = json.load(f)
+            candidate_email = data.get('candidate_email') or data.get('email') or vm_tag
+            labskraft_user = data.get('candidate_prefix') or data.get('labskraft_username')
+            start_time = data.get('assessment_start_time')
+            verify_aws_on_server(candidate_email, data.get('question_id', 'AWS_Q24_E'), labskraft_user, start_time, solution_data=data)
+        
+        print("✅ Central Evaluation finished successfully.")
+    except Exception as e:
+        print(f"❌ An error occurred during evaluation: {str(e)}")
+        traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
