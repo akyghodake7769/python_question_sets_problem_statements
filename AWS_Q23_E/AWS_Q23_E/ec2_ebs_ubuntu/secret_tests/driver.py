@@ -1,12 +1,12 @@
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # Capture Assessment Start Time
-START_TIME_STR = os.getenv('KODEARENA_START_TIME')
+START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
-USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEARENA_USERNAME', 'LOCAL_USER')
+USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
 def get_ec2_client(region_name='eu-west-2'):
     import boto3
@@ -50,7 +50,7 @@ def verify_task():
     start_time = START_TIME_STR
 
     print("\n" + "-" * 60)
-    print(f"{'KODEARENA AWS EC2 + EBS UBUNTU VERIFICATION':^60}")
+    print(f"{'KODEBUCK AWS EC2 + EBS UBUNTU VERIFICATION':^60}")
     print("-" * 60)
 
     total_score = 0
@@ -86,13 +86,25 @@ def verify_task():
             instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
             if instances:
                 inst = instances[0]
-                if inst.get('InstanceType') == 't2.micro':
+                launch_time = inst['LaunchTime']
+                if inst.get('InstanceType') != 't2.micro':
+                    print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
+                    print(f"     └─ [Reason]: Instance found but type is '{inst.get('InstanceType')}', expected 't2.micro'.")
+                elif launch_time < session_start:
+                    ist_tz = timezone(timedelta(hours=5, minutes=30))
+                    c_ist = launch_time.astimezone(ist_tz)
+                    s_ist = session_start.astimezone(ist_tz)
+                    info = f"Launched at {c_ist.strftime('%I:%M:%S %p IST')}, Assessment started at {s_ist.strftime('%I:%M:%S %p IST')}"
+                    print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
+                    print(f"     └─ [Reason]: Instance was launched BEFORE the assessment started. Please terminate and launch a new one!")
+                    print(f"     └─ [Info]: {info}")
+                elif launch_time > session_start + timedelta(minutes=max_duration + 10):
+                    print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
+                    print(f"     └─ [Reason]: Instance was launched after the assessment time window ended.")
+                else:
                     tc1_passed = True
                     instance_id = inst['InstanceId']
                     print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [PASSED] (5/5)")
-                else:
-                    print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
-                    print(f"     └─ [Reason]: Instance found but type is '{inst.get('InstanceType')}', expected 't2.micro'.")
             else:
                 print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
                 print(f"     └─ [Reason]: Running instance named '{target_instance}' not found in {region}.")
@@ -128,9 +140,22 @@ def verify_task():
                 found_volume = volumes_resp[0]
                 
             if found_volume:
-                tc2_passed = True
-                volume_id = found_volume['VolumeId']
-                print(f"TC2: EBS Volume (10 GB gp3) Created .............. [PASSED] (5/5)")
+                create_time = found_volume['CreateTime']
+                if create_time < session_start:
+                    ist_tz = timezone(timedelta(hours=5, minutes=30))
+                    c_ist = create_time.astimezone(ist_tz)
+                    s_ist = session_start.astimezone(ist_tz)
+                    info = f"Created at {c_ist.strftime('%I:%M:%S %p IST')}, Assessment started at {s_ist.strftime('%I:%M:%S %p IST')}"
+                    print(f"TC2: EBS Volume (10 GB gp3) Created .............. [FAILED] (0/5)")
+                    print(f"     └─ [Reason]: Volume was created BEFORE the assessment started. Please DELETE and recreate it!")
+                    print(f"     └─ [Info]: {info}")
+                elif create_time > session_start + timedelta(minutes=max_duration + 10):
+                    print(f"TC2: EBS Volume (10 GB gp3) Created .............. [FAILED] (0/5)")
+                    print(f"     └─ [Reason]: Volume was created after the assessment time window ended.")
+                else:
+                    tc2_passed = True
+                    volume_id = found_volume['VolumeId']
+                    print(f"TC2: EBS Volume (10 GB gp3) Created .............. [PASSED] (5/5)")
             else:
                 print(f"TC2: EBS Volume (10 GB gp3) Created .............. [FAILED] (0/5)")
                 print(f"     └─ [Reason]: No 10 GB gp3 volume found in the region.")
