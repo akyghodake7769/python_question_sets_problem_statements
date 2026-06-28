@@ -178,8 +178,63 @@ def verify_task():
                 is_attached = any(att['InstanceId'] == instance_id for att in attachments)
                 
                 if is_attached:
-                    tc3_passed = True
-                    print(f"TC3: EBS Attached & Mounted at /mnt/data-store .... [PASSED] (5/5)")
+                    # Attempt Guest OS mount verification via SSM
+                    import time
+                    import boto3
+                    ssm = boto3.client('ssm', region_name=region)
+                    is_managed = False
+                    try:
+                        ssm_instances = ssm.describe_instance_information(
+                            Filters=[{'Key': 'InstanceIds', 'Values': [instance_id]}]
+                        ).get('InstanceInformationList', [])
+                        if ssm_instances and ssm_instances[0].get('PingStatus') == 'Online':
+                            is_managed = True
+                    except Exception:
+                        pass
+                        
+                    if is_managed:
+                        # Run shell command to verify the mount point and filesystem type
+                        cmd = "findmnt -n -o FSTYPE /mnt/data-store"
+                        try:
+                            response = ssm.send_command(
+                                InstanceIds=[instance_id],
+                                DocumentName="AWS-RunShellScript",
+                                Parameters={'commands': [cmd]},
+                                TimeoutSeconds=30
+                            )
+                            command_id = response['Command']['CommandId']
+                            
+                            success = False
+                            output = ""
+                            for _ in range(10):
+                                time.sleep(1.5)
+                                res = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
+                                if res['Status'] in ['Success', 'Failed', 'TimedOut', 'Cancelled']:
+                                    success = (res['Status'] == 'Success')
+                                    output = res.get('StandardOutputContent', '').strip()
+                                    break
+                                    
+                            if success and output == 'ext4':
+                                tc3_passed = True
+                                print(f"TC3: EBS Attached & Mounted at /mnt/data-store .... [PASSED] (5/5)")
+                                print(f"     └─ [Info]: Verified ext4 filesystem mounted at /mnt/data-store inside guest OS.")
+                            else:
+                                tc3_passed = False
+                                print(f"TC3: EBS Attached & Mounted at /mnt/data-store .... [FAILED] (0/5)")
+                                if not success:
+                                    print(f"     └─ [Reason]: Failed to run verification command in Guest OS.")
+                                else:
+                                    print(f"     └─ [Reason]: Volume is attached but not formatted as ext4 or not mounted at /mnt/data-store.")
+                        except Exception as e:
+                            # Fallback if command send fails
+                            tc3_passed = True
+                            print(f"TC3: EBS Attached & Mounted at /mnt/data-store .... [PASSED] (5/5)")
+                            print(f"     └─ [WARNING]: SSM command execution failed: {e}. Falling back to attachment check.")
+                    else:
+                        tc3_passed = True
+                        print(f"TC3: EBS Attached & Mounted at /mnt/data-store .... [PASSED] (5/5)")
+                        print(f"     └─ [WARNING]: SSM agent is offline on the instance. Guest OS mount point could not be verified remotely.")
+                        print(f"                   Ensure you formatted /dev/xvdf as ext4 and mounted to /mnt/data-store.")
                 else:
                     print(f"TC3: EBS Attached & Mounted at /mnt/data-store .... [FAILED] (0/5)")
                     print(f"     └─ [Reason]: Volume '{volume_id}' is not attached to instance '{instance_id}'.")
