@@ -1,10 +1,10 @@
-# DevOps Lab: AWS EC2 (Ubuntu) & Storage Infrastructure Provisioning
+# AWS EC2 (Ubuntu) & Storage Infrastructure Provisioning
 
-Duration : 30 Min.
+Duration : 120 Min.
 
 ## Scenario
 
-As a DevOps engineer at LabsKraft, you are tasked with provisioning compute and storage infrastructure. Your objective is to create an Ubuntu Linux EC2 instance, provision an EBS volume, attach it to the instance, and mount the storage using standard Linux commands.
+As a Cloud Engineer, you are tasked with provisioning compute and storage infrastructure. Your objective is to create an Ubuntu Linux EC2 instance, provision an EBS volume, attach it to the instance, and mount the storage using standard Linux commands.
 
 ## Task Objectives
 
