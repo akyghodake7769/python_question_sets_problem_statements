@@ -13,7 +13,7 @@ Perform the following actions in the AWS environment:
 ### 1. Create EC2 Instance (Ubuntu Linux)
 
 - **Instance Name:** `labskraft-ubuntu-ec2-<your-labskraft-username>` (replace `<your-labskraft-username>` with your actual LabsKraft username, e.g. `labs-kraft-demo106`)
-- **AMI (Operating System):** Ubuntu Server (e.g., 22.04 LTS)
+- **AMI (Operating System):** Ubuntu Server (e.g., Ubuntu Server 24.04 LTS (HVM), SSD Volume Type)
 - **Instance Type:** `t2.micro`
 - **Region:** `eu-west-2` (Europe - London)
 
