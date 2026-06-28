@@ -64,7 +64,8 @@ def verify_task():
 
         now = datetime.now(timezone.utc)
         elapsed_minutes = (now - session_start).total_seconds() / 60
-        max_duration = 30  # 30 Min assessment for AWS_Q23_E
+        max_duration_env = os.getenv('KODEBUCK_ASSESSMENT_DURATION') or os.getenv('KODEARENA_ASSESSMENT_DURATION')
+        max_duration = int(max_duration_env) if max_duration_env else 30  # Fallback to 30 Min if not set
 
         if elapsed_minutes > max_duration + 10:
             print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
