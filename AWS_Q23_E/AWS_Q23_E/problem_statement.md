@@ -1,6 +1,6 @@
 # AWS EC2 (Ubuntu) & Storage Infrastructure Provisioning
 
-Duration : 120 Min.
+
 
 ## Scenario
 
