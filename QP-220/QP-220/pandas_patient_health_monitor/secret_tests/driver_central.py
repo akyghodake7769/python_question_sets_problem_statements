@@ -15,7 +15,8 @@ def get_timestamp():
     """Returns timestamp in YYYYMMDD_HHMMSS format (IST assumption)"""
     return datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")
 
-def test_student_code(solution_path, vm_tag="DEFAULT"):
+# UPDATE 1: Added exam_code="UNKNOWN"
+def test_student_code(solution_path, vm_tag="DEFAULT", exam_code="UNKNOWN"):
     problem_code = "pandas_patient_health_monitor"
     
     if vm_tag is None:
@@ -51,6 +52,10 @@ def test_student_code(solution_path, vm_tag="DEFAULT"):
         report_path = os.path.join(report_dir, f"{username}_{timestamp}.txt")
 
     results = [f">> Testing solution for {username} at {timestamp}"]
+    
+    # UPDATE 2: Added this line to print the exam code into the .txt report
+    results.append(f"EXAM CODE: {exam_code}")
+    
     report_items = []
     total_score = 0
     fail_count = 0
@@ -251,6 +256,10 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         arg1 = sys.argv[1]
         arg2 = sys.argv[2] if len(sys.argv) > 2 else None
+        
+        # UPDATE 3: Allow passing the 3rd argument (exam_code) when calling directly
+        arg3 = sys.argv[3] if len(sys.argv) > 3 else "UNKNOWN"
+        
         if arg1.endswith(".py") or "/" in arg1 or "\\" in arg1 or os.path.exists(arg1):
             sol = os.path.abspath(arg1)
             vm = arg2 if arg2 else "DEFAULT"
@@ -260,4 +269,6 @@ if __name__ == "__main__":
     else:
         vm = "DEFAULT"
         sol = os.path.join(os.path.dirname(__file__), "..", "student_workspace", "solution.py")
-    test_student_code(sol, vm)
+        arg3 = "UNKNOWN"
+        
+    test_student_code(sol, vm, arg3)
