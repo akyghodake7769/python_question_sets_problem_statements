@@ -3,12 +3,38 @@ import os
 import sys
 import time
 from datetime import datetime, timezone, timedelta
+import urllib.request
+import csv
 import boto3
 
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
-EXAM_CODE = os.getenv('KODEBUCK_EXAM_CODE', 'UNKNOWN')
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
+
+def get_exam_codes_from_sheet(username):
+    codes = []
+    env_code = os.getenv('KODEBUCK_EXAM_CODE')
+    if env_code:
+        codes.append(env_code.strip())
+    
+    try:
+        url = "https://docs.google.com/spreadsheets/d/14MJnX-lIvWYKWQ7lZ2boKNYYmCauW40LJ5guEf3BRm8/export?format=csv&gid=0"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            lines = [line.decode('utf-8') for line in response.readlines()]
+            reader = csv.reader(lines)
+            next(reader) # skip header
+            for row in reader:
+                if len(row) >= 3 and row[2].strip() == username:
+                    code = row[1].strip()
+                    if code and code not in codes:
+                        codes.append(code)
+    except Exception as e:
+        pass
+    
+    if not codes:
+        codes.append("UNKNOWN")
+    return codes
 
 def get_iam_username():
     try:
@@ -36,11 +62,16 @@ def verify_task():
 
     tc1_passed = False
     instance_id = None
-    possible_names = [
-        f"{username}-{EXAM_CODE}",
+    
+    exam_codes = get_exam_codes_from_sheet(username)
+    possible_names = []
+    for ec in exam_codes:
+        possible_names.append(f"{username}-{ec}")
+    possible_names.extend([
         username,
         f"labskraft-ubuntu-ec2-{username}"
-    ]
+    ])
+
     try:
         resp = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
         instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
