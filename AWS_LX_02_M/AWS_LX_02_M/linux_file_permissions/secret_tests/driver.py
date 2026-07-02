@@ -56,14 +56,18 @@ def verify_task():
     def run_ssm(cmd):
         if not instance_id: return None
         try:
-            res = ssm.send_command(InstanceIds=[instance_id], DocumentName="AWS-RunShellScript", Parameters={'commands': [cmd]}, TimeoutSeconds=30)
+            res = ssm.send_command(InstanceIds=[instance_id], DocumentName="AWS-RunShellScript", Parameters={'commands': [cmd]}, TimeoutSeconds=60)
             cmd_id = res['Command']['CommandId']
-            for _ in range(15):
+            for _ in range(30):
                 time.sleep(2)
-                inv = ssm.get_command_invocation(CommandId=cmd_id, InstanceId=instance_id)
-                if inv['Status'] in ['Success', 'Failed', 'TimedOut', 'Cancelled']:
-                    return inv.get('StandardOutputContent', '').strip()
-        except: pass
+                try:
+                    inv = ssm.get_command_invocation(CommandId=cmd_id, InstanceId=instance_id)
+                    if inv['Status'] in ['Success', 'Failed', 'TimedOut', 'Cancelled']:
+                        return inv.get('StandardOutputContent', '').strip()
+                except ssm.exceptions.InvocationDoesNotExist:
+                    pass
+        except Exception as e:
+            print(f"[DEBUG] SSM command send failed: {e}")
         return None
 
     # TC2
