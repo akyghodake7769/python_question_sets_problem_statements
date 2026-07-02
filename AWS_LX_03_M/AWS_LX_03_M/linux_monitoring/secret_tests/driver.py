@@ -20,7 +20,6 @@ def get_iam_username():
 
 def verify_task():
     username = USER_PREFIX if USER_PREFIX != 'LOCAL_USER' else (get_iam_username() or USER_PREFIX)
-    target_instance = f"{username}-AWS-LX-03-M"
     region = 'eu-west-2'
     start_time = START_TIME_STR or datetime.now(timezone.utc).isoformat()
 
@@ -36,13 +35,22 @@ def verify_task():
 
     tc1_passed = False
     instance_id = None
+    possible_names = [
+        f"{username}-AWS-LX-03-M",
+        f"{username}-AWS_LX_03_M",
+        username,
+        f"labskraft-ubuntu-ec2-{username}"
+    ]
     try:
-        resp = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': [target_instance]}, {'Name': 'instance-state-name', 'Values': ['running']}])
+        resp = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
         instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
-        if instances:
-            if instances[0].get('InstanceType') == 't2.micro':
-                tc1_passed = True
-                instance_id = instances[0]['InstanceId']
+        for inst in instances:
+            name = next((t['Value'] for t in inst.get('Tags', []) if t['Key'] == 'Name'), None)
+            if name in possible_names:
+                if inst.get('InstanceType') == 't2.micro':
+                    tc1_passed = True
+                    instance_id = inst['InstanceId']
+                    break
     except Exception as e:
         pass
 
