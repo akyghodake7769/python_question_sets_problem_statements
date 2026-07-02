@@ -7,6 +7,7 @@ import boto3
 
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
+EXAM_CODE = os.getenv('KODEBUCK_EXAM_CODE', 'UNKNOWN')
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
 def get_iam_username():
@@ -36,8 +37,7 @@ def verify_task():
     tc1_passed = False
     instance_id = None
     possible_names = [
-        f"{username}-AWS-LX-01-M",
-        f"{username}-AWS_LX_01_M",
+        f"{username}-{EXAM_CODE}",
         username,
         f"labskraft-ubuntu-ec2-{username}"
     ]
@@ -56,10 +56,10 @@ def verify_task():
 
     results['tc1'] = tc1_passed
     if tc1_passed:
-        total_score += 5
-        print("TC1: EC2 Instance (t2.micro) ............ [PASSED] (5/5)")
+        total_score += 4
+        print("TC1: EC2 Instance (t2.micro) ............ [PASSED] (4/4)")
     else:
-        print("TC1: EC2 Instance (t2.micro) ............ [FAILED] (0/5)")
+        print("TC1: EC2 Instance (t2.micro) ............ [FAILED] (0/4)")
 
     def run_ssm(cmd):
         if not instance_id: return None
@@ -78,32 +78,41 @@ def verify_task():
             print(f"[DEBUG] SSM command send failed: {e}")
         return None
 
-    # TC2
+    # TC2: Directory hierarchy created
     tc2_passed = False
     if tc1_passed:
         out = run_ssm("test -d /home/ubuntu/app/config && test -d /home/ubuntu/app/logs && echo PASS || echo FAIL")
         if out and "PASS" in out: tc2_passed = True
     results['tc2'] = tc2_passed
-    total_score += 5 if tc2_passed else 0
-    print(f"TC2: {'Directory hierarchy created':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({5 if tc2_passed else 0}/5)")
+    total_score += 4 if tc2_passed else 0
+    print(f"TC2: {'Directory hierarchy created':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
 
-    # TC3
+    # TC3: Initial files created
     tc3_passed = False
     if tc1_passed:
-        out = run_ssm("test -f /home/ubuntu/app/app.conf.backup && test -f /home/ubuntu/search_results.txt && echo PASS || echo FAIL")
+        out = run_ssm("test -f /home/ubuntu/app/config/app.conf && test -f /home/ubuntu/app/logs/error.log && echo PASS || echo FAIL")
         if out and "PASS" in out: tc3_passed = True
     results['tc3'] = tc3_passed
-    total_score += 5 if tc3_passed else 0
-    print(f"TC3: {'File operations completed':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({5 if tc3_passed else 0}/5)")
+    total_score += 4 if tc3_passed else 0
+    print(f"TC3: {'Initial files created':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
 
-    # TC4
+    # TC4: File operations completed
     tc4_passed = False
     if tc1_passed:
-        out = run_ssm("test -s /home/ubuntu/disk_usage.txt && echo PASS || echo FAIL")
+        out = run_ssm("test -f /home/ubuntu/app/app.conf.backup && test -f /home/ubuntu/search_results.txt && echo PASS || echo FAIL")
         if out and "PASS" in out: tc4_passed = True
     results['tc4'] = tc4_passed
-    total_score += 5 if tc4_passed else 0
-    print(f"TC4: {'Disk usage output generated':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({5 if tc4_passed else 0}/5)")
+    total_score += 4 if tc4_passed else 0
+    print(f"TC4: {'File operations completed':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
+
+    # TC5: Disk usage output generated
+    tc5_passed = False
+    if tc1_passed:
+        out = run_ssm("test -s /home/ubuntu/disk_usage.txt && echo PASS || echo FAIL")
+        if out and "PASS" in out: tc5_passed = True
+    results['tc5'] = tc5_passed
+    total_score += 4 if tc5_passed else 0
+    print(f"TC5: {'Disk usage output generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
 
     print("-" * 60)
     print(f"{'TOTAL SCORE:':<44} {total_score}/20")

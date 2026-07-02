@@ -12,30 +12,34 @@ Perform the following actions in the AWS environment:
 
 ### 1. Create EC2 Instance (Ubuntu Linux)
 
-- **Instance Name:** `<your-labskraft-username>-<your-exam-code>` (replace `<your-labskraft-username>-<your-exam-code>` with your actual LabsKraft username, e.g. `labs-kraft-demo106`)
+- **Instance Name:** `<your-labskraft-username>-<your-exam-code>` (replace `<your-labskraft-username>-<your-exam-code>` with your actual LabsKraft username and exam code, e.g. `labs-kraft-demo106-1123`)
 - **AMI (Operating System):** Ubuntu Server (e.g., 22.04 LTS)
 - **Instance Type:** `t2.micro`
 - **Region:** `eu-west-2` (Europe - London)
 
-### 2. Linux Directory Navigation & Creation
+### 2. Directory Hierarchy Creation
 
 Log in to the EC2 instance via SSM Session Manager and perform the following operations:
-- Use `mkdir -p` to create the following directory hierarchy inside the default home directory (`/home/ubuntu`):
+- Create a directory hierarchy inside the default home directory (`/home/ubuntu`) containing:
   - `/home/ubuntu/app/config`
   - `/home/ubuntu/app/logs`
-- Navigate into `/home/ubuntu/app/config` using `cd` and display the current path using `pwd`.
 
-### 3. File Creation and Operations
+### 3. Initial File Creation
 
-- Inside the `config` directory, use `touch` to create `app.conf`.
-- Inside the `logs` directory, use `touch` to create `error.log`.
-- Copy (`cp`) the `app.conf` file to `/home/ubuntu/app/` directory.
-- Move/Rename (`mv`) the copied file `/home/ubuntu/app/app.conf` to `/home/ubuntu/app/app.conf.backup`.
-- Search for the keyword "app" in the `/home/ubuntu` directory recursively using the `find` or `grep` command, and append the results to `/home/ubuntu/search_results.txt`.
+- Create the following blank files inside the newly created directories:
+  - `app.conf` inside `/home/ubuntu/app/config`
+  - `error.log` inside `/home/ubuntu/app/logs`
 
-### 4. Disk Analysis
+### 4. File Copy, Rename, and Search Operations
 
-- Check the disk usage using `df -h` and redirect the output to `/home/ubuntu/disk_usage.txt`.
+- Perform the following file operations on the instance:
+  - Copy the `app.conf` file from `/home/ubuntu/app/config` to `/home/ubuntu/app/` directory.
+  - Rename or move the copied file `/home/ubuntu/app/app.conf` to `/home/ubuntu/app/app.conf.backup`.
+  - Search recursively within the `/home/ubuntu` directory for all files or lines containing the string `"app"`, and save/append the search results to `/home/ubuntu/search_results.txt`.
+
+### 5. Disk Space Analysis
+
+- Perform disk analysis to check current disk space utilization, and save the formatted, human-readable report to `/home/ubuntu/disk_usage.txt`.
 
 ## Verification
 
@@ -45,17 +49,18 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement                                                                          | Marks   |
-| --------- | ------------------------------------------------------------------------------------ | ------- |
-| **TC1**   | EC2 Instance Existence (`t2.micro`, Ubuntu, named `<username>-<exam_code>`) | 5 Marks |
-| **TC2**   | Directory hierarchy (`app/config`, `app/logs`) and initial files created successfully| 5 Marks |
-| **TC3**   | File operations (`cp`, `mv`) and search (`search_results.txt`) completed             | 5 Marks |
-| **TC4**   | Disk usage output (`disk_usage.txt`) generated correctly                             | 5 Marks |
+| Test Case | Requirement | Marks |
+| --------- | ----------- | ----- |
+| **TC1**   | EC2 Instance Existence (`t2.micro`, Ubuntu, named `<username>-<exam_code>`) | 4 Marks |
+| **TC2**   | Directory hierarchy (`app/config`, `app/logs`) created successfully | 4 Marks |
+| **TC3**   | Initial files (`app.conf` in config, `error.log` in logs) created successfully | 4 Marks |
+| **TC4**   | File operations (`cp`, `mv`/rename) and keyword search results generated | 4 Marks |
+| **TC5**   | Disk usage output (`disk_usage.txt`) generated correctly | 4 Marks |
 
 **Total Score: 20 Marks**
 
 ## Important Notes
 
-- Ensure the instance name is exactly `<your-labskraft-username>-<your-exam-code>`.
+- Ensure the instance name matches one of the expected formats in the validation script.
 - The instance must be an Ubuntu Linux machine of type `t2.micro`.
 - Ensure the EC2 instance has the `Ec2_instance_SSM` IAM role attached for verification.
