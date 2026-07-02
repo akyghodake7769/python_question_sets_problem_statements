@@ -20,7 +20,7 @@ def get_iam_username():
 
 def verify_task():
     username = USER_PREFIX if USER_PREFIX != 'LOCAL_USER' else (get_iam_username() or USER_PREFIX)
-    target_instance = f"labskraft-ubuntu-ec2-{username}"
+    target_instance = f"{username}-AWS-LX-03-M"
     region = 'eu-west-2'
     start_time = START_TIME_STR or datetime.now(timezone.utc).isoformat()
 

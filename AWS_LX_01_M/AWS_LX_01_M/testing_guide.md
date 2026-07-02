@@ -5,7 +5,7 @@ This guide provides the exact steps required to solve and verify the problem sta
 ## Step 1: Provision Infrastructure
 1. Log in to the AWS Management Console.
 2. Launch an EC2 Instance with the following specifications:
-   - **Name:** `labskraft-ubuntu-ec2-<your-username>`
+   - **Name:** `<your-username>-AWS-LX-01-M`
    - **OS:** Ubuntu Server
    - **Instance Type:** `t2.micro`
    - **IAM Role:** `Ec2_instance_SSM`
