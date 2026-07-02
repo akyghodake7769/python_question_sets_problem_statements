@@ -9,13 +9,17 @@ except ImportError:
     from driver import verify_task_central
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python3 run_central.py <vm_tag> <solution_filename>")
+    if len(sys.argv) < 2:
+        print("Usage: python3 run_central.py <vm_tag> [solution_filename]")
         sys.exit(1)
 
     vm_tag = sys.argv[1]
-    solution_filename = sys.argv[2]
-    solution_path = os.path.abspath(solution_filename)
+    if len(sys.argv) > 2:
+        solution_filename = sys.argv[2]
+        solution_path = os.path.abspath(solution_filename)
+    else:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        solution_path = os.path.join(script_dir, "..", "student_workspace", "solution.json")
 
     print("\n🚀 Starting Central Evaluation...")
     if not os.path.exists(solution_path):
