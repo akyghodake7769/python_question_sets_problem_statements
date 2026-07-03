@@ -4,7 +4,7 @@ Duration : 60 Min.
 
 ## Scenario
 
-As a DevOps engineer at LabsKraft, you are tasked with setting up a specific directory hierarchy for an application on a newly provisioned local Ubuntu Linux server/VM. This involves utilizing Linux directory navigation commands and file operations.
+As a System Engineer in a technology firm, you are tasked with setting up a specific directory hierarchy for an application on a newly provisioned local Ubuntu Linux server/VM. This involves utilizing Linux directory navigation commands and file operations.
 
 ## Task Objectives
 

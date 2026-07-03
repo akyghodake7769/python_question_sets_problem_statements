@@ -4,7 +4,7 @@ Duration : 60 Min.
 
 ## Scenario
 
-As a DevOps engineer at LabsKraft, you are responsible for securing sensitive configuration files on a Linux web server hosted on a local Ubuntu server/VM to prevent unauthorized access. You must use file permission and ownership commands to restrict access.
+As a System Engineer in a technology firm, you are responsible for securing sensitive configuration files on a Linux web server hosted on a local Ubuntu server/VM to prevent unauthorized access. You must use file permission and ownership commands to restrict access.
 
 ## Task Objectives
 

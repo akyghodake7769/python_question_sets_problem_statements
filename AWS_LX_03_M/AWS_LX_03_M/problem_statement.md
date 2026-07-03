@@ -4,7 +4,7 @@ Duration : 60 Min.
 
 ## Scenario
 
-As a DevOps engineer at LabsKraft, you are tasked with troubleshooting a cloud server experiencing high resource utilization. You must provision an EC2 instance and generate diagnostic reports on system performance using various Linux monitoring commands.
+As a System Engineer in a technology firm, you are tasked with troubleshooting a cloud server experiencing high resource utilization. You must provision an EC2 instance and generate diagnostic reports on system performance using various Linux monitoring commands.
 
 ## Task Objectives
 
