@@ -48,7 +48,7 @@ def verify_task():
  # TC3: Automated Monitoring (Scheduled Task)
     tc3_passed = False
     if tc1_passed:
-        cmd = "[bool](Get-ScheduledTask -TaskPath '\\*' -TaskName 'MemoryMonitorTask' -ErrorAction SilentlyContinue)"
+        cmd = "if (schtasks /query /tn 'MemoryMonitorTask' 2>$null) { 'True' } else { 'False' }"
         success, output = run_powershell(cmd)
         if success and "True" in output:
             tc3_passed = True
