@@ -1,47 +1,28 @@
-================================================================================
-AWS_WIN_01_M: ec2_windows_basics - STUDENT IMPLEMENTATION & TESTING GUIDE
-================================================================================
+# Testing Guide: AWS_WIN_01_M (AWS EC2 Windows Basics)
 
-🎯 GOAL: AWS EC2 (Windows Server) Basics: Navigation, Environment Variables & File Operations
+This guide provides instructions on how to solve and verify the problem statement successfully.
 
-This guide details the exact steps a learner must perform for AWS_WIN_01_M.
+## Step 1: Provision Infrastructure
+1. Log in to the AWS Management Console.
+2. Launch an EC2 Instance with the following specifications:
+   - **Name:** `<your-labskraft-username>-<your-exam-code>` (replace `<your-labskraft-username>-<your-exam-code>` with your actual LabsKraft username and exam code, e.g. `labs-kraft-demo106-1123`)
+   - **OS:** Windows Server (e.g. 2022 Base)
+   - **Instance Type:** `t2.micro`
+   - **IAM Role:** `Ec2_instance_SSM`
 
---------------------------------------------------------------------------------
-STEP-BY-STEP IMPLEMENTATION
---------------------------------------------------------------------------------
+## Step 2: Connect to the Instance
+1. Go to the EC2 console and select your instance.
+2. Click **Connect** and choose the **Session Manager (SSM)** tab.
+3. Click **Connect** to open the terminal/PowerShell session.
 
-STEP 1: AWS CONSOLE LOGIN
-- Log into AWS Console.
-- Ensure you are in the eu-west-2 Region.
+## Step 3: Execute PowerShell Commands
+Run appropriate PowerShell commands in the terminal to achieve the following:
+1. **Provision EC2 Instance:** Launch the Windows Server matching naming standards.
+2. **Directory Structure:** Create the target folders `C:\workspace\logs` and `C:\workspace\backups` on the system.
+3. **Configure Environment Variables:** Permanently define the system environment variable `APP_ENVIRONMENT` and set it to `production`.
+4. **Metadata Auditing:** Query the computer hostname and operating system caption, saving them to `C:\workspace\sysinfo.txt`.
+5. **Log Auditing:** Search for all `.log` files directly under `C:\Windows` (non-recursively) and save their absolute paths to `C:\workspace\log_files.txt`.
 
-STEP 2: CREATE EC2 INSTANCE (PASSES TC1)
-- Navigate to EC2 -> "Launch Instance".
-- Name: `labskraft-windows-basics-<your-labskraft-username>` (replace <your-labskraft-username> with your actual username, e.g. labs-kraft-demo106).
-- Select Microsoft Windows Server 2022 Base AMI.
-- Select t2.micro Instance Type.
-
-STEP 3: CONFIGURE DIRECTORY LAYOUT (PASSES TC2)
-- Connect via RDP or EC2 Instance Connect / SSM Session Manager.
-- Open PowerShell as Administrator.
-- Run the following commands to create the directory layout:
-  New-Item -ItemType Directory -Path "C:\workspace\logs" -Force
-  New-Item -ItemType Directory -Path "C:\workspace\backups" -Force
-
-STEP 4: SET UP SYSTEM ENVIRONMENT VARIABLES (PASSES TC3)
-- In the PowerShell session, configure the system-level variable permanently:
-  [Environment]::SetEnvironmentVariable("APP_ENVIRONMENT", "production", "Machine")
-
-STEP 5: SYSTEM METADATA AND LOG AUDITING (PASSES TC4)
-- Retrieve the hostname and OS caption details, and write them to C:\workspace\sysinfo.txt:
-  $hostname = hostname
-  $os = (Get-CimInstance Win32_OperatingSystem).Caption
-  "Hostname: $hostname`nOS: $os" | Out-File -FilePath "C:\workspace\sysinfo.txt" -Encoding ascii -Force
-- Locate all .log files directly inside the C:\Windows folder and save their absolute paths to C:\workspace\log_files.txt:
-  Get-ChildItem -Path "C:\Windows" -Filter "*.log" -File | Select-Object -ExpandProperty FullName | Out-File -FilePath "C:\workspace\log_files.txt" -Encoding ascii -Force
-
---------------------------------------------------------------------------------
-HOW TO VERIFY LOCALLY
---------------------------------------------------------------------------------
-- Switch to the student workspace terminal.
-- Run local evaluation:
-  python student_workspace/run.py
+## Step 4: Verification
+To verify your solution, ensure the python test environment is set up with `boto3`, then run the driver script or automated evaluator provided in the problem structure.
+- The evaluation script will remotely execute SSM commands to verify that the directory layout, environment variable, and diagnostic log files are set up correctly.

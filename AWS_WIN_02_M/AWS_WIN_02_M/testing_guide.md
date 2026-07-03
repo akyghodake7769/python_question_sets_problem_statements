@@ -1,57 +1,28 @@
-================================================================================
-AWS_WIN_02_M: ec2_windows_monitoring - STUDENT IMPLEMENTATION & TESTING GUIDE
-================================================================================
+# Testing Guide: AWS_WIN_02_M (AWS EC2 Windows Monitoring & IIS)
 
-🎯 GOAL: AWS EC2 (Windows Server) Monitoring, Logging & Service Management
+This guide provides instructions on how to solve and verify the problem statement successfully.
 
-This guide details the exact steps a learner must perform for AWS_WIN_02_M.
+## Step 1: Provision Infrastructure
+1. Log in to the AWS Management Console.
+2. Launch an EC2 Instance with the following specifications:
+   - **Name:** `<your-labskraft-username>-<your-exam-code>` (replace `<your-labskraft-username>-<your-exam-code>` with your actual LabsKraft username and exam code, e.g. `labs-kraft-demo106-1123`)
+   - **OS:** Windows Server (e.g. 2022 Base)
+   - **Instance Type:** `t2.micro`
+   - **IAM Role:** `Ec2_instance_SSM`
 
---------------------------------------------------------------------------------
-STEP-BY-STEP IMPLEMENTATION
---------------------------------------------------------------------------------
+## Step 2: Connect to the Instance
+1. Go to the EC2 console and select your instance.
+2. Click **Connect** and choose the **Session Manager (SSM)** tab.
+3. Click **Connect** to open the terminal/PowerShell session.
 
-STEP 1: AWS CONSOLE LOGIN
-- Log into AWS Console.
-- Ensure you are in the eu-west-2 Region.
+## Step 3: Execute PowerShell Commands
+Run appropriate PowerShell commands in the terminal to achieve the following:
+1. **Provision EC2 Instance:** Launch the Windows Server matching naming standards.
+2. **Install IIS:** Enable the Web-Server (IIS) role on the server and start the `W3SVC` service automatically.
+3. **Configure Scheduled Task:** Create a Scheduled Task named `MemoryMonitorTask` that runs a command every 5 minutes to write system date and free memory to `C:\workspace\monitor\mem_usage.log`.
+4. **Disk & CPU Diagnostics:** Generate disk utilization details for drive `C:` and top 5 processes by CPU consumption, logging them to `disk_report.txt` and `cpu_process_report.txt` under `C:\workspace\monitor`.
+5. **Network & System Diagnostics:** Test local TCP port 80 connectivity and extract the last 5 System Event Log errors, writing them to `network_status.txt` and `event_errors.txt` under `C:\workspace\monitor`.
 
-STEP 2: CREATE EC2 INSTANCE (PASSES TC1)
-- Navigate to EC2 -> "Launch Instance".
-- Name: `labskraft-windows-monitor-<your-labskraft-username>` (replace <your-labskraft-username> with your actual username, e.g. labs-kraft-demo106).
-- Select Microsoft Windows Server 2022 Base AMI.
-- Select t2.micro Instance Type.
-
-STEP 3: INSTALL IIS ROLE & START SERVICE (PASSES TC2)
-- Connect via RDP or SSM Session Manager.
-- Open PowerShell as Administrator.
-- Install the Web Server (IIS) role:
-  Install-WindowsFeature -name Web-Server -IncludeManagementTools
-- Ensure the W3SVC service is enabled and Running:
-  Set-Service -Name W3SVC -StartupType Automatic
-  Start-Service -Name W3SVC
-
-STEP 4: AUTOMATE MEMORY MONITORING TASK (PASSES TC3)
-- Create the monitor directory:
-  New-Item -ItemType Directory -Path "C:\workspace\monitor" -Force
-- Write a monitoring script or run a task schedule to append memory logs.
-- Create a Scheduled Task named `MemoryMonitorTask` to run every 5 minutes:
-  $action = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument '-NoProfile -WindowStyle Hidden -Command "$date = Get-Date -Format s; $freeMem = (Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory; \"$date - Free Memory: $freeMem KB\" | Out-File -FilePath C:\workspace\monitor\mem_usage.log -Append -Encoding ascii"'
-  $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5)
-  $principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType Service
-  Register-ScheduledTask -TaskName "MemoryMonitorTask" -Action $action -Trigger $trigger -Principal $principal -Force
-
-STEP 5: DISK AUDITING, PROCESS LOGGING, EVENT DIAGNOSTICS (PASSES TC4)
-- Generate a disk utilization report for the C: drive:
-  Get-PSDrive C | Select-Object Name, Used, Free | Out-File -FilePath "C:\workspace\monitor\disk_report.txt" -Encoding ascii -Force
-- Generate the top 5 CPU-consuming processes report:
-  Get-Process | Sort-Object CPU -Descending | Select-Object -First 5 | Out-File -FilePath "C:\workspace\monitor\cpu_process_report.txt" -Encoding ascii -Force
-- Test local TCP connectivity on port 80:
-  Test-NetConnection -Port 80 | Out-File -FilePath "C:\workspace\monitor\network_status.txt" -Encoding ascii -Force
-- Audit Windows System event logs for the latest 5 error messages:
-  Get-EventLog -LogName System -EntryType Error -Newest 5 | Select-Object Message | Out-File -FilePath "C:\workspace\monitor\event_errors.txt" -Encoding ascii -Force
-
---------------------------------------------------------------------------------
-HOW TO VERIFY LOCALLY
---------------------------------------------------------------------------------
-- Switch to the student workspace terminal.
-- Run local evaluation:
-  python student_workspace/run.py
+## Step 4: Verification
+To verify your solution, ensure the python test environment is set up with `boto3`, then run the driver script or automated evaluator provided in the problem structure.
+- The evaluation script will remotely execute SSM commands to verify that the IIS service status, scheduled task, and performance logs are set up correctly.

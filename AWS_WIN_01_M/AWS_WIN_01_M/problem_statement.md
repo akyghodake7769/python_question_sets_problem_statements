@@ -14,26 +14,29 @@ Perform the following actions in the AWS cloud and guest OS environment:
 
 ### 1. Provision EC2 Instance (Windows Server)
 
-- **Instance Name:** `labskraft-windows-basics-<your-labskraft-username>` (replace `<your-labskraft-username>` with your actual username, e.g. `labs-kraft-demo106`)
+- **Instance Name:** `<your-labskraft-username>-<your-exam-code>` (replace `<your-labskraft-username>-<your-exam-code>` with your actual LabsKraft username and exam code, e.g. `labs-kraft-demo106-1123`)
 - **AMI (Operating System):** Microsoft Windows Server 2022 Base (or newer)
 - **Instance Type:** `t2.micro`
 - **Region:** `eu-west-2` (Europe - London)
+- **IAM Role:** `Ec2_instance_SSM`
 
 ### 2. Configure Directory Layout
 
-On the running Windows Server instance, create the following directory structure:
-- `C:\workspace\logs`
-- `C:\workspace\backups`
+Log in to the Windows Server instance and perform the following operations:
+- Create the target directories `C:\workspace\logs` and `C:\workspace\backups`.
 
 ### 3. Set Up System Environment Variables
 
-Configure a system-wide environment variable named `APP_ENVIRONMENT` and assign it the value `production`.
-- The variable must be set at the **System (Machine)** level so that it persists across reboots and is accessible by all user accounts.
+- Configure a system-wide environment variable named `APP_ENVIRONMENT` and assign it the value `production`.
+- The variable must be set permanently so that it persists across reboots and is accessible by all user accounts.
 
-### 4. System Metadata and Log Auditing
+### 4. System Metadata Auditing
 
-- Retrieve the computer hostname and operating system details, and write this information to `C:\workspace\sysinfo.txt`.
-- Locate all log files ending in `.log` within the `C:\Windows` directory (non-recursively, just inside the root `C:\Windows` folder) and write their absolute paths (one path per line) to `C:\workspace\log_files.txt`.
+- Retrieve the computer hostname and operating system name (caption) of the instance, and save this information to `C:\workspace\sysinfo.txt`.
+
+### 5. System Log Auditing
+
+- Locate all log files ending in `.log` directly inside the root `C:\Windows` directory (non-recursively) and write their absolute paths (one path per line) to `C:\workspace\log_files.txt`.
 
 ## Verification
 
@@ -43,18 +46,20 @@ Once you have performed the tasks, you can run the verification script. The veri
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement | Validation | Marks |
-| --------- | ----------- | ---------- | ----- |
-| **TC1**   | **EC2 Instance Provisioning** | Running `t2.micro` Windows Server instance named `labskraft-windows-basics-<username>` in `eu-west-2` region. | 5 Marks |
-| **TC2**   | **Directory Structure** | Folders `C:\workspace\logs` and `C:\workspace\backups` exist on the instance. | 5 Marks |
-| **TC3**   | **System Environment Variables** | System environment variable `APP_ENVIRONMENT` is set permanently to `production`. | 5 Marks |
-| **TC4**   | **Metadata & Log Auditing** | Files `sysinfo.txt` and `log_files.txt` exist in `C:\workspace` with correct contents. | 5 Marks |
+| Test Case | Requirement | Marks |
+| --------- | ----------- | ----- |
+| **TC1**   | EC2 Instance Existence (`t2.micro`, Windows Server, named `<username>-<exam_code>`) | 4 Marks |
+| **TC2**   | Directory structure (`C:\workspace\logs` and `C:\workspace\backups`) created successfully | 4 Marks |
+| **TC3**   | System environment variable `APP_ENVIRONMENT` set permanently to `production` | 4 Marks |
+| **TC4**   | Hostname and OS details successfully saved to `C:\workspace\sysinfo.txt` | 4 Marks |
+| **TC5**   | Path list of `.log` files successfully saved to `C:\workspace\log_files.txt` | 4 Marks |
 
 **Total Score: 20 Marks**
 
 ## Important Notes
 
-- Ensure the instance name matches exactly: `labskraft-windows-basics-<your-labskraft-username>`.
+- Ensure the instance name matches exactly: `<your-labskraft-username>-<your-exam-code>`.
 - The instance must be a Windows Server machine of type `t2.micro`.
-- Make sure to set the environment variable at the Machine level (e.g. using `[Environment]::SetEnvironmentVariable("APP_ENVIRONMENT", "production", "Machine")` or Windows GUI).
+- Make sure the environment variable is set permanently.
 - File paths inside `log_files.txt` must be absolute paths (e.g., `C:\Windows\setupact.log`) separated by newlines.
+- Ensure the EC2 instance has the `Ec2_instance_SSM` IAM role attached for verification.

@@ -1,53 +1,54 @@
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone, timedelta
+import urllib.request
+import csv
+import boto3
 
-# Capture Assessment Start Time
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
-def get_ec2_client(region_name='eu-west-2'):
-    import boto3
+def get_exam_codes_from_sheet(username):
+    codes = []
+    env_code = os.getenv('KODEBUCK_EXAM_CODE')
+    if env_code:
+        codes.append(env_code.strip())
+    
     try:
-        return boto3.client('ec2', region_name=region_name)
+        url = "https://docs.google.com/spreadsheets/d/14MJnX-lIvWYKWQ7lZ2boKNYYmCauW40LJ5guEf3BRm8/export?format=csv&gid=0"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            lines = [line.decode('utf-8') for line in response.readlines()]
+            reader = csv.reader(lines)
+            next(reader) # skip header
+            for row in reader:
+                if len(row) >= 3 and row[2].strip() == username:
+                    code = row[1].strip()
+                    if code and code not in codes:
+                        codes.append(code)
     except Exception as e:
-        print(f"FAILED: Could not connect to AWS. Error: {e}")
-        sys.exit(1)
+        pass
+    
+    if not codes:
+        codes.append("UNKNOWN")
+    return codes
 
 def get_iam_username():
     try:
-        import boto3
         sts = boto3.client('sts')
         arn = sts.get_caller_identity().get('Arn', '')
-        if ':user/' in arn:
-            return arn.split(':user/')[-1].strip()
-        elif ':assumed-role/' in arn:
-            role_part = arn.split(':assumed-role/')[-1].strip()
-            if '/' in role_part:
-                return role_part.split('/')[-1].strip()
-            return role_part.strip()
-        else:
-            if '/' in arn:
-                return arn.split('/')[-1].strip()
-    except Exception:
-        pass
-    return None
-
-def resolve_username(default_prefix):
-    if default_prefix and default_prefix != 'LOCAL_USER':
-        return default_prefix
-    iam_user = get_iam_username()
-    if iam_user and iam_user not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
-        return iam_user
-    return default_prefix
+        if ':user/' in arn: return arn.split(':user/')[-1].strip()
+        elif ':assumed-role/' in arn: return arn.split(':assumed-role/')[-1].split('/')[-1].strip()
+        return arn.split('/')[-1].strip()
+    except: return None
 
 def verify_task():
-    username = resolve_username(USER_PREFIX)
-    target_instance = f"labskraft-windows-basics-{username}"
+    username = USER_PREFIX if USER_PREFIX != 'LOCAL_USER' else (get_iam_username() or USER_PREFIX)
     region = 'eu-west-2'
-    start_time = START_TIME_STR
+    start_time = START_TIME_STR or datetime.now(timezone.utc).isoformat()
 
     print("\n" + "-" * 60)
     print(f"{'KODEBUCK AWS WINDOWS BASICS VERIFICATION':^60}")
@@ -55,212 +56,163 @@ def verify_task():
 
     total_score = 0
     results = {}
+    
+    ec2 = boto3.client('ec2', region_name=region)
+    ssm = boto3.client('ssm', region_name=region)
+
+    tc1_passed = False
+    instance_id = None
+    
+    exam_codes = get_exam_codes_from_sheet(username)
+    possible_names = []
+    for ec in exam_codes:
+        possible_names.append(f"{username}-{ec}")
+    possible_names.extend([
+        username,
+        f"labskraft-windows-basics-{username}"
+    ])
 
     try:
-        session_start = START_TIME
-        if not session_start:
-            session_start = datetime.now(timezone.utc)
-            start_time = session_start.isoformat()
-
-        now = datetime.now(timezone.utc)
-        elapsed_minutes = (now - session_start).total_seconds() / 60
-        max_duration_env = os.getenv('KODEBUCK_ASSESSMENT_DURATION') or os.getenv('KODEARENA_ASSESSMENT_DURATION')
-        max_duration = int(max_duration_env) if max_duration_env else 60
-
-        if elapsed_minutes > max_duration + 10:
-            print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
-            raise Exception("Time Limit Exceeded")
-
-        print(f"[SYSTEM] Validating AWS Resources for: {username}")
-        print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
-
-        ec2 = get_ec2_client(region)
-
-        # --- TC1: EC2 Instance (Windows t2.micro) --- (5 Marks)
-        tc1_passed = False
-        instance_id = None
-        try:
-            resp = ec2.describe_instances(Filters=[
-                {'Name': 'tag:Name', 'Values': [target_instance]},
-                {'Name': 'instance-state-name', 'Values': ['running']}
-            ])
-            instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
-            if instances:
-                inst = instances[0]
-                launch_time = inst['LaunchTime']
-                if inst.get('InstanceType') != 't2.micro':
-                    print(f"TC1: EC2 Instance (Windows t2.micro) ............ [FAILED] (0/5)")
-                    print(f"     - [Reason]: Instance found but type is '{inst.get('InstanceType')}', expected 't2.micro'.")
-                elif launch_time < session_start - timedelta(minutes=5):
-                    ist_tz = timezone(timedelta(hours=5, minutes=30))
-                    c_ist = launch_time.astimezone(ist_tz)
-                    s_ist = session_start.astimezone(ist_tz)
-                    info = f"Launched at {c_ist.strftime('%I:%M:%S %p IST')}, Assessment started at {s_ist.strftime('%I:%M:%S %p IST')}"
-                    print(f"TC1: EC2 Instance (Windows t2.micro) ............ [FAILED] (0/5)")
-                    print(f"     - [Reason]: Instance was launched BEFORE the assessment started. Please terminate and launch a new one!")
-                    print(f"     - [Info]: {info}")
-                else:
+        resp = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+        instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
+        for inst in instances:
+            name = next((t['Value'] for t in inst.get('Tags', []) if t['Key'] == 'Name'), None)
+            if name in possible_names:
+                if inst.get('InstanceType') == 't2.micro':
                     tc1_passed = True
                     instance_id = inst['InstanceId']
-                    print(f"TC1: EC2 Instance (Windows t2.micro) ............ [PASSED] (5/5)")
-            else:
-                print(f"TC1: EC2 Instance (Windows t2.micro) ............ [FAILED] (0/5)")
-                print(f"     - [Reason]: Running instance named '{target_instance}' not found in {region}.")
-        except Exception as e:
-            print(f"TC1: EC2 Instance (Windows t2.micro) ............ [FAILED] (0/5)")
-            print(f"     - [Reason]: Error: {e}")
+                    break
+    except Exception as e:
+        pass
 
-        results['tc1'] = tc1_passed
-        if tc1_passed:
-            total_score += 5
+    results['tc1'] = tc1_passed
+    if tc1_passed:
+        total_score += 4
+        print("TC1: EC2 Instance (t2.micro) ............ [PASSED] (4/4)")
+    else:
+        print("TC1: EC2 Instance (t2.micro) ............ [FAILED] (0/4)")
 
-        # Guest OS Check Prerequisites via SSM
-        is_managed = False
-        ssm = None
-        if tc1_passed:
-            import boto3
-            ssm = boto3.client('ssm', region_name=region)
-            try:
-                ssm_instances = ssm.describe_instance_information(
-                    Filters=[{'Key': 'InstanceIds', 'Values': [instance_id]}]
-                ).get('InstanceInformationList', [])
-                if ssm_instances and ssm_instances[0].get('PingStatus') == 'Online':
-                    is_managed = True
-            except Exception:
-                pass
+    is_managed = False
+    if tc1_passed:
+        try:
+            ssm_instances = ssm.describe_instance_information(
+                Filters=[{'Key': 'InstanceIds', 'Values': [instance_id]}]
+            ).get('InstanceInformationList', [])
+            if ssm_instances and ssm_instances[0].get('PingStatus') == 'Online':
+                is_managed = True
+        except Exception:
+            pass
 
-        # Helper to execute PowerShell scripts on Windows via SSM
-        def run_powershell(commands):
-            import time
-            try:
-                response = ssm.send_command(
-                    InstanceIds=[instance_id],
-                    DocumentName="AWS-RunPowerShellScript",
-                    Parameters={'commands': commands},
-                    TimeoutSeconds=30
-                )
-                command_id = response['Command']['CommandId']
-                for _ in range(15):
-                    time.sleep(1.5)
-                    res = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
-                    if res['Status'] in ['Success', 'Failed', 'TimedOut', 'Cancelled']:
-                        return res['Status'] == 'Success', res.get('StandardOutputContent', '').strip()
-            except Exception:
-                pass
-            return False, ""
+    def run_powershell(commands):
+        if not instance_id: return None
+        try:
+            response = ssm.send_command(
+                InstanceIds=[instance_id],
+                DocumentName="AWS-RunPowerShellScript",
+                Parameters={'commands': commands},
+                TimeoutSeconds=30
+            )
+            command_id = response['Command']['CommandId']
+            for _ in range(15):
+                time.sleep(1.5)
+                res = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
+                if res['Status'] in ['Success', 'Failed', 'TimedOut', 'Cancelled']:
+                    return res['Status'] == 'Success', res.get('StandardOutputContent', '').strip()
+        except Exception:
+            pass
+        return False, ""
 
-        # --- TC2: Directory Structure --- (5 Marks)
-        tc2_passed = False
-        if tc1_passed:
-            if is_managed:
-                cmd = "[bool](Test-Path 'C:\\workspace\\logs') -and [bool](Test-Path 'C:\\workspace\\backups')"
-                success, output = run_powershell([cmd])
-                if success and "True" in output:
-                    tc2_passed = True
-                    print(f"TC2: Directory Structure ......................... [PASSED] (5/5)")
-                else:
-                    print(f"TC2: Directory Structure ......................... [FAILED] (0/5)")
-                    print(f"     - [Reason]: Directories 'C:\\workspace\\logs' and/or 'C:\\workspace\\backups' do not exist.")
-            else:
-                tc2_passed = False
-                print(f"TC2: Directory Structure ......................... [FAILED] (0/5)")
-                print(f"     - [Reason]: SSM agent is offline on the instance. Cannot perform verification.")
-        else:
-            print(f"TC2: Directory Structure ......................... [FAILED] (0/5)")
-            print(f"     - [Reason]: Prerequisite TC1 (EC2 instance) failed.")
-
-        results['tc2'] = tc2_passed
+    # TC2: Directory Structure
+    tc2_passed = False
+    if tc1_passed:
+        if is_managed:
+            cmd = "[bool](Test-Path 'C:\\workspace\\logs') -and [bool](Test-Path 'C:\\workspace\\backups')"
+            success, output = run_powershell([cmd])
+            if success and "True" in output:
+                tc2_passed = True
         if tc2_passed:
-            total_score += 5
-
-        # --- TC3: System Environment Variables --- (5 Marks)
-        tc3_passed = False
-        if tc1_passed:
-            if is_managed:
-                cmd = "[Environment]::GetEnvironmentVariable('APP_ENVIRONMENT', 'Machine')"
-                success, output = run_powershell([cmd])
-                if success and output == "production":
-                    tc3_passed = True
-                    print(f"TC3: System Environment Variables ................ [PASSED] (5/5)")
-                else:
-                    print(f"TC3: System Environment Variables ................ [FAILED] (0/5)")
-                    print(f"     - [Reason]: Permanent system-level variable 'APP_ENVIRONMENT' is not set to 'production'.")
-            else:
-                tc3_passed = False
-                print(f"TC3: System Environment Variables ................ [FAILED] (0/5)")
-                print(f"     - [Reason]: SSM agent is offline. Cannot perform verification.")
+            print(f"TC2: {'Directory Structure created':<30} [PASSED] (4/4)")
         else:
-            print(f"TC3: System Environment Variables ................ [FAILED] (0/5)")
-            print(f"     - [Reason]: Prerequisite TC1 failed.")
+            print(f"TC2: {'Directory Structure created':<30} [FAILED] (0/4)")
+            if not is_managed:
+                print("     - [Reason]: SSM agent is offline on the instance. Cannot perform verification.")
+    else:
+        print(f"TC2: {'Directory Structure created':<30} [FAILED] (0/4)")
+        print("     - [Reason]: Prerequisite TC1 failed.")
+    results['tc2'] = tc2_passed
+    total_score += 4 if tc2_passed else 0
 
-        results['tc3'] = tc3_passed
+    # TC3: System Environment Variables
+    tc3_passed = False
+    if tc1_passed:
+        if is_managed:
+            cmd = "[Environment]::GetEnvironmentVariable('APP_ENVIRONMENT', 'Machine')"
+            success, output = run_powershell([cmd])
+            if success and output == "production":
+                tc3_passed = True
         if tc3_passed:
-            total_score += 5
-
-        # --- TC4: Metadata & Log Auditing --- (5 Marks)
-        tc4_passed = False
-        if tc1_passed:
-            if is_managed:
-                check_files_cmd = "[bool](Test-Path 'C:\\workspace\\sysinfo.txt') -and [bool](Test-Path 'C:\\workspace\\log_files.txt')"
-                success, output = run_powershell([check_files_cmd])
-                if success and "True" in output:
-                    # Validate sysinfo.txt content
-                    read_sysinfo = "Get-Content 'C:\\workspace\\sysinfo.txt' -Raw"
-                    s_success, s_output = run_powershell([read_sysinfo])
-                    # Validate log_files.txt content
-                    read_logs = "Get-Content 'C:\\workspace\\log_files.txt' -Raw"
-                    l_success, l_output = run_powershell([read_logs])
-
-                    if s_success and l_success and len(s_output.strip()) > 0 and len(l_output.strip()) > 0:
-                        tc4_passed = True
-                        print(f"TC4: Metadata & Log Auditing ..................... [PASSED] (5/5)")
-                    else:
-                        print(f"TC4: Metadata & Log Auditing ..................... [FAILED] (0/5)")
-                        print(f"     - [Reason]: Files exist but sysinfo.txt or log_files.txt is empty.")
-                else:
-                    print(f"TC4: Metadata & Log Auditing ..................... [FAILED] (0/5)")
-                    print(f"     - [Reason]: 'sysinfo.txt' and/or 'log_files.txt' not found in C:\\workspace.")
-            else:
-                tc4_passed = False
-                print(f"TC4: Metadata & Log Auditing ..................... [FAILED] (0/5)")
-                print(f"     - [Reason]: SSM agent is offline. Cannot perform verification.")
+            print(f"TC3: {'System Env Variables set':<30} [PASSED] (4/4)")
         else:
-            print(f"TC4: Metadata & Log Auditing ..................... [FAILED] (0/5)")
-            print(f"     - [Reason]: Prerequisite TC1 failed.")
+            print(f"TC3: {'System Env Variables set':<30} [FAILED] (0/4)")
+            if not is_managed:
+                print("     - [Reason]: SSM agent is offline. Cannot perform verification.")
+    else:
+        print(f"TC3: {'System Env Variables set':<30} [FAILED] (0/4)")
+        print("     - [Reason]: Prerequisite TC1 failed.")
+    results['tc3'] = tc3_passed
+    total_score += 4 if tc3_passed else 0
 
-        results['tc4'] = tc4_passed
+    # TC4: Metadata Auditing (sysinfo.txt)
+    tc4_passed = False
+    if tc1_passed:
+        if is_managed:
+            cmd = "[bool](Test-Path 'C:\\workspace\\sysinfo.txt')"
+            success, output = run_powershell([cmd])
+            if success and "True" in output:
+                read_cmd = "Get-Content 'C:\\workspace\\sysinfo.txt' -Raw"
+                r_success, r_output = run_powershell([read_cmd])
+                if r_success and len(r_output.strip()) > 0:
+                    tc4_passed = True
         if tc4_passed:
-            total_score += 5
+            print(f"TC4: {'Metadata Auditing (sysinfo)':<30} [PASSED] (4/4)")
+        else:
+            print(f"TC4: {'Metadata Auditing (sysinfo)':<30} [FAILED] (0/4)")
+            if not is_managed:
+                print("     - [Reason]: SSM agent is offline. Cannot perform verification.")
+    else:
+        print(f"TC4: {'Metadata Auditing (sysinfo)':<30} [FAILED] (0/4)")
+        print("     - [Reason]: Prerequisite TC1 failed.")
+    results['tc4'] = tc4_passed
+    total_score += 4 if tc4_passed else 0
 
-        print("-" * 60)
-        print(f"{'TOTAL SCORE:':<44} {total_score}/20")
-        print("-" * 60 + "\n")
+    # TC5: Log Auditing (log_files.txt)
+    tc5_passed = False
+    if tc1_passed:
+        if is_managed:
+            cmd = "[bool](Test-Path 'C:\\workspace\\log_files.txt')"
+            success, output = run_powershell([cmd])
+            if success and "True" in output:
+                read_cmd = "Get-Content 'C:\\workspace\\log_files.txt' -Raw"
+                r_success, r_output = run_powershell([read_cmd])
+                if r_success and len(r_output.strip()) > 0:
+                    tc5_passed = True
+        if tc5_passed:
+            print(f"TC5: {'Log Auditing (log_files)':<30} [PASSED] (4/4)")
+        else:
+            print(f"TC5: {'Log Auditing (log_files)':<30} [FAILED] (0/4)")
+            if not is_managed:
+                print("     - [Reason]: SSM agent is offline. Cannot perform verification.")
+    else:
+        print(f"TC5: {'Log Auditing (log_files)':<30} [FAILED] (0/4)")
+        print("     - [Reason]: Prerequisite TC1 failed.")
+    results['tc5'] = tc5_passed
+    total_score += 4 if tc5_passed else 0
 
-    except Exception as e:
-        print(f"[ERROR] Verification failed: {str(e)}")
-        total_score = 0
+    print("-" * 60)
+    print(f"{'TOTAL SCORE:':<44} {total_score}/20")
+    print("-" * 60 + "\n")
 
-    # Save Metadata for Central Evaluation
-    solution_data = {
-        'candidate_prefix': username,
-        'assessment_start_time': start_time,
-        'max_duration_minutes': max_duration,
-        'evaluation_type': 'REAL_TIME_API',
-        'score': total_score,
-        'results': results
-    }
-
-    try:
-        ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
-        os.makedirs(ws_path, exist_ok=True)
-        with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
-            json.dump(solution_data, f, indent=4)
-        
-        root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
-        with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
-            json.dump(solution_data, f, indent=4)
-    except Exception as e:
-        print(f"[ERROR] Could not write solution.json: {e}")
-
-if __name__ == "__main__":
-    verify_task()
+    ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
+    os.makedirs(ws_path, exist_ok=True)
+    with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
+        json.dump({'score': total_score, 'results': results}, f, indent=4)

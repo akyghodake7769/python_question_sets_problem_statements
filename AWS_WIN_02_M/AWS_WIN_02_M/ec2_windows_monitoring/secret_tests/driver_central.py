@@ -22,45 +22,56 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
     # --- TC1: EC2 Instance Provisioning ---
     tc1_passed = results.get('tc1', False)
     if tc1_passed:
-        report_items.append("TC1 [EC2 Instance Provisioning] (5/5)")
-        file_results.append("✓ TC1 [EC2 Instance Provisioning]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC1 [EC2 Instance Provisioning] (4/4)")
+        file_results.append("✓ TC1 [EC2 Instance Provisioning]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC1 [EC2 Instance Provisioning] (0/5)")
-        file_results.append(f"✗ TC1 [EC2 Instance Provisioning]: FAILED (0/5) | Running Windows EC2 instance named labskraft-windows-monitor-{username} not found.")
+        report_items.append("TC1 [EC2 Instance Provisioning] (0/4)")
+        file_results.append(f"✗ TC1 [EC2 Instance Provisioning]: FAILED (0/4) | Running Windows EC2 instance named {username} not found.")
         fail_count += 1
 
     # --- TC2: Service Management (IIS) ---
     tc2_passed = results.get('tc2', False)
     if tc2_passed:
-        report_items.append("TC2 [Service Management (IIS)] (5/5)")
-        file_results.append("✓ TC2 [Service Management (IIS)]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC2 [Service Management (IIS)] (4/4)")
+        file_results.append("✓ TC2 [Service Management (IIS)]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC2 [Service Management (IIS)] (0/5)")
-        file_results.append("✗ TC2 [Service Management (IIS)]: FAILED (0/5) | IIS service 'W3SVC' is not running or not installed.")
+        report_items.append("TC2 [Service Management (IIS)] (0/4)")
+        file_results.append("✗ TC2 [Service Management (IIS)]: FAILED (0/4) | IIS service 'W3SVC' is not running or not installed.")
         fail_count += 1
 
     # --- TC3: Automated Monitoring (Scheduled Task) ---
     tc3_passed = results.get('tc3', False)
     if tc3_passed:
-        report_items.append("TC3 [Automated Monitoring (Scheduled Task)] (5/5)")
-        file_results.append("✓ TC3 [Automated Monitoring (Scheduled Task)]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC3 [Automated Monitoring (Scheduled Task)] (4/4)")
+        file_results.append("✓ TC3 [Automated Monitoring (Scheduled Task)]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC3 [Automated Monitoring (Scheduled Task)] (0/5)")
-        file_results.append("✗ TC3 [Automated Monitoring (Scheduled Task)]: FAILED (0/5) | Scheduled Task 'MemoryMonitorTask' does not exist on the Windows instance.")
+        report_items.append("TC3 [Automated Monitoring (Scheduled Task)] (0/4)")
+        file_results.append("✗ TC3 [Automated Monitoring (Scheduled Task)]: FAILED (0/4) | Scheduled Task 'MemoryMonitorTask' does not exist on the Windows instance.")
         fail_count += 1
 
-    # --- TC4: Disk, CPU, Network & Log Diagnostics ---
+    # --- TC4: Disk & CPU Diagnostics ---
     tc4_passed = results.get('tc4', False)
     if tc4_passed:
-        report_items.append("TC4 [Disk, CPU, Network & Log Diagnostics] (5/5)")
-        file_results.append("✓ TC4 [Disk, CPU, Network & Log Diagnostics]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC4 [Disk & CPU Diagnostics] (4/4)")
+        file_results.append("✓ TC4 [Disk & CPU Diagnostics]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC4 [Disk, CPU, Network & Log Diagnostics] (0/5)")
-        file_results.append("✗ TC4 [Disk, CPU, Network & Log Diagnostics]: FAILED (0/5) | Diagnostics files exist but one or more of them are empty or missing under C:\\workspace\\monitor.")
+        report_items.append("TC4 [Disk & CPU Diagnostics] (0/4)")
+        file_results.append("✗ TC4 [Disk & CPU Diagnostics]: FAILED (0/4) | Diagnostics files exist but one or more of them are empty or missing under C:\\workspace\\monitor.")
+        fail_count += 1
+
+    # --- TC5: Network & System Log Diagnostics ---
+    tc5_passed = results.get('tc5', False)
+    if tc5_passed:
+        report_items.append("TC5 [Network & System Log Diagnostics] (4/4)")
+        file_results.append("✓ TC5 [Network & System Log Diagnostics]: PASSED (4/4)")
+        total_score += 4
+    else:
+        report_items.append("TC5 [Network & System Log Diagnostics] (0/4)")
+        file_results.append("✗ TC5 [Network & System Log Diagnostics]: FAILED (0/4) | Diagnostics files exist but one or more of them are empty or missing under C:\\workspace\\monitor.")
         fail_count += 1
 
     file_results.append("-" * 50)

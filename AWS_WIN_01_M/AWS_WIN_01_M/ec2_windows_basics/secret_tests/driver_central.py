@@ -22,45 +22,56 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
     # --- TC1: EC2 Instance Provisioning ---
     tc1_passed = results.get('tc1', False)
     if tc1_passed:
-        report_items.append("TC1 [EC2 Instance Provisioning] (5/5)")
-        file_results.append("✓ TC1 [EC2 Instance Provisioning]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC1 [EC2 Instance Provisioning] (4/4)")
+        file_results.append("✓ TC1 [EC2 Instance Provisioning]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC1 [EC2 Instance Provisioning] (0/5)")
-        file_results.append(f"✗ TC1 [EC2 Instance Provisioning]: FAILED (0/5) | Running Windows EC2 instance named labskraft-windows-basics-{username} not found.")
+        report_items.append("TC1 [EC2 Instance Provisioning] (0/4)")
+        file_results.append(f"✗ TC1 [EC2 Instance Provisioning]: FAILED (0/4) | Running Windows EC2 instance named {username} not found.")
         fail_count += 1
 
     # --- TC2: Directory Structure ---
     tc2_passed = results.get('tc2', False)
     if tc2_passed:
-        report_items.append("TC2 [Directory Structure] (5/5)")
-        file_results.append("✓ TC2 [Directory Structure]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC2 [Directory Structure] (4/4)")
+        file_results.append("✓ TC2 [Directory Structure]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC2 [Directory Structure] (0/5)")
-        file_results.append("✗ TC2 [Directory Structure]: FAILED (0/5) | Directories 'C:\\workspace\\logs' and/or 'C:\\workspace\\backups' do not exist.")
+        report_items.append("TC2 [Directory Structure] (0/4)")
+        file_results.append("✗ TC2 [Directory Structure]: FAILED (0/4) | Directories 'C:\\workspace\\logs' and/or 'C:\\workspace\\backups' do not exist.")
         fail_count += 1
 
     # --- TC3: System Environment Variables ---
     tc3_passed = results.get('tc3', False)
     if tc3_passed:
-        report_items.append("TC3 [System Environment Variables] (5/5)")
-        file_results.append("✓ TC3 [System Environment Variables]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC3 [System Environment Variables] (4/4)")
+        file_results.append("✓ TC3 [System Environment Variables]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC3 [System Environment Variables] (0/5)")
-        file_results.append("✗ TC3 [System Environment Variables]: FAILED (0/5) | System-level environment variable 'APP_ENVIRONMENT' not set to 'production'.")
+        report_items.append("TC3 [System Environment Variables] (0/4)")
+        file_results.append("✗ TC3 [System Environment Variables]: FAILED (0/4) | System-level environment variable 'APP_ENVIRONMENT' not set to 'production'.")
         fail_count += 1
 
-    # --- TC4: Metadata & Log Auditing ---
+    # --- TC4: Metadata Auditing ---
     tc4_passed = results.get('tc4', False)
     if tc4_passed:
-        report_items.append("TC4 [Metadata & Log Auditing] (5/5)")
-        file_results.append("✓ TC4 [Metadata & Log Auditing]: PASSED (5/5)")
-        total_score += 5
+        report_items.append("TC4 [Metadata Auditing] (4/4)")
+        file_results.append("✓ TC4 [Metadata Auditing]: PASSED (4/4)")
+        total_score += 4
     else:
-        report_items.append("TC4 [Metadata & Log Auditing] (0/5)")
-        file_results.append("✗ TC4 [Metadata & Log Auditing]: FAILED (0/5) | Files 'sysinfo.txt' and/or 'log_files.txt' not found or empty in C:\\workspace.")
+        report_items.append("TC4 [Metadata Auditing] (0/4)")
+        file_results.append("✗ TC4 [Metadata Auditing]: FAILED (0/4) | File 'sysinfo.txt' not found or empty in C:\\workspace.")
+        fail_count += 1
+
+    # --- TC5: Log Auditing ---
+    tc5_passed = results.get('tc5', False)
+    if tc5_passed:
+        report_items.append("TC5 [Log Auditing] (4/4)")
+        file_results.append("✓ TC5 [Log Auditing]: PASSED (4/4)")
+        total_score += 4
+    else:
+        report_items.append("TC5 [Log Auditing] (0/4)")
+        file_results.append("✗ TC5 [Log Auditing]: FAILED (0/4) | File 'log_files.txt' not found or empty in C:\\workspace.")
         fail_count += 1
 
     file_results.append("-" * 50)
