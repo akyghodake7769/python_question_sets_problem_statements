@@ -27,7 +27,7 @@ def verify_task():
     # TC2: Directory hierarchy created
     tc2_passed = False
     if tc1_passed:
-        if os.path.isdir('/home/ubuntu/app/config') and os.path('/home/ubuntu/app/logs'):
+        if os.path.isdir('/home/ubuntu/app/config') and os.path.isdir('/home/ubuntu/app/logs'):
             tc2_passed = True
     results['tc2'] = tc2_passed
     total_score += 4 if tc2_passed else 0
