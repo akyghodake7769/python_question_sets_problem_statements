@@ -162,9 +162,9 @@ def verify_task():
                     print(f"TC2: Service Management (IIS) ................... [FAILED] (0/5)")
                     print(f"     - [Reason]: IIS service 'W3SVC' is not running or not installed.")
             else:
-                tc2_passed = True
-                print(f"TC2: Service Management (IIS) ................... [PASSED] (5/5)")
-                print(f"     - [WARNING]: SSM agent is offline. IIS status check bypassed.")
+                tc2_passed = False
+                print(f"TC2: Service Management (IIS) ................... [FAILED] (0/5)")
+                print(f"     - [Reason]: SSM agent is offline. Cannot perform verification.")
         else:
             print(f"TC2: Service Management (IIS) ................... [FAILED] (0/5)")
             print(f"     - [Reason]: Prerequisite TC1 (EC2 instance) failed.")
@@ -186,9 +186,9 @@ def verify_task():
                     print(f"TC3: Automated Monitoring (Scheduled Task) ....... [FAILED] (0/5)")
                     print(f"     - [Reason]: Scheduled Task 'MemoryMonitorTask' does not exist on the Windows instance.")
             else:
-                tc3_passed = True
-                print(f"TC3: Automated Monitoring (Scheduled Task) ....... [PASSED] (5/5)")
-                print(f"     - [WARNING]: SSM agent is offline. Scheduled Task check bypassed.")
+                tc3_passed = False
+                print(f"TC3: Automated Monitoring (Scheduled Task) ....... [FAILED] (0/5)")
+                print(f"     - [Reason]: SSM agent is offline. Cannot perform verification.")
         else:
             print(f"TC3: Automated Monitoring (Scheduled Task) ....... [FAILED] (0/5)")
             print(f"     - [Reason]: Prerequisite TC1 failed.")
@@ -229,9 +229,9 @@ def verify_task():
                     print(f"TC4: Disk, CPU, Network & Log Diagnostics ........ [FAILED] (0/5)")
                     print(f"     - [Reason]: Missing one or more of the required reports under C:\\workspace\\monitor.")
             else:
-                tc4_passed = True
-                print(f"TC4: Disk, CPU, Network & Log Diagnostics ........ [PASSED] (5/5)")
-                print(f"     - [WARNING]: SSM agent is offline. Bypassed diagnostics reports checks.")
+                tc4_passed = False
+                print(f"TC4: Disk, CPU, Network & Log Diagnostics ........ [FAILED] (0/5)")
+                print(f"     - [Reason]: SSM agent is offline. Cannot perform verification.")
         else:
             print(f"TC4: Disk, CPU, Network & Log Diagnostics ........ [FAILED] (0/5)")
             print(f"     - [Reason]: Prerequisite TC1 failed.")

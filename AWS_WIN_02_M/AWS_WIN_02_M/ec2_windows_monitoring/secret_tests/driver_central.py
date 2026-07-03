@@ -3,7 +3,7 @@ import json
 import os
 from datetime import datetime, timezone, timedelta
 
-def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, assessment_start_time=None, solution_data=None):
+def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, assessment_start_time=None, solution_data=None, exam_code="UNKNOWN"):
     """
     Central Server Auditor: Verifies AWS Windows Server Monitoring & IIS setup.
     """
@@ -72,7 +72,7 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
     timestamp = datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")
     
     problem_code = "AWS_WIN_02_M"
-    csv_report = f"{date_str},{problem_code},{candidate_email},{timestamp},{len(report_items)}: {'; '.join(report_items)},,{fail_count},{total_score}"
+    csv_report = f"{date_str},{problem_code},{candidate_email},{timestamp},{len(report_items)}: {'; '.join(report_items)},{exam_code},{fail_count},{total_score}"
     
     # Save Report to Central Server Filesystem
     report_base = f"/home/ubuntu/central_server/reports/{problem_code}/{candidate_email}"

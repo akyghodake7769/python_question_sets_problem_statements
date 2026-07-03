@@ -162,10 +162,9 @@ def verify_task():
                     print(f"TC2: Directory Structure ......................... [FAILED] (0/5)")
                     print(f"     - [Reason]: Directories 'C:\\workspace\\logs' and/or 'C:\\workspace\\backups' do not exist.")
             else:
-                # Fallback check
-                tc2_passed = True
-                print(f"TC2: Directory Structure ......................... [PASSED] (5/5)")
-                print(f"     - [WARNING]: SSM agent is offline on the instance. Verification bypassed folder checks.")
+                tc2_passed = False
+                print(f"TC2: Directory Structure ......................... [FAILED] (0/5)")
+                print(f"     - [Reason]: SSM agent is offline on the instance. Cannot perform verification.")
         else:
             print(f"TC2: Directory Structure ......................... [FAILED] (0/5)")
             print(f"     - [Reason]: Prerequisite TC1 (EC2 instance) failed.")
@@ -187,9 +186,9 @@ def verify_task():
                     print(f"TC3: System Environment Variables ................ [FAILED] (0/5)")
                     print(f"     - [Reason]: Permanent system-level variable 'APP_ENVIRONMENT' is not set to 'production'.")
             else:
-                tc3_passed = True
-                print(f"TC3: System Environment Variables ................ [PASSED] (5/5)")
-                print(f"     - [WARNING]: SSM agent is offline. Environment variable checks bypassed.")
+                tc3_passed = False
+                print(f"TC3: System Environment Variables ................ [FAILED] (0/5)")
+                print(f"     - [Reason]: SSM agent is offline. Cannot perform verification.")
         else:
             print(f"TC3: System Environment Variables ................ [FAILED] (0/5)")
             print(f"     - [Reason]: Prerequisite TC1 failed.")
@@ -222,9 +221,9 @@ def verify_task():
                     print(f"TC4: Metadata & Log Auditing ..................... [FAILED] (0/5)")
                     print(f"     - [Reason]: 'sysinfo.txt' and/or 'log_files.txt' not found in C:\\workspace.")
             else:
-                tc4_passed = True
-                print(f"TC4: Metadata & Log Auditing ..................... [PASSED] (5/5)")
-                print(f"     - [WARNING]: SSM agent is offline. File verification bypassed.")
+                tc4_passed = False
+                print(f"TC4: Metadata & Log Auditing ..................... [FAILED] (0/5)")
+                print(f"     - [Reason]: SSM agent is offline. Cannot perform verification.")
         else:
             print(f"TC4: Metadata & Log Auditing ..................... [FAILED] (0/5)")
             print(f"     - [Reason]: Prerequisite TC1 failed.")
