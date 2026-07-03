@@ -11,21 +11,6 @@ USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME
 def verify_task():
     print("\n" + "-" * 60)
     print(f"{'KODEBUCK LOCAL LINUX VERIFICATION':^60}")
-    print(f"System Hostname: {socket.gethostname()}")
-    print("-" * 60)
-
-    print("DEBUG PATH LISTING:")
-    try:
-        if os.path.exists('/home/ubuntu'):
-            print(f"/home/ubuntu content: {os.listdir('/home/ubuntu')}")
-            if os.path.exists('/home/ubuntu/app_navigation'):
-                print(f"/home/ubuntu/app_navigation content: {os.listdir('/home/ubuntu/app_navigation')}")
-            else:
-                print("/home/ubuntu/app_navigation does not exist!")
-        else:
-            print("/home/ubuntu does not exist!")
-    except Exception as e:
-        print(f"Path listing error: {e}")
     print("-" * 60)
 
     total_score = 0
