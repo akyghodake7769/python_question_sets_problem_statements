@@ -216,3 +216,6 @@ def verify_task():
     os.makedirs(ws_path, exist_ok=True)
     with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
         json.dump({'score': total_score, 'results': results}, f, indent=4)
+
+if __name__ == "__main__":
+    verify_task()
