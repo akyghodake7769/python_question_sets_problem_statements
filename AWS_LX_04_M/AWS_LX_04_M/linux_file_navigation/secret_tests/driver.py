@@ -3,6 +3,8 @@ import os
 import sys
 from datetime import datetime, timezone, timedelta
 
+import socket
+
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
@@ -10,6 +12,7 @@ USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME
 def verify_task():
     print("\n" + "-" * 60)
     print(f"{'KODEBUCK LOCAL LINUX VERIFICATION':^60}")
+    print(f"System Hostname: {socket.gethostname()}")
     print("-" * 60)
 
     total_score = 0
