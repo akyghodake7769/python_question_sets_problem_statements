@@ -15,6 +15,20 @@ def verify_task():
     print(f"System Hostname: {socket.gethostname()}")
     print("-" * 60)
 
+    print("DEBUG PATH LISTING:")
+    try:
+        if os.path.exists('/home/ubuntu'):
+            print(f"/home/ubuntu content: {os.listdir('/home/ubuntu')}")
+            if os.path.exists('/home/ubuntu/app'):
+                print(f"/home/ubuntu/app content: {os.listdir('/home/ubuntu/app')}")
+            else:
+                print("/home/ubuntu/app does not exist!")
+        else:
+            print("/home/ubuntu does not exist!")
+    except Exception as e:
+        print(f"Path listing error: {e}")
+    print("-" * 60)
+
     total_score = 0
     results = {}
     
