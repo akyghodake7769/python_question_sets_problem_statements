@@ -45,7 +45,7 @@ def verify_task():
     total_score += 4 if tc2_passed else 0
     print(f"TC2: {'Service Management (IIS)':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
 
-    # TC3: Automated Monitoring (Scheduled Task)
+ # TC3: Automated Monitoring (Scheduled Task)
     tc3_passed = False
     if tc1_passed:
         cmd = "[bool](Get-ScheduledTask -TaskName 'MemoryMonitorTask' -ErrorAction SilentlyContinue)"
