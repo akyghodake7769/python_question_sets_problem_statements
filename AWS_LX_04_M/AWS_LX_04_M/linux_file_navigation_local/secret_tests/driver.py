@@ -92,7 +92,7 @@ def verify_task():
             return True
         try:
             mtime = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
-            return mtime >= START_TIME
+            return mtime >= START_TIME - timedelta(minutes=5)
         except Exception:
             return False
 
