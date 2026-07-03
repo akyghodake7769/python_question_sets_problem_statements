@@ -2,7 +2,6 @@ import json
 import os
 import sys
 from datetime import datetime, timezone, timedelta
-
 import socket
 
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
@@ -19,10 +18,10 @@ def verify_task():
     try:
         if os.path.exists('/home/ubuntu'):
             print(f"/home/ubuntu content: {os.listdir('/home/ubuntu')}")
-            if os.path.exists('/home/ubuntu/app'):
-                print(f"/home/ubuntu/app content: {os.listdir('/home/ubuntu/app')}")
+            if os.path.exists('/home/ubuntu/app_navigation'):
+                print(f"/home/ubuntu/app_navigation content: {os.listdir('/home/ubuntu/app_navigation')}")
             else:
-                print("/home/ubuntu/app does not exist!")
+                print("/home/ubuntu/app_navigation does not exist!")
         else:
             print("/home/ubuntu does not exist!")
     except Exception as e:
@@ -41,7 +40,7 @@ def verify_task():
     # TC2: Directory hierarchy created
     tc2_passed = False
     if tc1_passed:
-        if os.path.isdir('/home/ubuntu/app/config') and os.path.isdir('/home/ubuntu/app/logs'):
+        if os.path.isdir('/home/ubuntu/app_navigation/config') and os.path.isdir('/home/ubuntu/app_navigation/logs'):
             tc2_passed = True
     results['tc2'] = tc2_passed
     total_score += 4 if tc2_passed else 0
@@ -50,7 +49,7 @@ def verify_task():
     # TC3: Initial files created
     tc3_passed = False
     if tc1_passed:
-        if os.path.isfile('/home/ubuntu/app/config/app.conf') and os.path.isfile('/home/ubuntu/app/logs/error.log'):
+        if os.path.isfile('/home/ubuntu/app_navigation/config/app.conf') and os.path.isfile('/home/ubuntu/app_navigation/logs/error.log'):
             tc3_passed = True
     results['tc3'] = tc3_passed
     total_score += 4 if tc3_passed else 0
@@ -59,7 +58,7 @@ def verify_task():
     # TC4: File operations completed
     tc4_passed = False
     if tc1_passed:
-        if os.path.isfile('/home/ubuntu/app/app.conf.backup') and os.path.isfile('/home/ubuntu/search_results.txt'):
+        if os.path.isfile('/home/ubuntu/app_navigation/app.conf.backup') and os.path.isfile('/home/ubuntu/search_results_nav.txt'):
             tc4_passed = True
     results['tc4'] = tc4_passed
     total_score += 4 if tc4_passed else 0
@@ -68,7 +67,7 @@ def verify_task():
     # TC5: Disk usage output generated
     tc5_passed = False
     if tc1_passed:
-        if os.path.isfile('/home/ubuntu/disk_usage.txt') and os.path.getsize('/home/ubuntu/disk_usage.txt') > 0:
+        if os.path.isfile('/home/ubuntu/disk_usage_nav.txt') and os.path.getsize('/home/ubuntu/disk_usage_nav.txt') > 0:
             tc5_passed = True
     results['tc5'] = tc5_passed
     total_score += 4 if tc5_passed else 0
