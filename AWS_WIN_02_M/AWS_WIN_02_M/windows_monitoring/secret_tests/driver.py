@@ -51,6 +51,7 @@ def verify_task():
         cmd = "[bool](Get-ScheduledTask -TaskName 'MemoryMonitorTask' -ErrorAction SilentlyContinue)"
         success, output = run_powershell(cmd)
         print(f"DEBUG TC3 -> success={success}, output={output!r}")
+        if success and "True" in output:
             tc3_passed = True
     results['tc3'] = tc3_passed
     total_score += 4 if tc3_passed else 0
