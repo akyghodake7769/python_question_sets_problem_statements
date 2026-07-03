@@ -1,4 +1,4 @@
-# AWS EC2 (Windows Server) Monitoring, Logging & Service Management
+# Windows Server Monitoring, Logging & Service Management (Local VM)
 
 **Difficulty Level:** Medium
 
@@ -6,23 +6,17 @@
 
 ## Scenario
 
-As a Windows Cloud Ops Engineer, you are responsible for maintaining server availability, configuring automated administrative scripts, monitoring CPU/memory/disk performance, validating network connectivity, and diagnosing server health issues. You need to provision a new Windows Server instance, host a web service using IIS, schedule a memory monitoring task, generate disk and CPU process utilization reports, test local network connectivity, and audit critical system event errors.
+As a Windows Cloud Ops Engineer, you are responsible for maintaining server availability, configuring automated administrative scripts, monitoring CPU/memory/disk performance, validating network connectivity, and diagnosing server health issues on a local Windows Server/VM. You need to host a web service using IIS, schedule a memory monitoring task, generate disk and CPU process utilization reports, test local network connectivity, and audit critical system event errors.
 
 ## Task Objectives
 
-Perform the following actions in the AWS cloud and guest OS environment:
+Perform the following actions inside the local Windows guest OS:
 
-### 1. Provision EC2 Instance (Windows Server)
-
-- **Instance Name:** `<your-labskraft-username>-<your-exam-code>` (replace `<your-labskraft-username>-<your-exam-code>` with your actual LabsKraft username and exam code, e.g. `labs-kraft-demo106-1123`)
-- **AMI (Operating System):** Microsoft Windows Server 2022 Base (or newer)
-- **Instance Type:** `t2.micro`
-- **Region:** `eu-west-2` (Europe - London)
-- **IAM Role:** `Ec2_instance_SSM`
+### 1. Environment Verification
+- Ensure the local Windows Server environment is active and running.
 
 ### 2. Install and Manage Web Server (IIS)
 
-Log in to the Windows Server instance and perform the following operations:
 - Install the **Web-Server (IIS)** role on the server.
 - Ensure that the World Wide Web Publishing Service (`W3SVC`) is enabled, configured to start automatically, and running.
 
@@ -45,7 +39,7 @@ Generate network and error diagnostics under `C:\workspace\monitor\`:
 
 ## Verification
 
-Once you have performed the tasks, you can run the verification script. The verification script will check the configuration of your EC2 resources via the AWS client and connect via Systems Manager (SSM) inside the Windows Guest OS to check IIS service status, scheduled tasks, CPU/disk reports, network connection status, and event log files.
+Once you have performed the tasks, you can run the verification script. The verification script will check the configuration on your local Windows system to check IIS service status, scheduled tasks, CPU/disk reports, network connection status, and event log files.
 
 ## Grading Criteria
 
@@ -53,7 +47,7 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | EC2 Instance Existence (`t2.micro`, Windows Server, named `<username>-<exam_code>`) | 4 Marks |
+| **TC1**   | Local Windows VM Environment active and verified | 4 Marks |
 | **TC2**   | Web-Server (IIS) role installed and the `W3SVC` service running | 4 Marks |
 | **TC3**   | Scheduled Task `MemoryMonitorTask` created and configured | 4 Marks |
 | **TC4**   | Disk and CPU diagnostics reports generated under `C:\workspace\monitor` | 4 Marks |
@@ -63,7 +57,5 @@ Your performance will be evaluated based on the following test cases:
 
 ## Important Notes
 
-- Ensure the instance name matches exactly: `<your-labskraft-username>-<your-exam-code>`.
 - The scheduled task name must be exactly `MemoryMonitorTask`.
 - Ensure all diagnostics files are written to the correct folder: `C:\workspace\monitor`.
-- Ensure the EC2 instance has the `Ec2_instance_SSM` IAM role attached for verification.

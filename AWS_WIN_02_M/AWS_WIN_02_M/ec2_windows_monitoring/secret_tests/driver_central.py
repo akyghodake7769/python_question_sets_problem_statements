@@ -19,15 +19,15 @@ def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, 
     
     results = solution_data.get('results', {}) if solution_data else {}
     
-    # --- TC1: EC2 Instance Provisioning ---
+    # --- TC1: Local Environment Verification ---
     tc1_passed = results.get('tc1', False)
     if tc1_passed:
-        report_items.append("TC1 [EC2 Instance Provisioning] (4/4)")
-        file_results.append("✓ TC1 [EC2 Instance Provisioning]: PASSED (4/4)")
+        report_items.append("TC1 [Local Environment Verification] (4/4)")
+        file_results.append("✓ TC1 [Local Environment Verification]: PASSED (4/4)")
         total_score += 4
     else:
-        report_items.append("TC1 [EC2 Instance Provisioning] (0/4)")
-        file_results.append(f"✗ TC1 [EC2 Instance Provisioning]: FAILED (0/4) | Running Windows EC2 instance named {username} not found.")
+        report_items.append("TC1 [Local Environment Verification] (0/4)")
+        file_results.append(f"✗ TC1 [Local Environment Verification]: FAILED (0/4) | Local Windows environment check failed.")
         fail_count += 1
 
     # --- TC2: Service Management (IIS) ---
