@@ -22,19 +22,20 @@ def verify_task_central(username, start_time_str, exam_code="UNKNOWN"):
 
     report_items = []
     tc_names = {
-        'tc1': 'TC1 [User appuser]',
-        'tc2': 'TC2 [File Operations]',
-        'tc3': 'TC3 [Permissions]',
-        'tc4': 'TC4 [Ownership]'
+        'tc1': 'TC1 [Environment Check]',
+        'tc2': 'TC2 [User appuser]',
+        'tc3': 'TC3 [File Operations]',
+        'tc4': 'TC4 [Permissions]',
+        'tc5': 'TC5 [Ownership]'
     }
     
     fail_count = 0
     for tc, name in tc_names.items():
         passed = results.get(tc, False)
-        marks = 5 if passed else 0
+        marks = 4 if passed else 0
         if not passed:
             fail_count += 1
-        report_items.append(f"{name} ({marks}/5)")
+        report_items.append(f"{name} ({marks}/4)")
 
     date_str = datetime.now(ist_offset).strftime("%d-%m-%Y")
     timestamp_str = datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")

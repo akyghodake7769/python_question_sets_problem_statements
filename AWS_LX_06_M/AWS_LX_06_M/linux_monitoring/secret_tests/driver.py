@@ -15,29 +15,47 @@ def verify_task():
     total_score = 0
     results = {}
     
-    # TC1: CPU/process logs generated
-    tc1_passed = os.path.isfile('/home/ubuntu/cpu_monitor.txt') and os.path.getsize('/home/ubuntu/cpu_monitor.txt') > 0
+    # TC1: Environment active and verified
+    tc1_passed = os.path.exists('/home/ubuntu') and os.path.isdir('/home/ubuntu')
     results['tc1'] = tc1_passed
-    total_score += 5 if tc1_passed else 0
-    print(f"TC1: {'CPU/process logs generated':<30} [{'PASSED' if tc1_passed else 'FAILED'}] ({5 if tc1_passed else 0}/5)")
+    total_score += 4 if tc1_passed else 0
+    print(f"TC1: {'Local VM Environment active':<30} [{'PASSED' if tc1_passed else 'FAILED'}] ({4 if tc1_passed else 0}/4)")
 
-    # TC2: Memory logs generated
-    tc2_passed = os.path.isfile('/home/ubuntu/memory.txt') and os.path.getsize('/home/ubuntu/memory.txt') > 0
+    # TC2: CPU/process logs generated
+    tc2_passed = False
+    if tc1_passed:
+        if os.path.isfile('/home/ubuntu/cpu_monitor.txt') and os.path.getsize('/home/ubuntu/cpu_monitor.txt') > 0:
+            tc2_passed = True
     results['tc2'] = tc2_passed
-    total_score += 5 if tc2_passed else 0
-    print(f"TC2: {'Memory logs generated':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({5 if tc2_passed else 0}/5)")
+    total_score += 4 if tc2_passed else 0
+    print(f"TC2: {'CPU/process logs generated':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
 
-    # TC3: Disk logs generated
-    tc3_passed = os.path.isfile('/home/ubuntu/disk.txt') and os.path.getsize('/home/ubuntu/disk.txt') > 0
+    # TC3: Memory logs generated
+    tc3_passed = False
+    if tc1_passed:
+        if os.path.isfile('/home/ubuntu/memory.txt') and os.path.getsize('/home/ubuntu/memory.txt') > 0:
+            tc3_passed = True
     results['tc3'] = tc3_passed
-    total_score += 5 if tc3_passed else 0
-    print(f"TC3: {'Disk logs generated':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({5 if tc3_passed else 0}/5)")
+    total_score += 4 if tc3_passed else 0
+    print(f"TC3: {'Memory logs generated':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
 
-    # TC4: Network logs generated
-    tc4_passed = os.path.isfile('/home/ubuntu/network.txt') and os.path.getsize('/home/ubuntu/network.txt') > 0
+    # TC4: Disk logs generated
+    tc4_passed = False
+    if tc1_passed:
+        if os.path.isfile('/home/ubuntu/disk.txt') and os.path.getsize('/home/ubuntu/disk.txt') > 0:
+            tc4_passed = True
     results['tc4'] = tc4_passed
-    total_score += 5 if tc4_passed else 0
-    print(f"TC4: {'Network logs generated':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({5 if tc4_passed else 0}/5)")
+    total_score += 4 if tc4_passed else 0
+    print(f"TC4: {'Disk logs generated':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
+
+    # TC5: Network logs generated
+    tc5_passed = False
+    if tc1_passed:
+        if os.path.isfile('/home/ubuntu/network.txt') and os.path.getsize('/home/ubuntu/network.txt') > 0:
+            tc5_passed = True
+    results['tc5'] = tc5_passed
+    total_score += 4 if tc5_passed else 0
+    print(f"TC5: {'Network logs generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
 
     print("-" * 60)
     print(f"{'TOTAL SCORE:':<44} {total_score}/20")

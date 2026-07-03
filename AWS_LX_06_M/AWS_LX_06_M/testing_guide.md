@@ -7,10 +7,11 @@ Open the terminal on your local Linux machine/VM. Switch to the ubuntu user if n
 
 ## Step 2: Execute Linux Commands
 Run appropriate Linux commands in the terminal to achieve the following:
-1. **Monitor CPU & Processes:** Save a snapshot of active processes sorted by CPU usage to `/home/ubuntu/cpu_monitor.txt`.
-2. **Monitor Memory Usage:** Check memory statistics in megabytes and save the output to `/home/ubuntu/memory.txt`.
-3. **Run Disk Diagnostics:** Verify capacity and space on all mounted filesystems and save it to `/home/ubuntu/disk.txt`.
-4. **Analyze Network Connections:** Check listening ports and active network connections, and save to `/home/ubuntu/network.txt`.
+1. **Local VM Environment:** Make sure you are working on the local Ubuntu VM environment under `/home/ubuntu`.
+2. **Monitor CPU & Processes:** Save a snapshot of active processes sorted by CPU usage to `/home/ubuntu/cpu_monitor.txt`.
+3. **Monitor Memory Usage:** Check memory statistics in megabytes and save the output to `/home/ubuntu/memory.txt`.
+4. **Run Disk Diagnostics:** Verify capacity and space on all mounted filesystems and save it to `/home/ubuntu/disk.txt`.
+5. **Analyze Network Connections:** Check listening ports and active network connections, and save to `/home/ubuntu/network.txt`.
 
 ## Step 3: Verification
 To verify your solution, run the local verification script provided in the problem structure:

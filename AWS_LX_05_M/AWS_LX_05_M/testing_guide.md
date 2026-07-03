@@ -7,10 +7,11 @@ Open the terminal on your local Linux machine/VM. Switch to the ubuntu user if n
 
 ## Step 2: Execute Linux Commands
 Run appropriate Linux commands in the terminal to achieve the following:
-1. **Create Linux User:** Create a new user named `appuser` on the system.
-2. **Setup Directory and Files:** Create a directory `/home/ubuntu/secure_data` containing blank `passwords.txt` and `config.ini` files.
-3. **Configure Permissions:** Apply `400` (read-only by owner) on `passwords.txt` and `755` (read/write/execute by all) on `config.ini`.
-4. **Update Ownership:** Change the owner of `config.ini` to `appuser`.
+1. **Local VM Environment:** Make sure you are working on the local Ubuntu VM environment under `/home/ubuntu`.
+2. **Create Linux User:** Create a new user named `appuser` on the system.
+3. **Setup Directory and Files:** Create a directory `/home/ubuntu/secure_data` containing blank `passwords.txt` and `config.ini` files.
+4. **Configure Permissions:** Apply `400` (read-only by owner) on `passwords.txt` and `755` (read/write/execute by all) on `config.ini`.
+5. **Update Ownership:** Change the owner of `config.ini` to `appuser`.
 
 ## Step 3: Verification
 To verify your solution, run the local verification script provided in the problem structure:
