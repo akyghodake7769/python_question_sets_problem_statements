@@ -16,6 +16,15 @@
 #     total_score = 0
 #     results = {}
     
+#     def check_mtime(path):
+#         if not START_TIME:
+#             return True
+#         try:
+#             mtime = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
+#             return mtime >= START_TIME - timedelta(minutes=5)
+#         except Exception:
+#             return False
+
 #     # TC1: Environment active and verified
 #     tc1_passed = os.path.exists('/home/ubuntu') and os.path.isdir('/home/ubuntu')
 #     results['tc1'] = tc1_passed
@@ -26,7 +35,8 @@
 #     tc2_passed = False
 #     if tc1_passed:
 #         if os.path.isdir('/home/ubuntu/app_navigation/config') and os.path.isdir('/home/ubuntu/app_navigation/logs'):
-#             tc2_passed = True
+#             if check_mtime('/home/ubuntu/app_navigation/config') or check_mtime('/home/ubuntu/app_navigation/logs'):
+#                 tc2_passed = True
 #     results['tc2'] = tc2_passed
 #     total_score += 4 if tc2_passed else 0
 #     print(f"TC2: {'Directory hierarchy created':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
@@ -35,7 +45,8 @@
 #     tc3_passed = False
 #     if tc1_passed:
 #         if os.path.isfile('/home/ubuntu/app_navigation/config/app.conf') and os.path.isfile('/home/ubuntu/app_navigation/logs/error.log'):
-#             tc3_passed = True
+#             if check_mtime('/home/ubuntu/app_navigation/config/app.conf') and check_mtime('/home/ubuntu/app_navigation/logs/error.log'):
+#                 tc3_passed = True
 #     results['tc3'] = tc3_passed
 #     total_score += 4 if tc3_passed else 0
 #     print(f"TC3: {'Initial files created':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
@@ -44,7 +55,8 @@
 #     tc4_passed = False
 #     if tc1_passed:
 #         if os.path.isfile('/home/ubuntu/app_navigation/app.conf.backup') and os.path.isfile('/home/ubuntu/search_results_nav.txt'):
-#             tc4_passed = True
+#             if check_mtime('/home/ubuntu/app_navigation/app.conf.backup') and check_mtime('/home/ubuntu/search_results_nav.txt'):
+#                 tc4_passed = True
 #     results['tc4'] = tc4_passed
 #     total_score += 4 if tc4_passed else 0
 #     print(f"TC4: {'File operations completed':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
@@ -53,7 +65,8 @@
 #     tc5_passed = False
 #     if tc1_passed:
 #         if os.path.isfile('/home/ubuntu/disk_usage_nav.txt') and os.path.getsize('/home/ubuntu/disk_usage_nav.txt') > 0:
-#             tc5_passed = True
+#             if check_mtime('/home/ubuntu/disk_usage_nav.txt'):
+#                 tc5_passed = True
 #     results['tc5'] = tc5_passed
 #     total_score += 4 if tc5_passed else 0
 #     print(f"TC5: {'Disk usage output generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
