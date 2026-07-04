@@ -1,9 +1,81 @@
+# import json
+# import os
+# import sys
+# from datetime import datetime, timezone, timedelta
+
+# import socket
+
+# START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
+# START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
+# USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
+
+# def verify_task():
+#     print("\n" + "-" * 60)
+#     print(f"{'KODEBUCK LOCAL LINUX MONITORING VERIFICATION':^60}")
+#     print(f"System Hostname: {socket.gethostname()}")
+#     print("-" * 60)
+
+#     total_score = 0
+#     results = {}
+    
+#     # TC1: Environment active and verified
+#     tc1_passed = os.path.exists('/home/ubuntu') and os.path.isdir('/home/ubuntu')
+#     results['tc1'] = tc1_passed
+#     total_score += 4 if tc1_passed else 0
+#     print(f"TC1: {'Local VM Environment active':<30} [{'PASSED' if tc1_passed else 'FAILED'}] ({4 if tc1_passed else 0}/4)")
+
+#     # TC2: CPU/process logs generated
+#     tc2_passed = False
+#     if tc1_passed:
+#         if os.path.isfile('/home/ubuntu/cpu_monitor.txt') and os.path.getsize('/home/ubuntu/cpu_monitor.txt') > 0:
+#             tc2_passed = True
+#     results['tc2'] = tc2_passed
+#     total_score += 4 if tc2_passed else 0
+#     print(f"TC2: {'CPU/process logs generated':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
+
+#     # TC3: Memory logs generated
+#     tc3_passed = False
+#     if tc1_passed:
+#         if os.path.isfile('/home/ubuntu/memory.txt') and os.path.getsize('/home/ubuntu/memory.txt') > 0:
+#             tc3_passed = True
+#     results['tc3'] = tc3_passed
+#     total_score += 4 if tc3_passed else 0
+#     print(f"TC3: {'Memory logs generated':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
+
+#     # TC4: Disk logs generated
+#     tc4_passed = False
+#     if tc1_passed:
+#         if os.path.isfile('/home/ubuntu/disk.txt') and os.path.getsize('/home/ubuntu/disk.txt') > 0:
+#             tc4_passed = True
+#     results['tc4'] = tc4_passed
+#     total_score += 4 if tc4_passed else 0
+#     print(f"TC4: {'Disk logs generated':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
+
+#     # TC5: Network logs generated
+#     tc5_passed = False
+#     if tc1_passed:
+#         if os.path.isfile('/home/ubuntu/network.txt') and os.path.getsize('/home/ubuntu/network.txt') > 0:
+#             tc5_passed = True
+#     results['tc5'] = tc5_passed
+#     total_score += 4 if tc5_passed else 0
+#     print(f"TC5: {'Network logs generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
+
+#     print("-" * 60)
+#     print(f"{'TOTAL SCORE:':<44} {total_score}/20")
+#     print("-" * 60 + "\n")
+
+#     ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
+#     os.makedirs(ws_path, exist_ok=True)
+#     with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
+#         json.dump({'score': total_score, 'results': results}, f, indent=4)
+
+# if __name__ == "__main__":
+#     verify_task()
 import json
 import os
 import sys
+import tarfile
 from datetime import datetime, timezone, timedelta
-
-import socket
 
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
@@ -11,57 +83,73 @@ USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME
 
 def verify_task():
     print("\n" + "-" * 60)
-    print(f"{'KODEBUCK LOCAL LINUX MONITORING VERIFICATION':^60}")
-    print(f"System Hostname: {socket.gethostname()}")
+    print(f"{'KODEBUCK LOCAL LINUX VERIFICATION':^60}")
     print("-" * 60)
 
     total_score = 0
     results = {}
-    
-    # TC1: Environment active and verified
-    tc1_passed = os.path.exists('/home/ubuntu') and os.path.isdir('/home/ubuntu')
+
+    def check_mtime(path):
+        if not START_TIME:
+            return True
+        try:
+            mtime = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
+            return mtime >= START_TIME - timedelta(minutes=5)
+        except Exception:
+            return False
+
+    # TC1: Network Connectivity (ping_results.txt)
+    tc1_passed = False
+    ping_file = '/home/ubuntu/ping_results.txt'
+    if os.path.isfile(ping_file) and check_mtime(ping_file):
+        try:
+            with open(ping_file, 'r') as f:
+                content = f.read()
+                # Check for ping statistics and successful packets
+                if "ping statistics" in content.lower() and "packets transmitted" in content.lower():
+                    # Ensure it is not 100% packet loss
+                    if "100% packet loss" not in content.lower():
+                        tc1_passed = True
+        except Exception:
+            pass
     results['tc1'] = tc1_passed
-    total_score += 4 if tc1_passed else 0
-    print(f"TC1: {'Local VM Environment active':<30} [{'PASSED' if tc1_passed else 'FAILED'}] ({4 if tc1_passed else 0}/4)")
+    total_score += 5 if tc1_passed else 0
+    print(f"TC1: {'Network Connectivity Log':<30} [{'PASSED' if tc1_passed else 'FAILED'}] ({5 if tc1_passed else 0}/5)")
 
-    # TC2: CPU/process logs generated
+    # TC2: Port Diagnostics (open_ports.txt)
     tc2_passed = False
-    if tc1_passed:
-        if os.path.isfile('/home/ubuntu/cpu_monitor.txt') and os.path.getsize('/home/ubuntu/cpu_monitor.txt') > 0:
-            tc2_passed = True
+    ports_file = '/home/ubuntu/open_ports.txt'
+    if os.path.isfile(ports_file) and check_mtime(ports_file):
+        try:
+            with open(ports_file, 'r') as f:
+                content = f.read()
+                # Simple check for headers of ss or netstat
+                if "State" in content or "Local Address" in content or "Proto" in content or len(content.strip()) > 50:
+                    tc2_passed = True
+        except Exception:
+            pass
     results['tc2'] = tc2_passed
-    total_score += 4 if tc2_passed else 0
-    print(f"TC2: {'CPU/process logs generated':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
+    total_score += 5 if tc2_passed else 0
+    print(f"TC2: {'Port Diagnostics Report':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({5 if tc2_passed else 0}/5)")
 
-    # TC3: Memory logs generated
+    # TC3: File Compression (app_archive.tar.gz contains dummy_app.log)
     tc3_passed = False
-    if tc1_passed:
-        if os.path.isfile('/home/ubuntu/memory.txt') and os.path.getsize('/home/ubuntu/memory.txt') > 0:
-            tc3_passed = True
+    archive_file = '/home/ubuntu/app_archive.tar.gz'
+    if os.path.isfile(archive_file) and check_mtime(archive_file):
+        try:
+            with tarfile.open(archive_file, 'r:gz') as tar:
+                names = tar.getnames()
+                # Check if dummy_app.log exists in the tar archive list
+                if any("dummy_app.log" in name for name in names):
+                    tc3_passed = True
+        except Exception:
+            pass
     results['tc3'] = tc3_passed
-    total_score += 4 if tc3_passed else 0
-    print(f"TC3: {'Memory logs generated':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
-
-    # TC4: Disk logs generated
-    tc4_passed = False
-    if tc1_passed:
-        if os.path.isfile('/home/ubuntu/disk.txt') and os.path.getsize('/home/ubuntu/disk.txt') > 0:
-            tc4_passed = True
-    results['tc4'] = tc4_passed
-    total_score += 4 if tc4_passed else 0
-    print(f"TC4: {'Disk logs generated':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
-
-    # TC5: Network logs generated
-    tc5_passed = False
-    if tc1_passed:
-        if os.path.isfile('/home/ubuntu/network.txt') and os.path.getsize('/home/ubuntu/network.txt') > 0:
-            tc5_passed = True
-    results['tc5'] = tc5_passed
-    total_score += 4 if tc5_passed else 0
-    print(f"TC5: {'Network logs generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
+    total_score += 5 if tc3_passed else 0
+    print(f"TC3: {'Tarball Archive Compression':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({5 if tc3_passed else 0}/5)")
 
     print("-" * 60)
-    print(f"{'TOTAL SCORE:':<44} {total_score}/20")
+    print(f"{'TOTAL SCORE:':<44} {total_score}/15")
     print("-" * 60 + "\n")
 
     ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
