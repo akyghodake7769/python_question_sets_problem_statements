@@ -1,4 +1,4 @@
-# DevOps Lab: Linux File Operations & Security Permissions (Local VM)
+# Linux Lab: Linux File Operations & Security Permissions (Local VM)
 
 Duration : 60 Min.
 
@@ -11,6 +11,7 @@ As a System Engineer in a technology firm, you are responsible for securing sens
 Perform the following actions inside the default home directory (`/home/ubuntu`) of the local Ubuntu system:
 
 ### 1. Environment Verification
+
 - Ensure the local VM environment is running Ubuntu Linux with default `/home/ubuntu` workspace.
 
 ### 2. User Creation
@@ -41,12 +42,12 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement | Marks |
-| --------- | ----------- | ----- |
-| **TC1**   | Local VM Environment active and verified | 4 Marks |
-| **TC2**   | User `appuser` created successfully | 4 Marks |
-| **TC3**   | Directory `secure_data` and files (`passwords.txt`, `config.ini`) created | 4 Marks |
-| **TC4**   | Permissions applied (`400` on passwords.txt, `755` on config.ini) | 4 Marks |
-| **TC5**   | Ownership of `config.ini` changed to `appuser` | 4 Marks |
+| Test Case     | Requirement                                                                    | Marks   |
+| ------------- | ------------------------------------------------------------------------------ | ------- |
+| **TC1** | Local VM Environment active and verified                                       | 4 Marks |
+| **TC2** | User`appuser` created successfully                                           | 4 Marks |
+| **TC3** | Directory`secure_data` and files (`passwords.txt`, `config.ini`) created | 4 Marks |
+| **TC4** | Permissions applied (`400` on passwords.txt, `755` on config.ini)          | 4 Marks |
+| **TC5** | Ownership of`config.ini` changed to `appuser`                              | 4 Marks |
 
 **Total Score: 20 Marks**
