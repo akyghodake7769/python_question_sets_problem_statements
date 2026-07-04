@@ -1,4 +1,4 @@
-# DevOps Lab: Linux File System & Directory Navigation (Local VM)
+# Linux Lab: Linux File System & Directory Navigation (Local VM)
 
 Duration : 60 Min.
 
@@ -11,6 +11,7 @@ As a System Engineer in a technology firm, you are tasked with setting up a spec
 Perform the following actions inside the default home directory (`/home/ubuntu`) of the local Ubuntu system:
 
 ### 1. Environment Verification
+
 - Ensure the local VM environment is running Ubuntu Linux with default `/home/ubuntu` workspace.
 
 ### 2. Directory Hierarchy Creation
@@ -44,12 +45,12 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement | Marks |
-| --------- | ----------- | ----- |
-| **TC1**   | Local VM Environment active and verified | 4 Marks |
-| **TC2**   | Directory hierarchy (`app_navigation/config`, `app_navigation/logs`) created successfully | 4 Marks |
-| **TC3**   | Initial files (`app.conf` in config, `error.log` in logs) created successfully | 4 Marks |
-| **TC4**   | File operations (`cp`, `mv`/rename) and keyword search results generated | 4 Marks |
-| **TC5**   | Disk usage output (`disk_usage_nav.txt`) generated correctly | 4 Marks |
+| Test Case     | Requirement                                                                         | Marks   |
+| ------------- | ----------------------------------------------------------------------------------- | ------- |
+| **TC1** | Local VM Environment active and verified                                                  | 4 Marks |
+| **TC2** | Directory hierarchy (`app_navigation/config`, `app_navigation/logs`) created successfully | 4 Marks |
+| **TC3** | Initial files (`app.conf` in config, `error.log` in logs) created successfully            | 4 Marks |
+| **TC4** | File operations (`cp`, `mv`/rename) and keyword search results generated                  | 4 Marks |
+| **TC5** | Disk usage output (`disk_usage_nav.txt`) generated correctly                              | 4 Marks |
 
 **Total Score: 20 Marks**
