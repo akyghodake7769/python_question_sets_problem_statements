@@ -1,4 +1,4 @@
-# DevOps Lab: Linux Monitoring & Basic Troubleshooting (Local VM)
+# Linux Lab: Linux Monitoring & Basic Troubleshooting (Local VM)
 
 Duration : 60 Min.
 
