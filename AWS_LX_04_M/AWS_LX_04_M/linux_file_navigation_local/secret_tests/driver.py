@@ -1,9 +1,7 @@
 import json
 import os
 import sys
-import pwd
 from datetime import datetime, timezone, timedelta
-
 import socket
 
 HOME = os.path.expanduser('~')
@@ -15,7 +13,6 @@ USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME
 def verify_task():
     print("\n" + "-" * 60)
     print(f"{'KODEBUCK LOCAL LINUX VERIFICATION':^60}")
-    print(f"System Hostname: {socket.gethostname()}")
     print("-" * 60)
 
     total_score = 0
@@ -36,65 +33,55 @@ def verify_task():
     total_score += 0
     print(f"TC1: {'Local VM Environment active':<30} [{'PASSED' if tc1_passed else 'FAILED'}] (0/0)")
 
-    # TC2: User appuser created successfully
+    # TC2: Directory hierarchy created
     tc2_passed = False
     if tc1_passed:
-        try:
-            pwd.getpwnam('appuser')
-            tc2_passed = True
-        except KeyError:
-            pass
+        if os.path.isdir(f'{HOME}/app_navigation/config') and os.path.isdir(f'{HOME}/app_navigation/logs'):
+            if check_mtime(f'{HOME}/app_navigation/config') or check_mtime(f'{HOME}/app_navigation/logs'):
+                tc2_passed = True
     results['tc2'] = tc2_passed
     total_score += 4 if tc2_passed else 0
-    print(f"TC2: {'User appuser created':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
+    print(f"TC2: {'Directory hierarchy created':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
 
-    # TC3: Directory created
+    # TC3: Initial files created
     tc3_passed = False
     if tc1_passed:
-        if os.path.isdir(f'{HOME}/secure_data'):
-            if check_mtime(f'{HOME}/secure_data'):
+        if os.path.isfile(f'{HOME}/app_navigation/config/app.conf') and os.path.isfile(f'{HOME}/app_navigation/logs/error.log'):
+            if check_mtime(f'{HOME}/app_navigation/config/app.conf') and check_mtime(f'{HOME}/app_navigation/logs/error.log'):
                 tc3_passed = True
     results['tc3'] = tc3_passed
     total_score += 4 if tc3_passed else 0
-    print(f"TC3: {'Directory secure_data created':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
+    print(f"TC3: {'Initial files created':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
 
-    # TC4: Files created
+    # TC4: File Copy and Rename operations
     tc4_passed = False
     if tc1_passed:
-        if os.path.isfile(f'{HOME}/secure_data/passwords.txt') and os.path.isfile(f'{HOME}/secure_data/config.ini'):
-            if check_mtime(f'{HOME}/secure_data/passwords.txt') and check_mtime(f'{HOME}/secure_data/config.ini'):
+        if os.path.isfile(f'{HOME}/app_navigation/app.conf.backup'):
+            if check_mtime(f'{HOME}/app_navigation/app.conf.backup'):
                 tc4_passed = True
     results['tc4'] = tc4_passed
     total_score += 4 if tc4_passed else 0
-    print(f"TC4: {'Files created':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
+    print(f"TC4: {'File operations completed':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
 
-    # TC5: Proper permissions applied
+    # TC5: Keyword search results generated
     tc5_passed = False
     if tc1_passed:
-        if os.path.isfile(f'{HOME}/secure_data/passwords.txt') and os.path.isfile(f'{HOME}/secure_data/config.ini'):
-            if check_mtime(f'{HOME}/secure_data/passwords.txt') and check_mtime(f'{HOME}/secure_data/config.ini'):
-                p_mode = oct(os.stat(f'{HOME}/secure_data/passwords.txt').st_mode & 0o777)
-                c_mode = oct(os.stat(f'{HOME}/secure_data/config.ini').st_mode & 0o777)
-                if p_mode == '0o400' and c_mode == '0o755':
-                    tc5_passed = True
+        if os.path.isfile(f'{HOME}/search_results_nav.txt'):
+            if check_mtime(f'{HOME}/search_results_nav.txt'):
+                tc5_passed = True
     results['tc5'] = tc5_passed
     total_score += 4 if tc5_passed else 0
-    print(f"TC5: {'Proper permissions applied':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
+    print(f"TC5: {'Search results generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
 
-    # TC6: Ownership configured correctly
+    # TC6: Disk usage output generated
     tc6_passed = False
     if tc1_passed:
-        if os.path.isfile(f'{HOME}/secure_data/config.ini'):
-            if check_mtime(f'{HOME}/secure_data/config.ini'):
-                try:
-                    owner = pwd.getpwuid(os.stat(f'{HOME}/secure_data/config.ini').st_uid).pw_name
-                    if owner == 'appuser':
-                        tc6_passed = True
-                except KeyError:
-                    pass
+        if os.path.isfile(f'{HOME}/disk_usage_nav.txt') and os.path.getsize(f'{HOME}/disk_usage_nav.txt') > 0:
+            if check_mtime(f'{HOME}/disk_usage_nav.txt'):
+                tc6_passed = True
     results['tc6'] = tc6_passed
     total_score += 4 if tc6_passed else 0
-    print(f"TC6: {'Ownership configured correctly':<30} [{'PASSED' if tc6_passed else 'FAILED'}] ({4 if tc6_passed else 0}/4)")
+    print(f"TC6: {'Disk usage output generated':<30} [{'PASSED' if tc6_passed else 'FAILED'}] ({4 if tc6_passed else 0}/4)")
 
     print("-" * 60)
     print(f"{'TOTAL SCORE:':<44} {total_score}/20")
