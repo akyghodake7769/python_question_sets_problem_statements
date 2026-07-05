@@ -22,6 +22,15 @@ def verify_task():
 
     total_score = 0
     results = {}
+    
+    def check_mtime(path):
+        if not START_TIME:
+            return True
+        try:
+            mtime = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
+            return mtime >= START_TIME - timedelta(minutes=5)
+        except Exception:
+            return False
 
     try:
         session_start = START_TIME
@@ -49,24 +58,24 @@ def verify_task():
 
         # --- TC2: Logs Directory Structure --- (4 Marks)
         tc2_passed = False
-        if os.path.isdir('C:\\workspace\\logs'):
+        if os.path.isdir('C:\\workspace\\logs') and check_mtime('C:\\workspace\\logs'):
             tc2_passed = True
             print(f"TC2: Logs Directory Structure .................... [PASSED] (4/4)")
         else:
             print(f"TC2: Logs Directory Structure .................... [FAILED] (0/4)")
-            print(f"     - [Reason]: Directory 'C:\\workspace\\logs' does not exist.")
+            print(f"     - [Reason]: Directory 'C:\\workspace\\logs' does not exist or was created before the session started.")
         results['tc2'] = tc2_passed
         if tc2_passed:
             total_score += 4
 
         # --- TC3: Backups Directory Structure --- (4 Marks)
         tc3_passed = False
-        if os.path.isdir('C:\\workspace\\backups'):
+        if os.path.isdir('C:\\workspace\\backups') and check_mtime('C:\\workspace\\backups'):
             tc3_passed = True
             print(f"TC3: Backups Directory Structure ................. [PASSED] (4/4)")
         else:
             print(f"TC3: Backups Directory Structure ................. [FAILED] (0/4)")
-            print(f"     - [Reason]: Directory 'C:\\workspace\\backups' does not exist.")
+            print(f"     - [Reason]: Directory 'C:\\workspace\\backups' does not exist or was created before the session started.")
         results['tc3'] = tc3_passed
         if tc3_passed:
             total_score += 4
@@ -93,7 +102,7 @@ def verify_task():
         # --- TC5: System Metadata --- (4 Marks)
         tc5_passed = False
         sysinfo_path = 'C:\\workspace\\sysinfo.txt'
-        if os.path.isfile(sysinfo_path):
+        if os.path.isfile(sysinfo_path) and check_mtime(sysinfo_path):
             with open(sysinfo_path, 'r', encoding='utf-8', errors='ignore') as f1:
                 if len(f1.read().strip()) > 0:
                     tc5_passed = True
@@ -103,7 +112,7 @@ def verify_task():
                     print(f"     - [Reason]: File 'sysinfo.txt' is empty.")
         else:
             print(f"TC5: System Metadata ............................. [FAILED] (0/4)")
-            print(f"     - [Reason]: 'sysinfo.txt' not found in C:\\workspace.")
+            print(f"     - [Reason]: 'sysinfo.txt' not found or was modified before the session started.")
         results['tc5'] = tc5_passed
         if tc5_passed:
             total_score += 4
@@ -111,7 +120,7 @@ def verify_task():
         # --- TC6: Log Auditing --- (4 Marks)
         tc6_passed = False
         log_files_path = 'C:\\workspace\\log_files.txt'
-        if os.path.isfile(log_files_path):
+        if os.path.isfile(log_files_path) and check_mtime(log_files_path):
             with open(log_files_path, 'r', encoding='utf-8', errors='ignore') as f2:
                 if len(f2.read().strip()) > 0:
                     tc6_passed = True
@@ -121,7 +130,7 @@ def verify_task():
                     print(f"     - [Reason]: File 'log_files.txt' is empty.")
         else:
             print(f"TC6: Log Auditing ................................ [FAILED] (0/4)")
-            print(f"     - [Reason]: 'log_files.txt' not found in C:\\workspace.")
+            print(f"     - [Reason]: 'log_files.txt' not found or was modified before the session started.")
         results['tc6'] = tc6_passed
         if tc6_passed:
             total_score += 4
