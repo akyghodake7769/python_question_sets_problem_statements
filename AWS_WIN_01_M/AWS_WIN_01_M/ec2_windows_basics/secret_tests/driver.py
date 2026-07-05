@@ -1,105 +1,164 @@
 import json
 import os
 import sys
+import subprocess
 from datetime import datetime, timezone, timedelta
-import socket
 
-HOME = os.path.expanduser('~')
-
+# Capture Assessment Start Time
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
+def resolve_username(default_prefix):
+    return default_prefix
+
 def verify_task():
+    username = resolve_username(USER_PREFIX)
+    start_time = START_TIME_STR
+
     print("\n" + "-" * 60)
-    print(f"{'KODEBUCK LOCAL LINUX VERIFICATION':^60}")
+    print(f"{'KODEBUCK WINDOWS BASICS VERIFICATION':^60}")
     print("-" * 60)
 
     total_score = 0
     results = {}
-    
-    def check_mtime(path):
-        if not START_TIME:
-            return True
+
+    try:
+        session_start = START_TIME
+        if not session_start:
+            session_start = datetime.now(timezone.utc)
+            start_time = session_start.isoformat()
+
+        now = datetime.now(timezone.utc)
+        elapsed_minutes = (now - session_start).total_seconds() / 60
+        max_duration_env = os.getenv('KODEBUCK_ASSESSMENT_DURATION') or os.getenv('KODEARENA_ASSESSMENT_DURATION')
+        max_duration = int(max_duration_env) if max_duration_env else 60
+
+        if elapsed_minutes > max_duration + 10:
+            print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
+            raise Exception("Time Limit Exceeded")
+
+        print(f"[SYSTEM] Validating Local Windows Environment for: {username}")
+        print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
+
+        # --- TC1: Local Environment Verification --- (0 Marks)
+        tc1_passed = True
+        print(f"TC1: Local Environment Verification .............. [PASSED] (0/0)")
+        results['tc1'] = tc1_passed
+        total_score += 0
+
+        # --- TC2: Logs Directory Structure --- (4 Marks)
+        tc2_passed = False
+        if os.path.isdir('C:\\workspace\\logs'):
+            tc2_passed = True
+            print(f"TC2: Logs Directory Structure .................... [PASSED] (4/4)")
+        else:
+            print(f"TC2: Logs Directory Structure .................... [FAILED] (0/4)")
+            print(f"     - [Reason]: Directory 'C:\\workspace\\logs' does not exist.")
+        results['tc2'] = tc2_passed
+        if tc2_passed:
+            total_score += 4
+
+        # --- TC3: Backups Directory Structure --- (4 Marks)
+        tc3_passed = False
+        if os.path.isdir('C:\\workspace\\backups'):
+            tc3_passed = True
+            print(f"TC3: Backups Directory Structure ................. [PASSED] (4/4)")
+        else:
+            print(f"TC3: Backups Directory Structure ................. [FAILED] (0/4)")
+            print(f"     - [Reason]: Directory 'C:\\workspace\\backups' does not exist.")
+        results['tc3'] = tc3_passed
+        if tc3_passed:
+            total_score += 4
+
+        # --- TC4: System Environment Variables --- (4 Marks)
+        tc4_passed = False
         try:
-            mtime = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
-            return mtime >= START_TIME - timedelta(minutes=5)
-        except Exception:
-            return False
-
-    # TC1: Environment active and verified
-    tc1_passed = os.path.exists(HOME) and os.path.isdir(HOME)
-    results['tc1'] = tc1_passed
-    total_score += 0
-    print(f"TC1: {'Local VM Environment active':<30} [{'PASSED' if tc1_passed else 'FAILED'}] (0/0)")
-
-    # TC2: Directory hierarchy created
-    tc2_passed = False
-    if tc1_passed:
-        if os.path.isdir(f'{HOME}/app_navigation/config') and os.path.isdir(f'{HOME}/app_navigation/logs'):
-            if check_mtime(f'{HOME}/app_navigation/config') or check_mtime(f'{HOME}/app_navigation/logs'):
-                tc2_passed = True
-    results['tc2'] = tc2_passed
-    total_score += 4 if tc2_passed else 0
-    print(f"TC2: {'Directory hierarchy created':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({4 if tc2_passed else 0}/4)")
-
-    # TC3: Initial files created
-    tc3_passed = False
-    if tc1_passed:
-        if os.path.isfile(f'{HOME}/app_navigation/config/app.conf') and os.path.isfile(f'{HOME}/app_navigation/logs/error.log'):
-            if check_mtime(f'{HOME}/app_navigation/config/app.conf') and check_mtime(f'{HOME}/app_navigation/logs/error.log'):
-                tc3_passed = True
-    results['tc3'] = tc3_passed
-    total_score += 4 if tc3_passed else 0
-    print(f"TC3: {'Initial files created':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
-
-    # TC4: File Copy and Rename operations
-    tc4_passed = False
-    if tc1_passed:
-        if os.path.isfile(f'{HOME}/app_navigation/app.conf.backup'):
-            if check_mtime(f'{HOME}/app_navigation/app.conf.backup'):
+            # PowerShell command to get the Machine-level environment variable
+            cmd = "[Environment]::GetEnvironmentVariable('APP_ENVIRONMENT', 'Machine')"
+            output = subprocess.check_output(["powershell", "-Command", cmd], text=True).strip()
+            if output == "production":
                 tc4_passed = True
-    results['tc4'] = tc4_passed
-    total_score += 4 if tc4_passed else 0
-    print(f"TC4: {'File operations completed':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
+                print(f"TC4: System Environment Variables ................ [PASSED] (4/4)")
+            else:
+                print(f"TC4: System Environment Variables ................ [FAILED] (0/4)")
+                print(f"     - [Reason]: Permanent system-level variable 'APP_ENVIRONMENT' is not set to 'production'. Found: '{output}'")
+        except Exception as e:
+            print(f"TC4: System Environment Variables ................ [FAILED] (0/4)")
+            print(f"     - [Reason]: Failed to check environment variable. Error: {e}")
+        results['tc4'] = tc4_passed
+        if tc4_passed:
+            total_score += 4
 
-    # TC5: Keyword search results generated
-    tc5_passed = False
-    if tc1_passed:
-        if os.path.isfile(f'{HOME}/search_results_nav.txt'):
-            if check_mtime(f'{HOME}/search_results_nav.txt'):
-                tc5_passed = True
-    results['tc5'] = tc5_passed
-    total_score += 4 if tc5_passed else 0
-    print(f"TC5: {'Search results generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
+        # --- TC5: System Metadata --- (4 Marks)
+        tc5_passed = False
+        sysinfo_path = 'C:\\workspace\\sysinfo.txt'
+        if os.path.isfile(sysinfo_path):
+            with open(sysinfo_path, 'r', encoding='utf-8', errors='ignore') as f1:
+                if len(f1.read().strip()) > 0:
+                    tc5_passed = True
+                    print(f"TC5: System Metadata ............................. [PASSED] (4/4)")
+                else:
+                    print(f"TC5: System Metadata ............................. [FAILED] (0/4)")
+                    print(f"     - [Reason]: File 'sysinfo.txt' is empty.")
+        else:
+            print(f"TC5: System Metadata ............................. [FAILED] (0/4)")
+            print(f"     - [Reason]: 'sysinfo.txt' not found in C:\\workspace.")
+        results['tc5'] = tc5_passed
+        if tc5_passed:
+            total_score += 4
 
-    # TC6: Disk usage output generated
-    tc6_passed = False
-    if tc1_passed:
-        if os.path.isfile(f'{HOME}/disk_usage_nav.txt') and os.path.getsize(f'{HOME}/disk_usage_nav.txt') > 0:
-            if check_mtime(f'{HOME}/disk_usage_nav.txt'):
-                tc6_passed = True
-    results['tc6'] = tc6_passed
-    total_score += 4 if tc6_passed else 0
-    print(f"TC6: {'Disk usage output generated':<30} [{'PASSED' if tc6_passed else 'FAILED'}] ({4 if tc6_passed else 0}/4)")
+        # --- TC6: Log Auditing --- (4 Marks)
+        tc6_passed = False
+        log_files_path = 'C:\\workspace\\log_files.txt'
+        if os.path.isfile(log_files_path):
+            with open(log_files_path, 'r', encoding='utf-8', errors='ignore') as f2:
+                if len(f2.read().strip()) > 0:
+                    tc6_passed = True
+                    print(f"TC6: Log Auditing ................................ [PASSED] (4/4)")
+                else:
+                    print(f"TC6: Log Auditing ................................ [FAILED] (0/4)")
+                    print(f"     - [Reason]: File 'log_files.txt' is empty.")
+        else:
+            print(f"TC6: Log Auditing ................................ [FAILED] (0/4)")
+            print(f"     - [Reason]: 'log_files.txt' not found in C:\\workspace.")
+        results['tc6'] = tc6_passed
+        if tc6_passed:
+            total_score += 4
 
-    print("-" * 60)
-    print(f"{'TOTAL SCORE:':<44} {total_score}/20")
-    print("-" * 60 + "\n")
+        print("-" * 60)
+        print(f"{'TOTAL SCORE:':<44} {total_score}/20")
+        print("-" * 60 + "\n")
 
-    ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
-    os.makedirs(ws_path, exist_ok=True)
-    with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
-    # Write to solution.py as well because the KodeBuck IDE is hardcoded to only upload solution.py!
-    with open(os.path.join(ws_path, 'solution.py'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
+    except Exception as e:
+        print(f"[ERROR] Verification failed: {str(e)}")
+        total_score = 0
+
+    # Save Metadata for Central Evaluation
+    solution_data = {
+        'candidate_prefix': username,
+        'assessment_start_time': start_time,
+        'max_duration_minutes': max_duration,
+        'evaluation_type': 'LOCAL_VM_VERIFICATION',
+        'score': total_score,
+        'results': results
+    }
+
+    try:
+        ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
+        os.makedirs(ws_path, exist_ok=True)
+        with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
+            json.dump(solution_data, f, indent=4)
+        with open(os.path.join(ws_path, 'solution.py'), 'w') as f:
+            json.dump(solution_data, f, indent=4)
         
-    root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
-    with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
-    with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
+        root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+        with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
+            json.dump(solution_data, f, indent=4)
+        with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
+            json.dump(solution_data, f, indent=4)
+    except Exception as e:
+        print(f"[ERROR] Could not write solution.json: {e}")
 
 if __name__ == "__main__":
     verify_task()
