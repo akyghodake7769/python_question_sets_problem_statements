@@ -1,4 +1,4 @@
-# AWS EC2 (Windows Server) Basics: Navigation, Environment Variables & File Operations
+# Windows Server Basics: Navigation, Environment Variables & file manipulation
 
 **Difficulty Level:** Medium
 
@@ -6,7 +6,7 @@
 
 ## Scenario
 
-As a Windows System Administrator, you are tasked with setting up a baseline environment on a newly provisioned Windows Server in the cloud. You need to spin up a Windows Server EC2 instance, establish a workspace folder layout, configure system-wide environment variables, capture basic server metadata, and locate system log files.
+As a Windows System Administrator, you are tasked with setting up a baseline environment on a newly provisioned Windows Server. You need to establish a workspace folder layout, configure system-wide environment variables, capture basic server metadata, and locate system log files.
 
 ## Task Objectives
 
