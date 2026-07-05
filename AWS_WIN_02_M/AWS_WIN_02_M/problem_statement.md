@@ -2,7 +2,7 @@
 
 **Difficulty Level:** Medium
 
-**Duration:** 60 Minutes
+**Duration:** 120 Minutes
 
 ## Scenario
 
