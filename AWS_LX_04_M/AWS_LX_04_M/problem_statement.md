@@ -45,12 +45,13 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case     | Requirement                                                                         | Marks   |
-| ------------- | ----------------------------------------------------------------------------------- | ------- |
-| **TC1** | Local VM Environment active and verified                                                  | 4 Marks |
+| Test Case     | Requirement                                                                                   | Marks   |
+| ------------- | --------------------------------------------------------------------------------------------- | ------- |
+| **TC1** | Local VM Environment active and verified                                                      | 0 Marks |
 | **TC2** | Directory hierarchy (`app_navigation/config`, `app_navigation/logs`) created successfully | 4 Marks |
 | **TC3** | Initial files (`app.conf` in config, `error.log` in logs) created successfully            | 4 Marks |
-| **TC4** | File operations (`cp`, `mv`/rename) and keyword search results generated                  | 4 Marks |
-| **TC5** | Disk usage output (`disk_usage_nav.txt`) generated correctly                              | 4 Marks |
+| **TC4** | File operations (`cp`, `mv`/rename) performed successfully                                | 4 Marks |
+| **TC5** | Keyword search results generated to`search_results_nav.txt`                                 | 4 Marks |
+| **TC6** | Disk usage output (`disk_usage_nav.txt`) generated correctly                                | 4 Marks |
 
 **Total Score: 20 Marks**
