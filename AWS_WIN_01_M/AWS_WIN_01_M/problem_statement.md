@@ -10,7 +10,7 @@ As a Windows System Administrator, you are tasked with setting up a baseline env
 
 ## Task Objectives
 
-Perform the following actions in the AWS cloud and guest OS environment:
+Perform the following actions on this local Windows Virtual Machine:
 
 ### 1. Local Environment Verification
 
