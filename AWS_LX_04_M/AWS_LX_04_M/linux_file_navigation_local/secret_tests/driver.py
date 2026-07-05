@@ -89,9 +89,14 @@ def verify_task():
     os.makedirs(ws_path, exist_ok=True)
     with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
         json.dump({'score': total_score, 'results': results}, f, indent=4)
+    # Write to solution.py as well because the KodeBuck IDE is hardcoded to only upload solution.py!
+    with open(os.path.join(ws_path, 'solution.py'), 'w') as f:
+        json.dump({'score': total_score, 'results': results}, f, indent=4)
         
     root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
     with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
+        json.dump({'score': total_score, 'results': results}, f, indent=4)
+    with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
         json.dump({'score': total_score, 'results': results}, f, indent=4)
 
 if __name__ == "__main__":
