@@ -8,34 +8,34 @@ As a System Engineer in a technology firm, you are tasked with setting up a spec
 
 ## Task Objectives
 
-Perform the following actions inside the default home directory (`/home/ubuntu`) of the local Ubuntu system:
+Perform the following actions inside your home directory (`~`) of the local Linux system:
 
 ### 1. Environment Verification
 
-- Ensure the local VM environment is running Ubuntu Linux with default `/home/ubuntu` workspace.
+- Ensure the local VM environment is running with your default home directory (`~`).
 
 ### 2. Directory Hierarchy Creation
 
-- Create a directory hierarchy inside the home directory (`/home/ubuntu`) containing:
-  - `/home/ubuntu/app_navigation/config`
-  - `/home/ubuntu/app_navigation/logs`
+- Create a directory hierarchy inside your home directory (`~`) containing:
+  - `~/app_navigation/config`
+  - `~/app_navigation/logs`
 
 ### 3. Initial File Creation
 
 - Create the following blank files inside the newly created directories:
-  - `app.conf` inside `/home/ubuntu/app_navigation/config`
-  - `error.log` inside `/home/ubuntu/app_navigation/logs`
+  - `app.conf` inside `~/app_navigation/config`
+  - `error.log` inside `~/app_navigation/logs`
 
 ### 4. File Copy, Rename, and Search Operations
 
 - Perform the following file operations:
-  - Copy the `app.conf` file from `/home/ubuntu/app_navigation/config` to `/home/ubuntu/app_navigation/` directory.
-  - Rename or move the copied file `/home/ubuntu/app_navigation/app.conf` to `/home/ubuntu/app_navigation/app.conf.backup`.
-  - Search recursively within the `/home/ubuntu` directory for all files or lines containing the string `"app"`, and save/append the search results to `/home/ubuntu/search_results_nav.txt`.
+  - Copy the `app.conf` file from `~/app_navigation/config` to `~/app_navigation/` directory.
+  - Rename or move the copied file `~/app_navigation/app.conf` to `~/app_navigation/app.conf.backup`.
+  - Search recursively within the `~` directory for all files or lines containing the string `"app"`, and save/append the search results to `~/search_results_nav.txt`.
 
 ### 5. Disk Space Analysis
 
-- Perform disk analysis to check current disk space utilization, and save the formatted, human-readable report to `/home/ubuntu/disk_usage_nav.txt`.
+- Perform disk analysis to check current disk space utilization, and save the formatted, human-readable report to `~/disk_usage_nav.txt`.
 
 ## Verification
 
