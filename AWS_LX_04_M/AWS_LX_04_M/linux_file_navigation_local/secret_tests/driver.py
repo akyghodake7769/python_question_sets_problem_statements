@@ -112,8 +112,8 @@ def verify_task():
     # TC1: Environment active and verified
     tc1_passed = os.path.exists('/home/ubuntu') and os.path.isdir('/home/ubuntu')
     results['tc1'] = tc1_passed
-    total_score += 4 if tc1_passed else 0
-    print(f"TC1: {'Local VM Environment active':<30} [{'PASSED' if tc1_passed else 'FAILED'}] ({4 if tc1_passed else 0}/4)")
+    total_score += 0
+    print(f"TC1: {'Local VM Environment active':<30} [{'PASSED' if tc1_passed else 'FAILED'}] (0/0)")
 
     # TC2: Directory hierarchy created
     tc2_passed = False
@@ -135,25 +135,35 @@ def verify_task():
     total_score += 4 if tc3_passed else 0
     print(f"TC3: {'Initial files created':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({4 if tc3_passed else 0}/4)")
 
-    # TC4: File operations completed
+    # TC4: File Copy and Rename operations
     tc4_passed = False
     if tc1_passed:
-        if os.path.isfile('/home/ubuntu/app_navigation/app.conf.backup') and os.path.isfile('/home/ubuntu/search_results_nav.txt'):
-            if check_mtime('/home/ubuntu/app_navigation/app.conf.backup') and check_mtime('/home/ubuntu/search_results_nav.txt'):
+        if os.path.isfile('/home/ubuntu/app_navigation/app.conf.backup'):
+            if check_mtime('/home/ubuntu/app_navigation/app.conf.backup'):
                 tc4_passed = True
     results['tc4'] = tc4_passed
     total_score += 4 if tc4_passed else 0
     print(f"TC4: {'File operations completed':<30} [{'PASSED' if tc4_passed else 'FAILED'}] ({4 if tc4_passed else 0}/4)")
 
-    # TC5: Disk usage output generated
+    # TC5: Keyword search results generated
     tc5_passed = False
     if tc1_passed:
-        if os.path.isfile('/home/ubuntu/disk_usage_nav.txt') and os.path.getsize('/home/ubuntu/disk_usage_nav.txt') > 0:
-            if check_mtime('/home/ubuntu/disk_usage_nav.txt'):
+        if os.path.isfile('/home/ubuntu/search_results_nav.txt'):
+            if check_mtime('/home/ubuntu/search_results_nav.txt'):
                 tc5_passed = True
     results['tc5'] = tc5_passed
     total_score += 4 if tc5_passed else 0
-    print(f"TC5: {'Disk usage output generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
+    print(f"TC5: {'Search results generated':<30} [{'PASSED' if tc5_passed else 'FAILED'}] ({4 if tc5_passed else 0}/4)")
+
+    # TC6: Disk usage output generated
+    tc6_passed = False
+    if tc1_passed:
+        if os.path.isfile('/home/ubuntu/disk_usage_nav.txt') and os.path.getsize('/home/ubuntu/disk_usage_nav.txt') > 0:
+            if check_mtime('/home/ubuntu/disk_usage_nav.txt'):
+                tc6_passed = True
+    results['tc6'] = tc6_passed
+    total_score += 4 if tc6_passed else 0
+    print(f"TC6: {'Disk usage output generated':<30} [{'PASSED' if tc6_passed else 'FAILED'}] ({4 if tc6_passed else 0}/4)")
 
     print("-" * 60)
     print(f"{'TOTAL SCORE:':<44} {total_score}/20")
