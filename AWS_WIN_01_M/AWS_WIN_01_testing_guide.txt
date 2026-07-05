@@ -1,42 +1,38 @@
 ================================================================================
-AWS_WIN_01_M: ec2_windows_basics - STUDENT IMPLEMENTATION & TESTING GUIDE
+AWS_WIN_01_M: Windows Server Basics - STUDENT IMPLEMENTATION & TESTING GUIDE
 ================================================================================
 
-🎯 GOAL: AWS EC2 (Windows Server) Basics: Navigation, Environment Variables & File Operations
+🎯 GOAL: Windows Server Basics: Navigation, Environment Variables & File Operations
 
-This guide details the exact steps a learner must perform for AWS_WIN_01_M.
+This guide details the exact steps a learner must perform locally on the Windows VM.
 
 --------------------------------------------------------------------------------
 STEP-BY-STEP IMPLEMENTATION
 --------------------------------------------------------------------------------
 
-STEP 1: AWS CONSOLE LOGIN
-- Log into AWS Console.
-- Ensure you are in the eu-west-2 Region.
+STEP 1: LOCAL ENVIRONMENT VERIFICATION (PASSES TC1)
+- Log into the local Windows VM.
+- Ensure that the Windows OS environment is active and running.
 
-STEP 2: CREATE EC2 INSTANCE (PASSES TC1)
-- Navigate to EC2 -> "Launch Instance".
-- Name: `labskraft-windows-basics-<your-labskraft-username>` (replace <your-labskraft-username> with your actual username, e.g. labs-kraft-demo106).
-- Select Microsoft Windows Server 2022 Base AMI.
-- Select t2.micro Instance Type.
-
-STEP 3: CONFIGURE DIRECTORY LAYOUT (PASSES TC2)
-- Connect via RDP or EC2 Instance Connect / SSM Session Manager.
+STEP 2: CONFIGURE DIRECTORY LAYOUT (PASSES TC2 & TC3)
 - Open PowerShell as Administrator.
-- Run the following commands to create the directory layout:
+- Create the logs directory (C:\workspace\logs):
   New-Item -ItemType Directory -Path "C:\workspace\logs" -Force
+- Create the backups directory (C:\workspace\backups):
   New-Item -ItemType Directory -Path "C:\workspace\backups" -Force
 
-STEP 4: SET UP SYSTEM ENVIRONMENT VARIABLES (PASSES TC3)
-- In the PowerShell session, configure the system-level variable permanently:
+STEP 3: SET UP SYSTEM ENVIRONMENT VARIABLES (PASSES TC4)
+- In the PowerShell session, configure the system-level variable permanently to 'production':
   [Environment]::SetEnvironmentVariable("APP_ENVIRONMENT", "production", "Machine")
 
-STEP 5: SYSTEM METADATA AND LOG AUDITING (PASSES TC4)
+STEP 4: SYSTEM METADATA AUDITING (PASSES TC5)
 - Retrieve the hostname and OS caption details, and write them to C:\workspace\sysinfo.txt:
   $hostname = hostname
   $os = (Get-CimInstance Win32_OperatingSystem).Caption
   "Hostname: $hostname`nOS: $os" | Out-File -FilePath "C:\workspace\sysinfo.txt" -Encoding ascii -Force
-- Locate all .log files directly inside the C:\Windows folder and save their absolute paths to C:\workspace\log_files.txt:
+
+STEP 5: LOG AUDITING (PASSES TC6)
+- Locate all .log files directly inside the C:\Windows folder (non-recursively) and save their absolute paths to C:\workspace\log_files.txt:
   Get-ChildItem -Path "C:\Windows" -Filter "*.log" -File | Select-Object -ExpandProperty FullName | Out-File -FilePath "C:\workspace\log_files.txt" -Encoding ascii -Force
 
 --------------------------------------------------------------------------------
