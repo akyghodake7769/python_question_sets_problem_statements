@@ -10,6 +10,19 @@ START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
+def get_aws_metadata():
+    import urllib.request
+    try:
+        token_req = urllib.request.Request("http://169.254.169.254/latest/api/token", headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'}, method='PUT')
+        token = urllib.request.urlopen(token_req, timeout=1).read().decode()
+        id_req = urllib.request.Request("http://169.254.169.254/latest/meta-data/instance-id", headers={'X-aws-ec2-metadata-token': token})
+        instance_id = urllib.request.urlopen(id_req, timeout=1).read().decode()
+        region_req = urllib.request.Request("http://169.254.169.254/latest/meta-data/placement/region", headers={'X-aws-ec2-metadata-token': token})
+        region = urllib.request.urlopen(region_req, timeout=1).read().decode()
+        return instance_id, region
+    except Exception:
+        return None, None
+
 def verify_task():
     print("\n" + "-" * 60)
     print(f"{'KODEBUCK LOCAL LINUX VERIFICATION':^60}")
@@ -89,17 +102,24 @@ def verify_task():
 
     ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
     os.makedirs(ws_path, exist_ok=True)
+    
+    output_data = {'score': total_score, 'results': results}
+    instance_id, aws_region = get_aws_metadata()
+    if instance_id:
+        output_data['instance_id'] = instance_id
+        output_data['aws_region'] = aws_region
+        
     with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
+        json.dump(output_data, f, indent=4)
     # Write to solution.py as well because the KodeBuck IDE is hardcoded to only upload solution.py!
     with open(os.path.join(ws_path, 'solution.py'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
+        json.dump(output_data, f, indent=4)
         
     root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
     with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
+        json.dump(output_data, f, indent=4)
     with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
-        json.dump({'score': total_score, 'results': results}, f, indent=4)
+        json.dump(output_data, f, indent=4)
 
 if __name__ == "__main__":
     verify_task()
