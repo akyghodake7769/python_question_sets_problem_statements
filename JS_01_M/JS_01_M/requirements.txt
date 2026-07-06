@@ -1,0 +1,4 @@
+# No Python dependencies required for JS_01_M.
+# This challenge requires Maven (mvn) and Java 11+ to be installed on the local machine.
+# Install Maven: sudo apt-get install maven -y
+# Install Java:  sudo apt-get install default-jdk -y
