@@ -27,9 +27,9 @@ def verify_task():
             return False
 
     # TC1: Local VM Environment active and verified
-    tc1_passed = True
+    tc1_passed = os.path.exists(HOME) and os.path.isdir(HOME)
     results['tc1'] = tc1_passed
-    print(f"TC1: {'VM Environment Verification':<30} [{'PASSED'}] (0/0)")
+    print(f"TC1: {'VM Environment Verification':<30} [{'PASSED' if tc1_passed else 'FAILED'}] (0/0)")
 
     # TC2: Network Connectivity (ping_results.txt)
     tc2_passed = False
