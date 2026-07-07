@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
+HOME = os.path.expanduser('~')
 
 def verify_task():
     print("\n" + "-" * 60)
@@ -32,7 +33,7 @@ def verify_task():
 
     # TC2: Network Connectivity (ping_results.txt)
     tc2_passed = False
-    ping_file = '/home/ubuntu/ping_results.txt'
+    ping_file = os.path.join(HOME, 'ping_results.txt')
     if os.path.isfile(ping_file) and check_mtime(ping_file):
         try:
             with open(ping_file, 'r') as f:
@@ -48,7 +49,7 @@ def verify_task():
 
     # TC3: Port Diagnostics (open_ports.txt)
     tc3_passed = False
-    ports_file = '/home/ubuntu/open_ports.txt'
+    ports_file = os.path.join(HOME, 'open_ports.txt')
     if os.path.isfile(ports_file) and check_mtime(ports_file):
         try:
             with open(ports_file, 'r') as f:
@@ -63,7 +64,7 @@ def verify_task():
 
     # TC4: IP Configuration (ip_config.txt)
     tc4_passed = False
-    ip_file = '/home/ubuntu/ip_config.txt'
+    ip_file = os.path.join(HOME, 'ip_config.txt')
     if os.path.isfile(ip_file) and check_mtime(ip_file):
         try:
             with open(ip_file, 'r') as f:
@@ -78,7 +79,7 @@ def verify_task():
 
     # TC5: Dummy log file creation
     tc5_passed = False
-    log_file = '/home/ubuntu/dummy_app.log'
+    log_file = os.path.join(HOME, 'dummy_app.log')
     if os.path.isfile(log_file) and check_mtime(log_file):
         tc5_passed = True
     results['tc5'] = tc5_passed
@@ -87,7 +88,7 @@ def verify_task():
 
     # TC6: File Compression (app_archive.tar.gz contains dummy_app.log)
     tc6_passed = False
-    archive_file = '/home/ubuntu/app_archive.tar.gz'
+    archive_file = os.path.join(HOME, 'app_archive.tar.gz')
     if os.path.isfile(archive_file) and check_mtime(archive_file):
         try:
             with tarfile.open(archive_file, 'r:gz') as tar:
