@@ -67,9 +67,11 @@ def verify_task():
                                 break
                 if resolved_exam_code != 'UNKNOWN':
                     break
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[DEBUG] Dynamic resolution error: {e}")
 
+    print(f"[DEBUG] Username resolved: {username}")
+    print(f"[DEBUG] Exam code resolved: {resolved_exam_code}")
     target_instance = f"{username}-{resolved_exam_code}"
     start_time = START_TIME_STR
 
