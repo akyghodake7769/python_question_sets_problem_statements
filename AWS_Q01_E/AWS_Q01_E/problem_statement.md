@@ -1,6 +1,6 @@
 # AWS LAB : S3 Infrastructure Provisioning
 
-Duration : 15 Min.
+Duration : 60 Min.
 
 ## Scenario
 
