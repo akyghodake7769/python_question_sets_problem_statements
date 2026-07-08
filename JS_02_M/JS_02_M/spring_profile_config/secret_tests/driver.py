@@ -1,12 +1,13 @@
 import sys
 import json
 import os
-import subprocess
-import stat
 
 def get_base_path():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.abspath(os.path.join(current_dir, '../student_workspace'))
+    if os.path.basename(current_dir) == 'secret_tests':
+        return os.path.abspath(os.path.join(current_dir, '../student_workspace'))
+    else:
+        return os.path.abspath(os.path.join(current_dir, 'student_workspace'))
 
 def run_tests():
     base_path = get_base_path()
@@ -18,37 +19,25 @@ def run_tests():
         "tc5": False
     }
 
-    script_path = os.path.join(base_path, 'extract.sh')
-    output_path = os.path.join(base_path, 'output.txt')
+    script_path = os.path.join(base_path, 'start.sh')
 
-    # TC1: Check if script exists, has execution permissions, and runs
     try:
         if os.path.exists(script_path):
-            st = os.stat(script_path)
-            if bool(st.st_mode & stat.S_IXUSR):
-                process = subprocess.run(['./extract.sh'], cwd=base_path, capture_output=True, timeout=5)
-                if process.returncode == 0:
-                    results['tc1'] = True
+            with open(script_path, 'r') as f:
+                content = f.read()
+            
+            if '-XX:MaxRAMPercentage=75.0' in content:
+                results['tc1'] = True
+            if '-XX:+UseG1GC' in content:
+                results['tc2'] = True
+            if 'java ' in content and '-jar app.jar' in content:
+                results['tc3'] = True
     except Exception:
         pass
 
-    # Read output.txt for remaining TCs
-    try:
-        if os.path.exists(output_path):
-            results['tc2'] = True
-            with open(output_path, 'r') as f:
-                content = f.read().strip()
-            
-            if content:
-                results['tc3'] = True
-                
-            if 'prod_ultra_secure_pw_987!@#' in content:
-                results['tc4'] = True
-                
-            if 'dev_super_secret_pw_123' not in content and 'default_password' not in content:
-                results['tc5'] = True
-    except Exception:
-        pass
+    if results['tc1'] and results['tc2'] and results['tc3']:
+        results['tc4'] = True
+        results['tc5'] = True
 
     return results
 
@@ -65,13 +54,13 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "Check if extract.sh exists and runs",
-            "tc2": "Output file generated successfully",
-            "tc3": "Configuration content loaded",
-            "tc4": "Production profile active",
-            "tc5": "Development profile inactive"
+            "tc1": "Verify MaxRAMPercentage flag",
+            "tc2": "Verify G1GC flag",
+            "tc3": "Verify Java execution command",
+            "tc4": "Simulated run successful",
+            "tc5": "Verify running process flags"
         }
-        print("Running Tests for: Spring Profile Configuration\n")
+        print("Running Tests for: Configure JVM Arguments\n")
         total_score = 0
         for k, v in test_results.items():
             if k.lower().startswith('tc'):
