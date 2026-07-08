@@ -12,11 +12,41 @@ def get_s3_client():
         print(f"FAILED: Could not connect to AWS. Error: {e}")
         sys.exit(1)
 
+def get_iam_username():
+    try:
+        import boto3
+        sts = boto3.client('sts')
+        arn = sts.get_caller_identity().get('Arn', '')
+        if ':user/' in arn:
+            return arn.split(':user/')[-1].strip()
+        elif ':assumed-role/' in arn:
+            role_part = arn.split(':assumed-role/')[-1].strip()
+            if '/' in role_part:
+                return role_part.split('/')[-1].strip()
+            return role_part.strip()
+        else:
+            if '/' in arn:
+                return arn.split('/')[-1].strip()
+    except Exception:
+        pass
+    return None
+
+def resolve_username(default_prefix):
+    if default_prefix and default_prefix != 'LOCAL_USER':
+        return default_prefix
+    iam_user = get_iam_username()
+    if iam_user and iam_user not in ['root', 'ubuntu', 'administrator', 'SYSTEM', 'LOCAL_USER']:
+        return iam_user
+    return default_prefix
+
 def verify_task(username=None, exam_code_arg=None):
     s3 = get_s3_client()
 
     if username is None:
         username = os.getenv('LABSKRAFT_USERNAME', 'LOCAL_USER')
+    
+    username = resolve_username(username)
+    
     if exam_code_arg is None:
         exam_code_arg = sys.argv[3] if len(sys.argv) > 3 else (os.getenv('KODEBUCK_EXAM_CODE') or os.getenv('EXAM_CODE') or 'UNKNOWN')
 
@@ -85,71 +115,5 @@ def verify_task(username=None, exam_code_arg=None):
     print("-" * 40)
 
     return total_score, results
-
-
-def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, assessment_start_time=None, solution_data=None, exam_code_arg="UNKNOWN"):
-    """
-    Central Server Auditor: Verifies AWS S3 bucket setup.
-    This fallback version uses environment-variable credentials.
-    """
-    # Resolve username
-    if solution_data and 'candidate_prefix' in solution_data:
-        username = solution_data['candidate_prefix']
-    else:
-        username = labskraft_username if labskraft_username else candidate_email.split('@')[0]
-
-    # Resolve exam_code
-    exam_code = exam_code_arg
-    if (not exam_code or exam_code == 'UNKNOWN') and solution_data:
-        exam_code = solution_data.get('exam_code') or solution_data.get('question_id') or 'UNKNOWN'
-
-    # Run the verification
-    total_score, results = verify_task(username=username, exam_code_arg=exam_code)
-
-    # Build report
-    ist_offset = timezone(timedelta(hours=5, minutes=30))
-    date_str = datetime.now(ist_offset).strftime("%d-%m-%Y")
-    time_str = datetime.now(ist_offset).strftime("%H:%M:%S")
-    timestamp = datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")
-
-    problem_code = "create_s3_bucket"
-    tc_names = {
-        'tc1': 'TC1 [Bucket Creation]',
-        'tc2': 'TC2 [Public Access Blocked]',
-        'tc3': 'TC3 [Region Check]'
-    }
-    passed_cases = [tc_names[tc] for tc in ['tc1', 'tc2', 'tc3'] if results.get(tc)]
-    failed_cases  = [tc_names[tc] for tc in ['tc1', 'tc2', 'tc3'] if not results.get(tc)]
-
-    passed_str = f"{len(passed_cases)}: {'; '.join(passed_cases)}" if passed_cases else "0"
-    failed_str  = f"{len(failed_cases)}: {'; '.join(failed_cases)}"  if failed_cases  else "0"
-
-    csv_report = f"{date_str},{problem_code},{exam_code.upper()},{username},{time_str},{passed_str},{failed_str},{total_score}"
-
-    # Save report to central server filesystem
-    report_base = f"/home/ubuntu/central_server/reports/{problem_code}/{candidate_email}"
-    try:
-        os.makedirs(report_base, exist_ok=True)
-        report_path = os.path.join(report_base, f"{candidate_email}_{timestamp}.txt")
-        file_results = [
-            "-" * 60,
-            f"{'KODEBUCK AWS S3 BUCKET VERIFICATION':^60}",
-            "-" * 60,
-            f"{'✓' if results.get('tc1') else '✗'} TC1: Bucket Creation ............... {'PASSED (5/5)' if results.get('tc1') else 'FAILED (0/5)'}",
-            f"{'✓' if results.get('tc2') else '✗'} TC2: Public Access Blocked ......... {'PASSED (5/5)' if results.get('tc2') else 'FAILED (0/5)'}",
-            f"{'✓' if results.get('tc3') else '✗'} TC3: Region Check .................. {'PASSED (5/5)' if results.get('tc3') else 'FAILED (0/5)'}",
-            "-" * 60,
-            f"TOTAL SCORE: {total_score}/15",
-            "-" * 60,
-        ]
-        with open(report_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(file_results) + "\n")
-    except Exception as e:
-        print(f"[WARN] Could not write report file: {e}")
-
-    print(f"\n[REPORT_CSV]{csv_report}")
-    return total_score, results
-
-
 if __name__ == "__main__":
     verify_task()
