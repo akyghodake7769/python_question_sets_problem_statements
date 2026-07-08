@@ -1,4 +1,4 @@
-# DevOps Lab: AWS S3 Infrastructure Provisioning
+# AWS LAB : S3 Infrastructure Provisioning
 
 Duration : 15 Min.
 
