@@ -276,5 +276,107 @@ def verify_task():
     except Exception as e:
         print(f"[ERROR] Could not write solution.json: {e}")
 
+    return total_score, results
+
+def verify_aws_on_server(candidate_email, question_id, labskraft_username=None, assessment_start_time=None, solution_data=None, exam_code_arg="UNKNOWN"):
+    """
+    Central Server Auditor: Verifies AWS EC2 + EBS Ubuntu setup.
+    """
+    global USER_PREFIX, START_TIME_STR, START_TIME, exam_code
+    
+    # Resolve username
+    if solution_data and 'candidate_prefix' in solution_data:
+        username = solution_data['candidate_prefix']
+    else:
+        username = labskraft_username if labskraft_username else candidate_email.split('@')[0]
+    
+    USER_PREFIX = username
+    
+    # Resolve start time
+    if assessment_start_time:
+        START_TIME_STR = assessment_start_time
+    elif solution_data and solution_data.get('assessment_start_time'):
+        START_TIME_STR = solution_data.get('assessment_start_time')
+    
+    if START_TIME_STR:
+        try:
+            START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00'))
+        except Exception:
+            START_TIME = datetime.now(timezone.utc)
+    else:
+        START_TIME = datetime.now(timezone.utc)
+        START_TIME_STR = START_TIME.isoformat()
+        
+    # Resolve exam code
+    exam_code = exam_code_arg if exam_code_arg else "UNKNOWN"
+    
+    # Run the verification task
+    total_score, results = verify_task()
+    
+    # Generate report file content
+    file_results = []
+    file_results.append("-" * 60)
+    file_results.append(f"{'KODEBUCK AWS EC2 + EBS UBUNTU VERIFICATION':^60}")
+    file_results.append("-" * 60)
+    
+    if results.get('tc1', False):
+        file_results.append("✓ TC1: EC2 Instance (Ubuntu t2.micro) ............ PASSED (5/5)")
+    else:
+        file_results.append("✗ TC1: EC2 Instance (Ubuntu t2.micro) ............ FAILED (0/5)")
+        
+    if results.get('tc2', False):
+        file_results.append("✓ TC2: EBS Volume (10 GB gp3) Created .............. PASSED (5/5)")
+    else:
+        file_results.append("✗ TC2: EBS Volume (10 GB gp3) Created .............. FAILED (0/5)")
+        
+    if results.get('tc3', False):
+        file_results.append("✓ TC3: EBS Attached & Mounted at /mnt/data-store .... PASSED (5/5)")
+    else:
+        file_results.append("✗ TC3: EBS Attached & Mounted at /mnt/data-store .... FAILED (0/5)")
+        
+    file_results.append("-" * 60)
+    file_results.append(f"TOTAL SCORE: {total_score}/15")
+    file_results.append("-" * 60)
+    
+    # 8-Column CSV Format for Taxila LMS
+    ist_offset = timezone(timedelta(hours=5, minutes=30))
+    date_str = datetime.now(ist_offset).strftime("%d-%m-%Y")
+    time_str = datetime.now(ist_offset).strftime("%H:%M:%S")
+    timestamp = datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")
+    
+    problem_code = "ec2_ebs_ubuntu"
+    passed_cases = []
+    failed_cases = []
+    tc_names = {
+        'tc1': 'TC1 [EC2 Instance (Ubuntu t2.micro)]',
+        'tc2': 'TC2 [EBS Volume (10 GB gp3) Created]',
+        'tc3': 'TC3 [EBS Attached & Mounted at /mnt/data-store]'
+    }
+    for tc in ['tc1', 'tc2', 'tc3']:
+        if results.get(tc, False):
+            passed_cases.append(tc_names[tc])
+        else:
+            failed_cases.append(tc_names[tc])
+            
+    passed_str = f"{len(passed_cases)}: {'; '.join(passed_cases)}" if passed_cases else "0"
+    failed_str = f"{len(failed_cases)}: {'; '.join(failed_cases)}" if failed_cases else "0"
+    
+    csv_report = f"{date_str},{problem_code},{exam_code.upper()},{username},{time_str},{passed_str},{failed_str},{total_score}"
+    
+    # Save Report to Central Server Filesystem
+    report_base = f"/home/ubuntu/central_server/reports/{problem_code}/{candidate_email}"
+    try:
+        os.makedirs(report_base, exist_ok=True)
+        report_path = os.path.join(report_base, f"{candidate_email}_{timestamp}.txt")
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(file_results) + "\n")
+    except Exception as e:
+        print(f"[WARN] Could not write report file: {e}")
+        pass
+    
+    print(f"\n[REPORT_CSV]{csv_report}")
+    return total_score, results
+
 if __name__ == "__main__":
     verify_task()
+
