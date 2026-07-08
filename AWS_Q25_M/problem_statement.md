@@ -1,5 +1,6 @@
 # AWS RDS Lab: Provisioning a Secure RDS MySQL Database (Local Verification)
 
+##  Duration : 90 Min.
 ## Scenario
 You are a Cloud Engineer tasked with setting up a highly secure and cost-efficient MySQL database instance on AWS RDS for a new retail web application. To optimize costs and comply with security audits, the database must use the minimum cost tier, have storage autoscaling disabled, and be completely hidden from the public internet.
 
