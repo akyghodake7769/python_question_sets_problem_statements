@@ -192,7 +192,8 @@ def verify_task():
         'assessment_start_time': START_TIME_STR,
         'evaluation_type': 'REAL_TIME_API',
         'score': total_score,
-        'results': results
+        'results': results,
+        'exam_code': EXAM_CODE
     }
 
     try:
