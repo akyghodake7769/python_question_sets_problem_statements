@@ -264,7 +264,7 @@ def verify_task():
         # TC1: Environment active and verified (boto3 connection works)
         tc1_passed = True
         results['tc1'] = tc1_passed
-        print("TC1 [Environment Check] (0/0) - Success: AWS environment active.")
+        print("TC1: VM Environment Verification [PASSED] (0/0)")
 
         # Retrieve DB Instance details
         db_instance = None
@@ -282,12 +282,12 @@ def verify_task():
             engine_version = db_instance.get('EngineVersion', '')
             if engine == 'mysql' and engine_version.startswith('8.0'):
                 tc2_passed = True
-                print("TC2 [RDS Instance & MySQL Engine] (4/4) - Success: Instance verified.")
+                print("TC2: RDS Instance and MySQL Engine [PASSED] (4/4)")
             else:
-                print("TC2 [RDS Instance & MySQL Engine] (0/4) - Failed: Engine mismatch.")
+                print("TC2: RDS Instance and MySQL Engine [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Expected engine 'mysql' (version 8.0), found '{engine}' (version {engine_version}).")
         else:
-            print("TC2 [RDS Instance & MySQL Engine] (0/4) - Failed: DB instance not found.")
+            print("TC2: RDS Instance and MySQL Engine [FAILED] (0/4)")
             print("     └─ [Reason]: DB instance 'retail-mysql-db' could not be found.")
 
         results['tc2'] = tc2_passed
@@ -303,12 +303,12 @@ def verify_task():
             
             if db_class == 'db.t3.micro' and allocated_storage == 20 and not public_access:
                 tc3_passed = True
-                print("TC3 [Instance Class & Storage] (4/4) - Success: Spec configuration correct.")
+                print("TC3: Instance Class, Storage & Accessibility [PASSED] (4/4)")
             else:
-                print("TC3 [Instance Class & Storage] (0/4) - Failed: Spec configuration mismatch.")
+                print("TC3: Instance Class, Storage & Accessibility [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Class='{db_class}' (expected db.t3.micro), Storage={allocated_storage}GB (expected 20GB), PubliclyAccessible={public_access} (expected False)")
         else:
-            print("TC3 [Instance Class & Storage] (0/4) - Failed: Prerequisite failed.")
+            print("TC3: Instance Class, Storage & Accessibility [FAILED] (0/4)")
             print("     └─ [Reason]: Prerequisite failed.")
 
         results['tc3'] = tc3_passed
@@ -321,12 +321,12 @@ def verify_task():
             db_name = db_instance.get('DBName', '')
             if db_name == 'retaildb':
                 tc4_passed = True
-                print("TC4 [Default Database Name] (4/4) - Success: Database name verified.")
+                print("TC4: Default Database Name Verification [PASSED] (4/4)")
             else:
-                print("TC4 [Default Database Name] (0/4) - Failed: Database name mismatch.")
+                print("TC4: Default Database Name Verification [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Expected default database 'retaildb', found '{db_name}'.")
         else:
-            print("TC4 [Default Database Name] (0/4) - Failed: Prerequisite failed.")
+            print("TC4: Default Database Name Verification [FAILED] (0/4)")
             print("     └─ [Reason]: Prerequisite failed.")
 
         results['tc4'] = tc4_passed
@@ -358,12 +358,12 @@ def verify_task():
             
             if port_3306_allowed:
                 tc5_passed = True
-                print("TC5 [Security Group Ingress] (4/4) - Success: Firewall rules allow port 3306.")
+                print("TC5: Inbound Security Group Ingress Rules [PASSED] (4/4)")
             else:
-                print("TC5 [Security Group Ingress] (0/4) - Failed: Firewall rules invalid.")
+                print("TC5: Inbound Security Group Ingress Rules [FAILED] (0/4)")
                 print(f"     └─ [Reason]: No Security Group attached to the RDS allows TCP inbound traffic on port 3306.")
         else:
-            print("TC5 [Security Group Ingress] (0/4) - Failed: Prerequisite failed.")
+            print("TC5: Inbound Security Group Ingress Rules [FAILED] (0/4)")
             print("     └─ [Reason]: Prerequisite failed.")
 
         results['tc5'] = tc5_passed
@@ -377,12 +377,12 @@ def verify_task():
             allocated_storage = db_instance.get('AllocatedStorage', 20)
             if max_storage == 0 or max_storage == allocated_storage:
                 tc6_passed = True
-                print("TC6 [Storage Autoscaling Configuration] (4/4) - Success: Storage autoscaling is disabled.")
+                print("TC6: Storage Autoscaling Configuration [PASSED] (4/4)")
             else:
-                print("TC6 [Storage Autoscaling Configuration] (0/4) - Failed: Storage autoscaling is enabled.")
+                print("TC6: Storage Autoscaling Configuration [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Storage autoscaling is enabled (MaxAllocatedStorage limit is set to {max_storage} GB).")
         else:
-            print("TC6 [Storage Autoscaling Configuration] (0/4) - Failed: Prerequisite failed.")
+            print("TC6: Storage Autoscaling Configuration [FAILED] (0/4)")
             print("     └─ [Reason]: Prerequisite failed.")
 
         results['tc6'] = tc6_passed
