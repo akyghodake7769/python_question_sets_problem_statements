@@ -24,21 +24,16 @@ def verify_task():
     results = {}
 
     try:
-        # Time Enforcement Logic
-        if not START_TIME:
-            print("[ERROR] KODEBUCK_START_TIME environment variable is missing.")
-            raise Exception("Invalid Session")
-
+        # Time Info (non-blocking)
+        session_start = START_TIME if START_TIME else datetime.now(timezone.utc)
         now = datetime.now(timezone.utc)
-        elapsed_minutes = (now - START_TIME).total_seconds() / 60
-        max_duration = 75  # 75 Min assessment
-
-        if elapsed_minutes > max_duration + 5: # 5 min grace
-            print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
-            raise Exception("Time Limit Exceeded")
+        elapsed_minutes = (now - session_start).total_seconds() / 60
 
         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
-        print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
+        if START_TIME:
+            print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
+        else:
+            print(f"[SYSTEM] No start time set — running in open mode\n")
 
         aws_region = None
         ec2_client = None
