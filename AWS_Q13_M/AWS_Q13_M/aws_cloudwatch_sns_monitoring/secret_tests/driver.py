@@ -50,7 +50,7 @@ def verify_task():
             temp_ec2 = boto3.client('ec2', region_name=region)
             try:
                 instances = temp_ec2.describe_instances(Filters=[
-                    {'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopped']}
+                    {'Name': 'instance-state-name', 'Values': ['running', 'pending']}
                 ])
                 
                 if instances.get('Reservations'):
@@ -61,9 +61,9 @@ def verify_task():
                                 if tag['Key'] == 'Name':
                                     name_tag = tag['Value']
                             
-                            expected_name = f'labskraft-monitor-ec2-{user_prefix}'.lower()
-                            if expected_name == name_tag.lower() or \
-                               ('labskraft-monitor-ec2' in name_tag.lower() and user_prefix.lower() in name_tag.lower()):
+                            # Problem statement names instance as: {username}-{exam_code}
+                            # Accept any instance whose name starts with the username
+                            if name_tag.lower().startswith(user_prefix.lower()):
                                 valid_instance = inst
                                 break
                         if valid_instance:
@@ -129,7 +129,11 @@ def verify_task():
             try:
                 topics = sns_client.list_topics()
                 for t in topics.get('Topics', []):
-                    if t['TopicArn'].endswith(f':DevOps-Alerts-{user_prefix}'):
+                    topic_name = t['TopicArn'].split(':')[-1].lower()
+                    # Accept topic names that start with the username (format: {username}-{exam_code})
+                    # Also accept legacy format: DevOps-Alerts-{username}
+                    if topic_name.startswith(user_prefix.lower()) or \
+                       t['TopicArn'].endswith(f':DevOps-Alerts-{user_prefix}'):
                         target_topic_arn = t['TopicArn']
                         break
                 
