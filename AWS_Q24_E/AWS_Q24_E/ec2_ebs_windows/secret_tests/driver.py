@@ -51,29 +51,58 @@ def verify_task():
     username = resolve_username(USER_PREFIX)
     region = 'eu-west-2'
     
+    # 1. Scan regions to find running EC2 instance starting with username (handling user/uesr typo)
+    valid_instance = None
+    aws_region = region
+    ec2_client = None
     resolved_exam_code = exam_code
-    if resolved_exam_code == 'UNKNOWN':
+
+    import boto3
+    for r in ['eu-west-1', 'eu-west-2', 'eu-west-3']:
         try:
-            ec2 = get_ec2_client(region)
-            resp = ec2.describe_instances(Filters=[
-                {'Name': 'tag:Name', 'Values': [f"{username}-*"]},
+            temp_ec2 = boto3.client('ec2', region_name=r)
+            resp = temp_ec2.describe_instances(Filters=[
                 {'Name': 'instance-state-name', 'Values': ['running']}
             ])
             for res in resp.get('Reservations', []):
                 for inst in res.get('Instances', []):
+                    name_tag = ""
                     for tag in inst.get('Tags', []):
                         if tag['Key'] == 'Name':
-                            val = tag['Value']
-                            suffix = val.replace(f"{username}-", "").strip()
-                            if suffix:
-                                resolved_exam_code = suffix
-                                break
-                if resolved_exam_code != 'UNKNOWN':
+                            name_tag = tag['Value']
+                    
+                    # Normalize and support uesr/user typo tolerance
+                    norm_name = name_tag.lower()
+                    norm_user = username.lower()
+                    norm_user_typo1 = norm_user.replace('user', 'uesr')
+                    norm_user_typo2 = norm_user.replace('uesr', 'user')
+                    
+                    is_match = False
+                    matched_prefix = ""
+                    for prefix in [norm_user, norm_user_typo1, norm_user_typo2]:
+                        if norm_name.startswith(prefix):
+                            is_match = True
+                            matched_prefix = prefix
+                            break
+                            
+                    if is_match:
+                        valid_instance = inst
+                        aws_region = r
+                        ec2_client = temp_ec2
+                        
+                        # Extract suffix (exam code) dynamically
+                        suffix = name_tag[len(matched_prefix):].strip('-')
+                        if suffix:
+                            resolved_exam_code = suffix
+                        break
+                if valid_instance:
                     break
+            if valid_instance:
+                break
         except Exception:
             pass
 
-    # Propagate resolved code back to global so reports use correct value
+    # Propagate resolved code and regional client
     exam_code = resolved_exam_code
     target_instance = f"{username}-{exam_code}"
     start_time = START_TIME_STR
@@ -100,19 +129,19 @@ def verify_task():
         else:
             print(f"[SYSTEM] No start time set — running in open mode\n")
 
-        ec2 = get_ec2_client(region)
+        # Use the discovered region's EC2 client, or fallback to default
+        if ec2_client:
+            ec2 = ec2_client
+            region = aws_region
+        else:
+            ec2 = get_ec2_client(region)
 
         # --- TC1: EC2 Instance (Windows t2.micro) --- (5 Marks)
         tc1_passed = False
         instance_id = None
         try:
-            resp = ec2.describe_instances(Filters=[
-                {'Name': 'tag:Name', 'Values': [target_instance]},
-                {'Name': 'instance-state-name', 'Values': ['running']}
-            ])
-            instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
-            if instances:
-                inst = instances[0]
+            if valid_instance:
+                inst = valid_instance
                 if inst.get('InstanceType') == 't2.micro':
                     tc1_passed = True
                     instance_id = inst['InstanceId']
@@ -120,7 +149,7 @@ def verify_task():
                 else:
                     print(f"TC1 [EC2 Instance] (0/5) - Failed: Instance found but type is '{inst.get('InstanceType')}', expected 't2.micro'.")
             else:
-                print(f"TC1 [EC2 Instance] (0/5) - Failed: Running instance named '{target_instance}' not found in {region}.")
+                print(f"TC1 [EC2 Instance] (0/5) - Failed: Running instance starting with '{username}' not found in scanning regions.")
         except Exception as e:
             print(f"TC1 [EC2 Instance] (0/5) - Failed: Error: {e}")
 
@@ -153,7 +182,7 @@ def verify_task():
                 print(f"TC2 [EBS Volume Created] (5/5) - Success: 20 GB io2 volume found.")
             else:
                 print(f"TC2 [EBS Volume Created] (0/5) - Failed: 20 GB io2 volume not found.")
-                print(f"     └─ [Reason]: No 20 GB io2 volume found in the region.")
+                print(f"     +- [Reason]: No 20 GB io2 volume found in the region.")
         except Exception as e:
             print(f"TC2 [EBS Volume Created] (0/5) - Failed: Error retrieving volumes: {e}")
 
@@ -178,6 +207,7 @@ def verify_task():
                     print(f"TC3 [EBS Volume Attached & Mounted] (5/5) - Success: NTFS volume F: found.")
                 else:
                     print(f"TC3 [EBS Volume Attached & Mounted] (0/5) - Failed: No 20 GB io2 volume is attached to instance '{instance_id}'.")
+                    print(f"     +- [Reason]: No 20 GB io2 volume is attached to instance '{instance_id}'.")
             except Exception as e:
                 print(f"TC3 [EBS Volume Attached & Mounted] (0/5) - Failed: Error verifying attachment: {e}")
         else:
