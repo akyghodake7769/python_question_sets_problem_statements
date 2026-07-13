@@ -3,7 +3,10 @@ import os
 import json
 from datetime import datetime, timezone, timedelta
 from azure.identity import ClientSecretCredential
-from azure.mgmt.resource import ResourceManagementClient
+try:
+    from azure.mgmt.resource import ResourceManagementClient
+except ImportError:
+    from azure.mgmt.resource.resources import ResourceManagementClient
 from azure.mgmt.storage import StorageManagementClient
 
 # Capture Assessment Start Time
@@ -36,7 +39,7 @@ def verify_task():
 
         if not all([subscription_id, tenant_id, client_id, client_secret]):
             print("TC1: Resource Group Access [FAILED] (0/0)")
-            print("     └─ [Reason]: Missing subscription_id, tenant_id, client_id, or client_secret.")
+            print("     +- [Reason]: Missing subscription_id, tenant_id, client_id, or client_secret.")
             return
 
         credential = ClientSecretCredential(
@@ -61,7 +64,7 @@ def verify_task():
             print("TC1: Resource Group Access ............................ [PASSED] (0/0)")
         except Exception as e:
             print("TC1: Resource Group Access ............................ [FAILED] (0/0)")
-            print(f"     └─ [Reason]: Pre-created Resource Group '{rg_name}' not found. Details: {e}")
+            print(f"     +- [Reason]: Pre-created Resource Group '{rg_name}' not found. Details: {e}")
             return
 
         results['tc1'] = tc1_passed
@@ -77,10 +80,10 @@ def verify_task():
                 print("TC2: Storage Account Existence ........................ [PASSED] (4/4)")
             else:
                 print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
-                print(f"     └─ [Reason]: Storage account is in '{sa.location}', expected 'eastasia'.")
+                print(f"     +- [Reason]: Storage account is in '{sa.location}', expected 'eastasia'.")
         except Exception as e:
             print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Storage account '{storage_account_name}' not found. Details: {str(e)}")
+            print(f"     +- [Reason]: Storage account '{storage_account_name}' not found. Details: {str(e)}")
 
         results['tc2'] = tc2_passed
         if tc2_passed:
@@ -96,13 +99,13 @@ def verify_task():
                     print("TC3: Storage Account SKU check ........................ [PASSED] (4/4)")
                 else:
                     print("TC3: Storage Account SKU check ........................ [FAILED] (0/4)")
-                    print(f"     └─ [Reason]: Sku is expected to be Standard LRS, found '{sku_name}'.")
+                    print(f"     +- [Reason]: Sku is expected to be Standard LRS, found '{sku_name}'.")
             except Exception as e:
                 print("TC3: Storage Account SKU check ........................ [FAILED] (0/4)")
-                print(f"     └─ [Reason]: Error checking SKU: {e}")
+                print(f"     +- [Reason]: Error checking SKU: {e}")
         else:
             print("TC3: Storage Account SKU check ........................ [FAILED] (0/4)")
-            print("     └─ [Reason]: Prerequisite storage account not found.")
+            print("     +- [Reason]: Prerequisite storage account not found.")
 
         results['tc3'] = tc3_passed
         if tc3_passed:
@@ -117,7 +120,7 @@ def verify_task():
             print("TC4: Blob Container Setup ............................. [PASSED] (4/4)")
         except Exception as e:
             print("TC4: Blob Container Setup ............................. [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Blob container 'assets' not found under account '{storage_account_name}'. Details: {str(e)}")
+            print(f"     +- [Reason]: Blob container 'assets' not found under account '{storage_account_name}'. Details: {str(e)}")
 
         results['tc4'] = tc4_passed
         if tc4_passed:
@@ -133,13 +136,13 @@ def verify_task():
                     print("TC5: Container Public Access Policy ................... [PASSED] (4/4)")
                 else:
                     print("TC5: Container Public Access Policy ................... [FAILED] (0/4)")
-                    print(f"     └─ [Reason]: Container 'assets' public access level is '{public_access}', expected private.")
+                    print(f"     +- [Reason]: Container 'assets' public access level is '{public_access}', expected private.")
             except Exception as e:
                 print("TC5: Container Public Access Policy ................... [FAILED] (0/4)")
-                print(f"     └─ [Reason]: Error checking access policy: {e}")
+                print(f"     +- [Reason]: Error checking access policy: {e}")
         else:
             print("TC5: Container Public Access Policy ................... [FAILED] (0/4)")
-            print("     └─ [Reason]: Prerequisite container not found.")
+            print("     +- [Reason]: Prerequisite container not found.")
 
         results['tc5'] = tc5_passed
         if tc5_passed:
@@ -155,13 +158,13 @@ def verify_task():
                     print("TC6: Secure Transfer Enforcement ...................... [PASSED] (4/4)")
                 else:
                     print("TC6: Secure Transfer Enforcement ...................... [FAILED] (0/4)")
-                    print("     └─ [Reason]: 'Secure transfer required' (HTTPS only) is disabled.")
+                    print("     +- [Reason]: 'Secure transfer required' (HTTPS only) is disabled.")
             except Exception as e:
                 print("TC6: Secure Transfer Enforcement ...................... [FAILED] (0/4)")
-                print(f"     └─ [Reason]: Error checking HTTPS enforcement: {e}")
+                print(f"     +- [Reason]: Error checking HTTPS enforcement: {e}")
         else:
             print("TC6: Secure Transfer Enforcement ...................... [FAILED] (0/4)")
-            print("     └─ [Reason]: Prerequisite storage account not found.")
+            print("     +- [Reason]: Prerequisite storage account not found.")
 
         results['tc6'] = tc6_passed
         if tc6_passed:
