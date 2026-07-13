@@ -37,19 +37,25 @@ def verify_task():
         client_id = os.environ.get("AZURE_CLIENT_ID")
         client_secret = os.environ.get("AZURE_CLIENT_SECRET")
 
+        credential = None
+        resource_client = None
+        storage_client = None
+
         if not all([subscription_id, tenant_id, client_id, client_secret]):
-            print("TC1: Resource Group Access [FAILED] (0/0)")
+            print("TC1: Resource Group Access ............................ [FAILED] (0/0)")
             print("     +- [Reason]: Missing subscription_id, tenant_id, client_id, or client_secret.")
-            return
-
-        credential = ClientSecretCredential(
-            tenant_id=tenant_id,
-            client_id=client_id,
-            client_secret=client_secret
-        )
-
-        resource_client = ResourceManagementClient(credential, subscription_id)
-        storage_client = StorageManagementClient(credential, subscription_id)
+        else:
+            try:
+                credential = ClientSecretCredential(
+                    tenant_id=tenant_id,
+                    client_id=client_id,
+                    client_secret=client_secret
+                )
+                resource_client = ResourceManagementClient(credential, subscription_id)
+                storage_client = StorageManagementClient(credential, subscription_id)
+            except Exception as e:
+                print("TC1: Resource Group Access ............................ [FAILED] (0/0)")
+                print(f"     +- [Reason]: Error initializing Azure clients. Details: {e}")
 
         # Resource configurations
         username = USER_PREFIX.lower().replace('.', '-').replace('@', '-')
@@ -58,32 +64,38 @@ def verify_task():
 
         # TC1: Resource Group validation (0 Marks)
         tc1_passed = False
-        try:
-            resource_client.resource_groups.get(rg_name)
-            tc1_passed = True
-            print("TC1: Resource Group Access ............................ [PASSED] (0/0)")
-        except Exception as e:
-            print("TC1: Resource Group Access ............................ [FAILED] (0/0)")
-            print(f"     +- [Reason]: Pre-created Resource Group '{rg_name}' not found. Details: {e}")
-            return
+        if resource_client:
+            try:
+                resource_client.resource_groups.get(rg_name)
+                tc1_passed = True
+                print("TC1: Resource Group Access ............................ [PASSED] (0/0)")
+            except Exception as e:
+                print("TC1: Resource Group Access ............................ [FAILED] (0/0)")
+                print(f"     +- [Reason]: Pre-created Resource Group '{rg_name}' not found. Details: {e}")
+        else:
+            tc1_passed = False
 
         results['tc1'] = tc1_passed
 
         # TC2: Storage Account existence in eastasia (4 Marks)
         tc2_passed = False
         sa = None
-        try:
-            sa = storage_client.storage_accounts.get_properties(rg_name, storage_account_name)
-            loc = sa.location.lower().replace(" ", "")
-            if loc == "eastasia":
-                tc2_passed = True
-                print("TC2: Storage Account Existence ........................ [PASSED] (4/4)")
-            else:
+        if storage_client:
+            try:
+                sa = storage_client.storage_accounts.get_properties(rg_name, storage_account_name)
+                loc = sa.location.lower().replace(" ", "")
+                if loc == "eastasia":
+                    tc2_passed = True
+                    print("TC2: Storage Account Existence ........................ [PASSED] (4/4)")
+                else:
+                    print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
+                    print(f"     +- [Reason]: Storage account is in '{sa.location}', expected 'eastasia'.")
+            except Exception as e:
                 print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
-                print(f"     +- [Reason]: Storage account is in '{sa.location}', expected 'eastasia'.")
-        except Exception as e:
+                print(f"     +- [Reason]: Storage account '{storage_account_name}' not found. Details: {str(e)}")
+        else:
             print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
-            print(f"     +- [Reason]: Storage account '{storage_account_name}' not found. Details: {str(e)}")
+            print("     +- [Reason]: Prerequisite Azure client initialization failed.")
 
         results['tc2'] = tc2_passed
         if tc2_passed:
@@ -114,13 +126,17 @@ def verify_task():
         # TC4: Blob Container existence (4 Marks)
         tc4_passed = False
         container = None
-        try:
-            container = storage_client.blob_containers.get(rg_name, storage_account_name, "assets")
-            tc4_passed = True
-            print("TC4: Blob Container Setup ............................. [PASSED] (4/4)")
-        except Exception as e:
+        if storage_client:
+            try:
+                container = storage_client.blob_containers.get(rg_name, storage_account_name, "assets")
+                tc4_passed = True
+                print("TC4: Blob Container Setup ............................. [PASSED] (4/4)")
+            except Exception as e:
+                print("TC4: Blob Container Setup ............................. [FAILED] (0/4)")
+                print(f"     +- [Reason]: Blob container 'assets' not found under account '{storage_account_name}'. Details: {str(e)}")
+        else:
             print("TC4: Blob Container Setup ............................. [FAILED] (0/4)")
-            print(f"     +- [Reason]: Blob container 'assets' not found under account '{storage_account_name}'. Details: {str(e)}")
+            print("     +- [Reason]: Prerequisite Azure client initialization failed.")
 
         results['tc4'] = tc4_passed
         if tc4_passed:
