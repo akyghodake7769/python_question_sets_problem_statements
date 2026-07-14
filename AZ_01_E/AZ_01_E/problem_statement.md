@@ -1,6 +1,6 @@
-# DevOps Lab: Azure Storage Account & Container Setup
+# Azure Lab: Azure Storage Account & Container Setup
 
-Duration : 30 Min.
+Duration : 60 Min.
 
 ## Scenario
 
@@ -9,10 +9,20 @@ As a Junior Cloud Engineer at LabsKraft, you are tasked with provisioning a secu
 ## Input Details
 
 The environment has been pre-configured with the following resources:
+
 - **Subscription:** LabsKraft
 - **Resource Group:** `rg-iRUN-LTM-Assessment`
 - **Region:** Asia Pacific East Asia (use `eastasia` region)
 - **Preferred Storage Type:** Standard LRS (`Standard_LRS`)
+
+## Username & Naming Conventions
+
+Your candidate prefix is the part of your Azure login email before the `@` symbol.
+For example, if your Azure username is `ltmdemo01@michaelkloudkrafthotmail.onmicrosoft.com`, your prefix is **`ltmdemo01`**.
+
+You must name your resources accordingly:
+
+- **Storage Account Name:** `store<prefix>` (e.g. `storeltmdemo01`)
 
 ## Task Objectives
 
@@ -20,8 +30,8 @@ Perform the following configuration steps directly in the Azure Portal or using 
 
 ### 1. Create Storage Account
 
-- **Storage Account Name:** `store<username>` (Storage Account names must be between 3 and 24 characters, using numbers and lowercase letters only with no special characters. E.g. `storelabsdemouser1`)
-- **Resource Group:** Place the Storage Account in the pre-existing Resource Group `iRun-Assessment-test`.
+- **Storage Account Name:** `store<prefix>` (Storage Account names must be between 3 and 24 characters, using numbers and lowercase letters only with no special characters. E.g. `storeltmdemo01`)
+- **Resource Group:** Place the Storage Account in the pre-existing Resource Group `rg-iRUN-LTM-Assessment`.
 - **Location:** Deploy the Storage Account in the `eastasia` region.
 - **Storage Sku:** Standard LRS (`Standard_LRS`)
 - **Security:** Ensure that secure transfer (HTTPS-only traffic) is explicitly enabled/enforced for the storage account.
@@ -35,14 +45,14 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement | Marks |
-| --------- | ----------- | ----- |
-| **TC1**   | Resource Group validation (`rg-iRUN-LTM-Assessment` exists and is accessible) | 0 Marks |
-| **TC2**   | Storage Account existence (`store<username>` in `eastasia`) | 4 Marks |
-| **TC3**   | Storage Account SKU verification (Standard LRS) | 4 Marks |
-| **TC4**   | Blob Container existence (container named `assets` exists) | 4 Marks |
-| **TC5**   | Blob Container access policy (Private container / no public access) | 4 Marks |
-| **TC6**   | Secure transfer configuration (HTTPS-only traffic enforced) | 4 Marks |
+| Test Case     | Requirement                                                                     | Marks   |
+| ------------- | ------------------------------------------------------------------------------- | ------- |
+| **TC1** | Resource Group validation (`rg-iRUN-LTM-Assessment` exists and is accessible) | 0 Marks |
+| **TC2** | Storage Account existence (`store<prefix>` in `eastasia`)                   | 4 Marks |
+| **TC3** | Storage Account SKU verification (Standard LRS)                                 | 4 Marks |
+| **TC4** | Blob Container existence (container named`assets` exists)                     | 4 Marks |
+| **TC5** | Blob Container access policy (Private container / no public access)             | 4 Marks |
+| **TC6** | Secure transfer configuration (HTTPS-only traffic enforced)                     | 4 Marks |
 
 **Total Score: 20 Marks**
 
