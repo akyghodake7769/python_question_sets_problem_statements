@@ -64,14 +64,18 @@ def verify_task():
         storage_client = StorageManagementClient(credential, subscription_id)
 
         # Resource configurations
-        raw_username = USER_PREFIX
-        if '@' in raw_username:
-            raw_username = raw_username.split('@')[0]
-        if '_' in raw_username:
-            raw_username = raw_username.split('_')[0]
-        username = raw_username.lower().replace('.', '-')
+        azure_username = os.environ.get("AZURE_USERNAME")
+        if not azure_username:
+            azure_username = sys.argv[1] if len(sys.argv) > 1 else "default"
+        prefix = azure_username.split("@")[0].lower()
         rg_name = "rg-iRUN-LTM-Assessment"
-        storage_account_name = f"store{username}".replace('-', '').replace('_', '')[:24]
+        storage_account_name = f"store{prefix}".replace('-', '').replace('_', '')[:24]
+
+        # Print debug once
+        print(f"Azure Username: {azure_username}")
+        print(f"Azure Prefix: {prefix}")
+        print(f"Expected Storage Account: {storage_account_name}")
+        print(f"Expected Resource Group: {rg_name}")
 
         # TC1: Resource Group validation (0 Marks)
         tc1_passed = False
