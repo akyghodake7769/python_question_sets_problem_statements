@@ -199,6 +199,7 @@
 
 # if __name__ == '__main__':
 #     verify_task()
+
 import sys
 import os
 import json
@@ -309,8 +310,9 @@ def verify_task():
                     
                     if creation_time < START_TIME:
                         tc2_passed = False
+                        sa = None
                         print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
-                        print(f"     └─ [Reason]: Storage account was created before the assessment started ({creation_time} < {START_TIME}).")
+                        print("     └─ [Reason]: Storage account was found but not created in the current session.")
                     else:
                         tc2_passed = True
                         print("TC2: Storage Account Existence ........................ [PASSED] (4/4)")
@@ -318,9 +320,11 @@ def verify_task():
                     tc2_passed = True
                     print("TC2: Storage Account Existence ........................ [PASSED] (4/4)")
             else:
+                sa = None
                 print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Storage account is in '{sa.location}', expected 'eastasia'.")
         except Exception as e:
+            sa = None
             print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
             print(f"     └─ [Reason]: Storage account '{storage_account_name}' not found. Details: {str(e)}")
 
@@ -330,7 +334,7 @@ def verify_task():
 
         # TC3: Storage Account SKU verification (4 Marks)
         tc3_passed = False
-        if sa:
+        if tc2_passed and sa:
             try:
                 sku_name = sa.sku.name.value if sa.sku else ""
                 if "Standard_LRS" in sku_name or "Standard" in sku_name:
@@ -344,7 +348,7 @@ def verify_task():
                 print(f"     └─ [Reason]: Error checking SKU: {e}")
         else:
             print("TC3: Storage Account SKU check ........................ [FAILED] (0/4)")
-            print("     └─ [Reason]: Prerequisite storage account not found.")
+            print("     └─ [Reason]: Prerequisite storage account not found or invalid.")
 
         results['tc3'] = tc3_passed
         if tc3_passed:
@@ -353,13 +357,35 @@ def verify_task():
         # TC4: Blob Container existence (4 Marks)
         tc4_passed = False
         container = None
-        try:
-            container = storage_client.blob_containers.get(rg_name, storage_account_name, "assets")
-            tc4_passed = True
-            print("TC4: Blob Container Setup ............................. [PASSED] (4/4)")
-        except Exception as e:
+        if tc2_passed:
+            try:
+                container = storage_client.blob_containers.get(rg_name, storage_account_name, "assets")
+                
+                # Check creation/last modified time of container to prevent pre-creation
+                last_modified = getattr(container, 'last_modified_time', None)
+                if START_TIME and last_modified:
+                    if last_modified.tzinfo is None:
+                        last_modified = last_modified.replace(tzinfo=timezone.utc)
+                    if START_TIME.tzinfo is None:
+                        START_TIME = START_TIME.replace(tzinfo=timezone.utc)
+                        
+                    if last_modified < START_TIME:
+                        tc4_passed = False
+                        container = None
+                        print("TC4: Blob Container Setup ............................. [FAILED] (0/4)")
+                        print("     └─ [Reason]: Blob container was found but not created in the current session.")
+                    else:
+                        tc4_passed = True
+                        print("TC4: Blob Container Setup ............................. [PASSED] (4/4)")
+                else:
+                    tc4_passed = True
+                    print("TC4: Blob Container Setup ............................. [PASSED] (4/4)")
+            except Exception as e:
+                print("TC4: Blob Container Setup ............................. [FAILED] (0/4)")
+                print(f"     └─ [Reason]: Blob container 'assets' not found under account '{storage_account_name}'. Details: {str(e)}")
+        else:
             print("TC4: Blob Container Setup ............................. [FAILED] (0/4)")
-            print(f"     └─ [Reason]: Blob container 'assets' not found under account '{storage_account_name}'. Details: {str(e)}")
+            print("     └─ [Reason]: Prerequisite storage account not found or invalid.")
 
         results['tc4'] = tc4_passed
         if tc4_passed:
@@ -367,7 +393,7 @@ def verify_task():
 
         # TC5: Blob Container access policy (Private container / no public access) (4 Marks)
         tc5_passed = False
-        if container:
+        if tc2_passed and tc4_passed and container:
             try:
                 public_access = container.public_access
                 public_access_str = str(public_access).lower() if public_access is not None else "none"
@@ -382,7 +408,7 @@ def verify_task():
                 print(f"     └─ [Reason]: Error checking access policy: {e}")
         else:
             print("TC5: Container Public Access Policy ................... [FAILED] (0/4)")
-            print("     └─ [Reason]: Prerequisite container not found.")
+            print("     └─ [Reason]: Prerequisite container not found or invalid.")
 
         results['tc5'] = tc5_passed
         if tc5_passed:
@@ -390,7 +416,7 @@ def verify_task():
 
         # TC6: Secure transfer configuration (HTTPS-only traffic enforced) (4 Marks)
         tc6_passed = False
-        if sa:
+        if tc2_passed and sa:
             try:
                 # check enable_https_traffic_only (secure transfer required)
                 if sa.enable_https_traffic_only:
@@ -404,7 +430,7 @@ def verify_task():
                 print(f"     └─ [Reason]: Error checking HTTPS enforcement: {e}")
         else:
             print("TC6: Secure Transfer Enforcement ...................... [FAILED] (0/4)")
-            print("     └─ [Reason]: Prerequisite storage account not found.")
+            print("     └─ [Reason]: Prerequisite storage account not found or invalid.")
 
         results['tc6'] = tc6_passed
         if tc6_passed:
