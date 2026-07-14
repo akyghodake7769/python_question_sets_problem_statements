@@ -10,7 +10,7 @@ As a Junior Cloud Engineer at LabsKraft, you are tasked with provisioning a secu
 
 The environment has been pre-configured with the following resources:
 - **Subscription:** LabsKraft
-- **Resource Group:** `iRun-Assessment-test`
+- **Resource Group:** `rg-iRUN-LTM-Assessment`
 - **Region:** Asia Pacific East Asia (use `eastasia` region)
 - **Preferred Storage Type:** Standard LRS (`Standard_LRS`)
 
