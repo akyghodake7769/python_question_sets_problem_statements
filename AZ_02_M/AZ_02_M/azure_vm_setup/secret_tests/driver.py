@@ -8,10 +8,10 @@ from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.compute import ComputeManagementClient
 
 # Capture Assessment Start Time
-START_TIME_STR = os.getenv('KODEARENA_START_TIME')
+START_TIME_STR = os.getenv('KODEBUCK_START_TIME') or os.getenv('KODEARENA_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
-USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEARENA_USERNAME', os.getenv('LABSKRAFT_USERNAME', 'LOCAL_USER'))
-EXAM_CODE = sys.argv[3] if len(sys.argv) > 3 else 'UNKNOWN'
+USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', os.getenv('KODEARENA_USERNAME', os.getenv('LABSKRAFT_USERNAME', 'LOCAL_USER')))
+EXAM_CODE = sys.argv[3] if len(sys.argv) > 3 else (os.getenv('KODEBUCK_EXAM_CODE') or os.getenv('KODEARENA_EXAM_CODE') or 'UNKNOWN')
 
 def verify_task():
     print("-" * 65)
@@ -51,8 +51,13 @@ def verify_task():
         compute_client = ComputeManagementClient(credential, subscription_id)
 
         # Resource configurations
-        username = USER_PREFIX.lower().replace('.', '-').replace('@', '-')
-        rg_name = "iRun-Assessment-test"
+        raw_username = USER_PREFIX
+        if '@' in raw_username:
+            raw_username = raw_username.split('@')[0]
+        if '_' in raw_username:
+            raw_username = raw_username.split('_')[0]
+        username = raw_username.lower().replace('.', '-')
+        rg_name = "rg-iRUN-LTM-Assessment"
         vnet_name = f"vnet-{username}"
         nsg_name = f"nsg-{username}"
         vm_name = f"vm-{username}"
