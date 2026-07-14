@@ -1,6 +1,6 @@
 # Azure Lab: Azure Virtual Machine & Security Configuration
 
-Duration : 45 Min.
+Duration : 60 Min.
 
 ## Scenario
 
