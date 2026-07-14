@@ -3,15 +3,56 @@ import os
 import json
 from datetime import datetime, timezone, timedelta
 from azure.identity import ClientSecretCredential
-from azure.mgmt.resource import ResourceManagementClient
-from azure.mgmt.network import NetworkManagementClient
-from azure.mgmt.compute import ComputeManagementClient
+
+try:
+    from azure.mgmt.resource import ResourceManagementClient
+except ImportError:
+    try:
+        from azure.mgmt.resource.resources import ResourceManagementClient
+    except ImportError:
+        ResourceManagementClient = None
+
+try:
+    from azure.mgmt.network import NetworkManagementClient
+except ImportError:
+    try:
+        from azure.mgmt.network.v2022_07_01 import NetworkManagementClient
+    except ImportError:
+        NetworkManagementClient = None
+
+try:
+    from azure.mgmt.compute import ComputeManagementClient
+except ImportError:
+    try:
+        from azure.mgmt.compute.v2022_11_01 import ComputeManagementClient
+    except ImportError:
+        ComputeManagementClient = None
+
 
 # Capture Assessment Start Time
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME') or os.getenv('KODEARENA_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', os.getenv('KODEARENA_USERNAME', os.getenv('LABSKRAFT_USERNAME', 'LOCAL_USER')))
 EXAM_CODE = sys.argv[3] if len(sys.argv) > 3 else (os.getenv('KODEBUCK_EXAM_CODE') or os.getenv('KODEARENA_EXAM_CODE') or 'UNKNOWN')
+def check_creation_time(resource_obj, start_time):
+    if not start_time or not resource_obj:
+        return True
+    created_time = None
+    if hasattr(resource_obj, 'creation_time') and resource_obj.creation_time:
+        created_time = resource_obj.creation_time
+    elif hasattr(resource_obj, 'time_created') and resource_obj.time_created:
+        created_time = resource_obj.time_created
+    elif hasattr(resource_obj, 'system_data') and resource_obj.system_data and getattr(resource_obj.system_data, 'created_at', None):
+        created_time = resource_obj.system_data.created_at
+
+    if created_time:
+        if created_time.tzinfo is None:
+            created_time = created_time.replace(tzinfo=timezone.utc)
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
+        if created_time < start_time:
+            return False
+    return True
 
 def verify_task():
     print("-" * 65)
@@ -51,16 +92,21 @@ def verify_task():
         compute_client = ComputeManagementClient(credential, subscription_id)
 
         # Resource configurations
-        raw_username = USER_PREFIX
-        if '@' in raw_username:
-            raw_username = raw_username.split('@')[0]
-        if '_' in raw_username:
-            raw_username = raw_username.split('_')[0]
-        username = raw_username.lower().replace('.', '-')
+        azure_username = os.environ.get("AZURE_USERNAME")
+        if not azure_username:
+            azure_username = sys.argv[1] if len(sys.argv) > 1 else "default"
+        prefix = azure_username.split("@")[0].lower()
         rg_name = "rg-iRUN-LTM-Assessment"
-        vnet_name = f"vnet-{username}"
-        nsg_name = f"nsg-{username}"
-        vm_name = f"vm-{username}"
+        vnet_name = f"vnet-{prefix}"
+        nsg_name = f"nsg-{prefix}"
+        vm_name = f"vm-{prefix}"
+        storage_account_name = f"store{prefix}".replace('-', '').replace('_', '')[:24]
+
+        # Print debug once
+        print(f"Azure Username: {azure_username}")
+        print(f"Azure Prefix: {prefix}")
+        print(f"Expected Storage Account: {storage_account_name}")
+        print(f"Expected Resource Group: {rg_name}")
 
         # TC1: Resource Group validation (0 Marks)
         tc1_passed = False
@@ -89,8 +135,12 @@ def verify_task():
                 print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
                 print(f"     └─ [Reason]: VNet is in '{vnet.location}', expected 'eastasia'.")
             elif "10.0.0.0/16" in prefixes and subnet_prefix == "10.0.0.0/24":
-                tc2_passed = True
-                print("TC2: Virtual Network & Subnet Range ................... [PASSED] (4/4)")
+                if not check_creation_time(vnet, START_TIME):
+                    print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
+                    print("     └─ [Reason]: Virtual network was found but not created in the current session.")
+                else:
+                    tc2_passed = True
+                    print("TC2: Virtual Network & Subnet Range ................... [PASSED] (4/4)")
             else:
                 print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Address Space: {prefixes} (expected ['10.0.0.0/16']), Subnet range: {subnet_prefix} (expected '10.0.0.0/24').")
@@ -169,8 +219,13 @@ def verify_task():
                 print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
                 print(f"     └─ [Reason]: VM is in '{vm.location}', expected 'eastasia'.")
             elif is_running and is_size_correct and is_ubuntu:
-                tc5_passed = True
-                print("TC5: VM Specifications & Running State ................ [PASSED] (4/4)")
+                if not check_creation_time(vm, START_TIME):
+                    vm = None
+                    print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                    print("     └─ [Reason]: Virtual machine was found but not created in the current session.")
+                else:
+                    tc5_passed = True
+                    print("TC5: VM Specifications & Running State ................ [PASSED] (4/4)")
             else:
                 print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Size={vm_size} (expected Standard_B1s), OS={os_publisher}/{os_offer} (expected Ubuntu), Running={is_running}")
