@@ -3,8 +3,23 @@ import os
 import json
 from datetime import datetime, timezone, timedelta
 from azure.identity import ClientSecretCredential
-from azure.mgmt.resource import ResourceManagementClient
-from azure.mgmt.storage import StorageManagementClient
+
+try:
+    from azure.mgmt.resource import ResourceManagementClient
+except ImportError:
+    try:
+        from azure.mgmt.resource.resources import ResourceManagementClient
+    except ImportError:
+        ResourceManagementClient = None
+
+try:
+    from azure.mgmt.storage import StorageManagementClient
+except ImportError:
+    try:
+        from azure.mgmt.storage.v2023_01_01 import StorageManagementClient
+    except ImportError:
+        StorageManagementClient = None
+
 
 # Capture Assessment Start Time
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME') or os.getenv('KODEARENA_START_TIME')
