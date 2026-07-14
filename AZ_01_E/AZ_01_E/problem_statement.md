@@ -37,7 +37,7 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | Resource Group validation (`iRun-Assessment-test` exists and is accessible) | 0 Marks |
+| **TC1**   | Resource Group validation (`rg-iRUN-LTM-Assessment` exists and is accessible) | 0 Marks |
 | **TC2**   | Storage Account existence (`store<username>` in `eastasia`) | 4 Marks |
 | **TC3**   | Storage Account SKU verification (Standard LRS) | 4 Marks |
 | **TC4**   | Blob Container existence (container named `assets` exists) | 4 Marks |
