@@ -303,12 +303,13 @@ def verify_task():
                 creation_time = getattr(sa, 'creation_time', None)
                 if START_TIME and creation_time:
                     # Ensure both are timezone aware
+                    start_time = START_TIME
                     if creation_time.tzinfo is None:
                         creation_time = creation_time.replace(tzinfo=timezone.utc)
-                    if START_TIME.tzinfo is None:
-                        START_TIME = START_TIME.replace(tzinfo=timezone.utc)
+                    if start_time.tzinfo is None:
+                        start_time = start_time.replace(tzinfo=timezone.utc)
                     
-                    if creation_time < START_TIME:
+                    if creation_time < start_time:
                         tc2_passed = False
                         sa = None
                         print("TC2: Storage Account Existence ........................ [FAILED] (0/4)")
@@ -364,12 +365,13 @@ def verify_task():
                 # Check creation/last modified time of container to prevent pre-creation
                 last_modified = getattr(container, 'last_modified_time', None)
                 if START_TIME and last_modified:
+                    start_time = START_TIME
                     if last_modified.tzinfo is None:
                         last_modified = last_modified.replace(tzinfo=timezone.utc)
-                    if START_TIME.tzinfo is None:
-                        START_TIME = START_TIME.replace(tzinfo=timezone.utc)
+                    if start_time.tzinfo is None:
+                        start_time = start_time.replace(tzinfo=timezone.utc)
                         
-                    if last_modified < START_TIME:
+                    if last_modified < start_time:
                         tc4_passed = False
                         container = None
                         print("TC4: Blob Container Setup ............................. [FAILED] (0/4)")
