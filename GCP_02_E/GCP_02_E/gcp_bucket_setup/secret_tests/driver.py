@@ -137,12 +137,12 @@ def verify_task():
         tc3_passed = False
         if bucket:
             loc = bucket.location.lower()
-            if loc == "us-central1":
+            if loc == "us-east4":
                 tc3_passed = True
                 print("TC3: Bucket Location Validation ....................... [PASSED] (4/4)")
             else:
                 print("TC3: Bucket Location Validation ....................... [FAILED] (0/4)")
-                print(f"     └─ [Reason]: Location is '{bucket.location}', expected 'US-CENTRAL1'.")
+                print(f"     └─ [Reason]: Location is '{bucket.location}', expected 'US-EAST4'.")
         else:
             print("TC3: Bucket Location Validation ....................... [FAILED] (0/4)")
 
