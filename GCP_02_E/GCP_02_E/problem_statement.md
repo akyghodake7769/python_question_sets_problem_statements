@@ -1,4 +1,4 @@
-# DevOps Lab: Google Cloud Storage (GCS) Bucket & Versioning Setup
+# GCP Lab: Google Cloud Storage (GCS) Bucket & Versioning Setup
 
 Duration : 30 Min.
 
@@ -9,6 +9,7 @@ As a Junior Cloud Engineer at LabsKraft, you are tasked with setting up a highly
 ## Input Details
 
 The GCP environment is pre-configured with the following constraints:
+
 - **Project ID:** (Your pre-allocated GCP project, e.g. `ltm-assessment-project`)
 - **Region:** `us-central1` (Iowa region)
 - **Default Storage Class:** Standard (`STANDARD`)
@@ -16,11 +17,12 @@ The GCP environment is pre-configured with the following constraints:
 
 ## Username & Naming Conventions
 
-Your candidate prefix is the part of your exam login email before the `@` symbol.
-For example, if your exam username is `ltmdemo01@michaelkloudkrafthotmail.onmicrosoft.com`, your prefix is **`ltmdemo01`**.
+Your candidate prefix is the part of your GCP Console login email (provided in your credentials sheet) before the `@` symbol.
+For example, if your GCP Console username is `akyghodake7769@gmail.com`, your prefix is **`akyghodake7769`**.
 
 You must name your resources accordingly:
-- **Storage Bucket Name:** `bkt-<prefix>` (Bucket names must be globally unique. E.g. `bkt-ltmdemo01`)
+
+- **Storage Bucket Name:** `bkt-<prefix>` (Bucket names must be globally unique. E.g. `bkt-akyghodake7769`)
 
 ## Task Objectives
 
@@ -42,14 +44,14 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement | Marks |
-| --------- | ----------- | ----- |
-| **TC1**   | Google Cloud Storage service access check | 0 Marks |
-| **TC2**   | Bucket existence (`bkt-<prefix>` created) | 4 Marks |
-| **TC3**   | Location validation (must be in region `us-central1`) | 4 Marks |
-| **TC4**   | Object existence (`welcome.txt` file is successfully uploaded to the bucket) | 4 Marks |
-| **TC5**   | Object Versioning check (must be explicitly enabled on the bucket) | 4 Marks |
-| **TC6**   | Storage Class check (Standard Storage Class) | 4 Marks |
+| Test Case     | Requirement                                                                    | Marks   |
+| ------------- | ------------------------------------------------------------------------------ | ------- |
+| **TC1** | Google Cloud Storage service access check                                      | 0 Marks |
+| **TC2** | Bucket existence (`bkt-<prefix>` created)                                    | 4 Marks |
+| **TC3** | Location validation (must be in region`us-central1`)                         | 4 Marks |
+| **TC4** | Object existence (`welcome.txt` file is successfully uploaded to the bucket) | 4 Marks |
+| **TC5** | Object Versioning check (must be explicitly enabled on the bucket)             | 4 Marks |
+| **TC6** | Storage Class check (Standard Storage Class)                                   | 4 Marks |
 
 **Total Score: 20 Marks**
 
