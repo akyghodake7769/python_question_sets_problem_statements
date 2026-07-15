@@ -93,7 +93,7 @@ def verify_task():
         if not project_id:
             project_id = "ltm-assessment-project" # Default fallback
 
-        zone = "us-central1-a"
+        zone = "us-east4-a"
         vm_name = f"vm-{username}"
 
         # Initialize Google Compute Client
