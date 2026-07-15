@@ -11,7 +11,7 @@ As a Junior Cloud Engineer at LabsKraft, you are tasked with setting up a highly
 The GCP environment is pre-configured with the following constraints:
 
 - **Project ID:** (Your pre-allocated GCP project, e.g. `ltm-assessment-project`)
-- **Region:** `us-central1` (Iowa region)
+- **Region:** `us-east4` (Northern Virginia region)
 - **Default Storage Class:** Standard (`STANDARD`)
 - **Test File to Upload:** Create a local text file named `welcome.txt` containing any text content (e.g. `Welcome to LabsKraft GCP Assessment!`).
 
@@ -30,8 +30,8 @@ Perform the following configurations using the Google Cloud Console or `gsutil` 
 
 ### 1. Create Google Cloud Storage Bucket
 
-- **Bucket Name:** `bkt-<prefix>` (e.g., `bkt-ltmdemo01`)
-- **Location Type:** Select **Region** and set location to `us-central1`.
+- **Bucket Name:** `bkt-<prefix>` (e.g., `bkt-akyghodake7769`)
+- **Location Type:** Select **Region** and set location to `us-east4`.
 - **Default Storage Class:** Standard (`STANDARD`).
 - **Object Versioning:** Enable Object Versioning explicitly on the bucket to preserve old versions of files.
 - **Upload File:** Upload your created text file `welcome.txt` into the root of this bucket.
@@ -48,7 +48,7 @@ Your performance will be evaluated based on the following test cases:
 | ------------- | ------------------------------------------------------------------------------ | ------- |
 | **TC1** | Google Cloud Storage service access check                                      | 0 Marks |
 | **TC2** | Bucket existence (`bkt-<prefix>` created)                                    | 4 Marks |
-| **TC3** | Location validation (must be in region`us-central1`)                         | 4 Marks |
+| **TC3** | Location validation (must be in region`us-east4`)                            | 4 Marks |
 | **TC4** | Object existence (`welcome.txt` file is successfully uploaded to the bucket) | 4 Marks |
 | **TC5** | Object Versioning check (must be explicitly enabled on the bucket)             | 4 Marks |
 | **TC6** | Storage Class check (Standard Storage Class)                                   | 4 Marks |
