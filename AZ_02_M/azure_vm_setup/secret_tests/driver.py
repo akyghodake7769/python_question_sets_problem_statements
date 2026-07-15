@@ -234,7 +234,10 @@ def verify_task():
             print("     └─ [Reason]: NSG verification failed.")
 
         results['tc4'] = tc4_passed
-             # TC5: Ubuntu VM (Standard_B1s) running and linked (4 Marks)
+        if tc4_passed:
+            total_score += 4
+
+        # TC5: Ubuntu VM (Standard_B1s) running and linked (4 Marks)
         tc5_passed = False
         vm = None
         try:
@@ -244,7 +247,7 @@ def verify_task():
                 vms = list(compute_client.virtual_machines.list(rg_name))
                 if vms:
                     for v in vms:
-                        if prefix in v.name.lower() or "vm" in v.name.lower() or len(vms) == 1:
+                        if prefix in v.name.lower():
                             vm = compute_client.virtual_machines.get(rg_name, v.name, expand='instanceView')
                             break
                     if not vm:
@@ -257,8 +260,8 @@ def verify_task():
                 os_offer = vm.storage_profile.image_reference.offer if vm.storage_profile and vm.storage_profile.image_reference else ""
                 vm_loc = vm.location.lower().replace(" ", "")
                 
-                statuses = [s.code for s in vm.instance_view.statuses if s.code] if vm.instance_view else []
-                is_running = any("running" in status.lower() for status in statuses) if statuses else True
+                statuses = [s.code for s in vm.instance_view.statuses] if vm.instance_view else []
+                is_running = any("PowerState/running" in status for status in statuses)
                 
                 is_size_correct = vm_size.lower() in ["standard_b1s"]
                 
@@ -290,13 +293,13 @@ def verify_task():
                 linux_conf = os_prof.linux_configuration if os_prof else None
                 disable_pwd = linux_conf.disable_password_authentication if linux_conf else False
                 
-                if disable_pwd or not os_prof or linux_conf is None:
-                    # Grant pass if password auth is disabled or if os_profile/linux_configuration is not returned
+                if disable_pwd or not os_prof:
+                    # Grant pass if password auth is disabled or if os_profile is hidden
                     tc6_passed = True
                     print("TC6: SSH Key Authentication Enforced .................. [PASSED] (4/4)")
                 else:
                     print("TC6: SSH Key Authentication Enforced .................. [FAILED] (0/4)")
-                    print(f"     └─ [Reason]: Password authentication is not disabled.")
+                    print("     └─ [Reason]: Password authentication is not disabled.")
             except Exception as e:
                 print("TC6: SSH Key Authentication Enforced .................. [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Error checking SSH configuration: {e}")
