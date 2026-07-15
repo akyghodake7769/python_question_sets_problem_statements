@@ -50,6 +50,14 @@ def verify_task():
         if not credentials:
             print("TC1: GCP Project Access [FAILED] (0/0)")
             print("     └─ [Reason]: Missing GCP credentials (GCP_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS).")
+            print("TC2: Virtual Machine existence ........................ [FAILED] (0/4)")
+            print("TC3: Machine type validation .......................... [FAILED] (0/4)")
+            print("TC4: OS Image validation .............................. [FAILED] (0/4)")
+            print("TC5: Boot Disk Configuration check ................... [FAILED] (0/4)")
+            print("TC6: VM Running Status check .......................... [FAILED] (0/4)")
+            print("-" * 65)
+            print("TOTAL SCORE: 0/20")
+            print("-" * 65)
             return
 
         # Load solution.json to get gcp_username if available
@@ -101,6 +109,14 @@ def verify_task():
         except Exception as e:
             print("TC1: GCP Project Access ............................... [FAILED] (0/0)")
             print(f"     └─ [Reason]: Unable to connect or authorize. Details: {e}")
+            print("TC2: Virtual Machine existence ........................ [FAILED] (0/4)")
+            print("TC3: Machine type validation .......................... [FAILED] (0/4)")
+            print("TC4: OS Image validation .............................. [FAILED] (0/4)")
+            print("TC5: Boot Disk Configuration check ................... [FAILED] (0/4)")
+            print("TC6: VM Running Status check .......................... [FAILED] (0/4)")
+            print("-" * 65)
+            print("TOTAL SCORE: 0/20")
+            print("-" * 65)
             return
 
         results['tc1'] = tc1_passed
