@@ -50,6 +50,14 @@ def verify_task():
         if not credentials:
             print("TC1: GCP Storage Access [FAILED] (0/0)")
             print("     └─ [Reason]: Missing GCP credentials (GCP_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS).")
+            print("TC2: Storage Bucket Existence ......................... [FAILED] (0/4)")
+            print("TC3: Bucket Location Validation ....................... [FAILED] (0/4)")
+            print("TC4: Object Upload Validation (welcome.txt) ........... [FAILED] (0/4)")
+            print("TC5: Object Versioning check .......................... [FAILED] (0/4)")
+            print("TC6: Storage Class check .............................. [FAILED] (0/4)")
+            print("-" * 65)
+            print("TOTAL SCORE: 0/20")
+            print("-" * 65)
             return
 
         # Load solution.json to get gcp_username if available
@@ -98,6 +106,14 @@ def verify_task():
         except Exception as e:
             print("TC1: GCP Storage Access ............................... [FAILED] (0/0)")
             print(f"     └─ [Reason]: Unable to connect or authorize. Details: {e}")
+            print("TC2: Storage Bucket Existence ......................... [FAILED] (0/4)")
+            print("TC3: Bucket Location Validation ....................... [FAILED] (0/4)")
+            print("TC4: Object Upload Validation (welcome.txt) ........... [FAILED] (0/4)")
+            print("TC5: Object Versioning check .......................... [FAILED] (0/4)")
+            print("TC6: Storage Class check .............................. [FAILED] (0/4)")
+            print("-" * 65)
+            print("TOTAL SCORE: 0/20")
+            print("-" * 65)
             return
 
         results['tc1'] = tc1_passed
