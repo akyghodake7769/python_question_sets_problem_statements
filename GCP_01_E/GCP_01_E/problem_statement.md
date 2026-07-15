@@ -1,4 +1,4 @@
-# DevOps Lab: Google Cloud Platform (GCP) Virtual Machine Creation
+# GCP Lab: Google Cloud Platform (GCP) Virtual Machine Creation
 
 Duration : 30 Min.
 
@@ -9,6 +9,7 @@ As a Junior Cloud Infrastructure Associate at LabsKraft, you are tasked with set
 ## Input Details
 
 The GCP environment is pre-configured with the following constraints:
+
 - **Project ID:** (Your pre-allocated GCP project, e.g. `ltm-assessment-project`)
 - **Zone:** `us-central1-a` (or as specified in your credentials sheet)
 - **Boot Disk Type:** SSD Persistent Disk (`pd-ssd`)
@@ -16,11 +17,12 @@ The GCP environment is pre-configured with the following constraints:
 
 ## Username & Naming Conventions
 
-Your candidate prefix is the part of your exam login email before the `@` symbol.
-For example, if your exam username is `ltmdemo01@michaelkloudkrafthotmail.onmicrosoft.com`, your prefix is **`ltmdemo01`**.
+Your candidate prefix is the part of your GCP Console login email (provided in your credentials sheet) before the `@` symbol.
+For example, if your GCP Console username is `akyghodake7769@gmail.com`, your prefix is **`akyghodake7769`**.
 
 You must name your resources accordingly:
-- **Compute Instance (VM) Name:** `vm-<prefix>` (e.g. `vm-ltmdemo01`)
+
+- **Compute Instance (VM) Name:** `vm-<prefix>` (e.g. `vm-akyghodake7769`)
 
 ## Task Objectives
 
@@ -43,14 +45,14 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement | Marks |
-| --------- | ----------- | ----- |
-| **TC1**   | Google Cloud Platform project access check | 0 Marks |
-| **TC2**   | Virtual Machine existence (`vm-<prefix>` in zone `us-central1-a`) | 4 Marks |
-| **TC3**   | Machine type validation (must be `f1-micro`) | 4 Marks |
-| **TC4**   | OS Image validation (must be Ubuntu-based) | 4 Marks |
-| **TC5**   | Boot disk size & type validation (10 GB size, `pd-ssd` type) | 4 Marks |
-| **TC6**   | Instance running status (must be `RUNNING`) | 4 Marks |
+| Test Case     | Requirement                                                           | Marks   |
+| ------------- | --------------------------------------------------------------------- | ------- |
+| **TC1** | Google Cloud Platform project access check                            | 0 Marks |
+| **TC2** | Virtual Machine existence (`vm-<prefix>` in zone `us-central1-a`) | 4 Marks |
+| **TC3** | Machine type validation (must be`f1-micro`)                         | 4 Marks |
+| **TC4** | OS Image validation (must be Ubuntu-based)                            | 4 Marks |
+| **TC5** | Boot disk size & type validation (10 GB size,`pd-ssd` type)         | 4 Marks |
+| **TC6** | Instance running status (must be`RUNNING`)                          | 4 Marks |
 
 **Total Score: 20 Marks**
 
