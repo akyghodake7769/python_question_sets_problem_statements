@@ -1,6 +1,6 @@
-# DevOps Lab: Google Cloud Platform (GCP) Virtual Machine Creation
+# GCP Lab: Google Cloud Platform (GCP) Virtual Machine Creation
 
-Duration : 30 Min.
+Duration : 60 Min.
 
 ## Scenario
 
