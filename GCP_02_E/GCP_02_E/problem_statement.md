@@ -1,6 +1,6 @@
 # GCP Lab: Google Cloud Storage (GCS) Bucket & Versioning Setup
 
-Duration : 30 Min.
+Duration : 60 Min.
 
 ## Scenario
 
