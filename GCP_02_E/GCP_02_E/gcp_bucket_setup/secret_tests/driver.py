@@ -52,10 +52,22 @@ def verify_task():
             print("     └─ [Reason]: Missing GCP credentials (GCP_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS).")
             return
 
-        # Naming convention parsing
-        raw_username = USER_PREFIX
-        if '@' in raw_username:
-            raw_username = raw_username.split('@')[0]
+        # Load solution.json to get gcp_username if available
+        solution_data = {}
+        try:
+            for p in ['solution.json', '../student_workspace/solution.json', '../../student_workspace/solution.json']:
+                if os.path.exists(p):
+                    with open(p, 'r') as f:
+                        solution_data = json.load(f)
+                    break
+        except Exception:
+            pass
+
+        gcp_username = solution_data.get('gcp_username') or os.environ.get('gcp_username') or os.environ.get('GCP_USERNAME') or USER_PREFIX
+        if '@' in gcp_username:
+            raw_username = gcp_username.split('@')[0]
+        else:
+            raw_username = gcp_username
         if '_' in raw_username:
             raw_username = raw_username.split('_')[0]
         username = raw_username.lower().replace('.', '-')
