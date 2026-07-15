@@ -93,7 +93,7 @@ def verify_task():
         if not project_id:
             project_id = "ltm-assessment-project" # Default fallback
 
-        zone = "us-central1-a"
+        zone = "us-west1-a"
         vm_name = f"vm-{username}"
 
         # Initialize Google Compute Client
@@ -140,12 +140,12 @@ def verify_task():
         tc3_passed = False
         if instance:
             m_type = instance.machine_type.split('/')[-1]
-            if m_type == "f1-micro":
+            if m_type == "n1-standard-1":
                 tc3_passed = True
                 print("TC3: Machine Type Validation .......................... [PASSED] (4/4)")
             else:
                 print("TC3: Machine Type Validation .......................... [FAILED] (0/4)")
-                print(f"     └─ [Reason]: Machine type is '{m_type}', expected 'f1-micro'.")
+                print(f"     └─ [Reason]: Machine type is '{m_type}', expected 'n1-standard-1'.")
         else:
             print("TC3: Machine Type Validation .......................... [FAILED] (0/4)")
 
