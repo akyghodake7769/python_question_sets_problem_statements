@@ -1,1 +1,1 @@
-gradle
+# No python requirements needed for this Kotlin challenge
