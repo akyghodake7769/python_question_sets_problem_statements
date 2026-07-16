@@ -34,6 +34,7 @@ START_TIME_STR = os.getenv('KODEBUCK_START_TIME') or os.getenv('KODEARENA_START_
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', os.getenv('KODEARENA_USERNAME', os.getenv('LABSKRAFT_USERNAME', 'LOCAL_USER')))
 EXAM_CODE = sys.argv[3] if len(sys.argv) > 3 else (os.getenv('KODEBUCK_EXAM_CODE') or os.getenv('KODEARENA_EXAM_CODE') or 'UNKNOWN')
+
 def check_creation_time(resource_obj, start_time):
     if not start_time or not resource_obj:
         return True
@@ -77,7 +78,7 @@ def verify_task():
         client_secret = os.environ.get("AZURE_CLIENT_SECRET")
 
         if not all([subscription_id, tenant_id, client_id, client_secret]):
-            print("TC1: Resource Group Access [FAILED] (0/0)")
+            print("TC1: Resource Group validation (rg-iRUN-LTM-Assessment exists and is accessible) [FAILED] (0/0)")
             print("     └─ [Reason]: Missing subscription_id, tenant_id, client_id, or client_secret.")
             return
 
@@ -113,9 +114,9 @@ def verify_task():
         try:
             resource_client.resource_groups.get(rg_name)
             tc1_passed = True
-            print("TC1: Resource Group Access ............................ [PASSED] (0/0)")
+            print("TC1: Resource Group validation (rg-iRUN-LTM-Assessment exists and is accessible) ... [PASSED] (0/0)")
         except Exception as e:
-            print("TC1: Resource Group Access ............................ [FAILED] (0/0)")
+            print("TC1: Resource Group validation (rg-iRUN-LTM-Assessment exists and is accessible) ... [FAILED] (0/0)")
             print(f"     └─ [Reason]: Pre-created Resource Group '{rg_name}' not found. Details: {e}")
             return
 
@@ -153,22 +154,22 @@ def verify_task():
                     vnet_loc = vnet.location.lower().replace(" ", "")
                     
                     if vnet_loc != "eastasia":
-                        print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
+                        print("TC2: Virtual Network (vnet-<prefix> 10.0.0.0/16) and subnets default (10.0.0.0/24) & AzureBastionSubnet (10.0.1.0/26) ... [FAILED] (0/4)")
                         print(f"     └─ [Reason]: VNet is in '{vnet.location}', expected 'eastasia'.")
                     elif any("10.0.0.0/16" in p or "10.0." in p for p in prefixes) and (subnet_prefix and ("10.0.0.0/24" in subnet_prefix or "10.0." in subnet_prefix)):
                         tc2_passed = True
-                        print("TC2: Virtual Network & Subnet Range ................... [PASSED] (4/4)")
+                        print("TC2: Virtual Network (vnet-<prefix> 10.0.0.0/16) and subnets default (10.0.0.0/24) & AzureBastionSubnet (10.0.1.0/26) ... [PASSED] (4/4)")
                     else:
-                        print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
+                        print("TC2: Virtual Network (vnet-<prefix> 10.0.0.0/16) and subnets default (10.0.0.0/24) & AzureBastionSubnet (10.0.1.0/26) ... [FAILED] (0/4)")
                         print(f"     └─ [Reason]: Address Space: {prefixes} (expected ['10.0.0.0/16']), Subnet range: {subnet_prefix} (expected '10.0.0.0/24').")
                 else:
-                    print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
+                    print("TC2: Virtual Network (vnet-<prefix> 10.0.0.0/16) and subnets default (10.0.0.0/24) & AzureBastionSubnet (10.0.1.0/26) ... [FAILED] (0/4)")
                     print(f"     └─ [Reason]: No subnets found in VNet '{vnet_name}'.")
             else:
-                print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
+                print("TC2: Virtual Network (vnet-<prefix> 10.0.0.0/16) and subnets default (10.0.0.0/24) & AzureBastionSubnet (10.0.1.0/26) ... [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Virtual network '{vnet_name}' not found.")
         except Exception as e:
-            print("TC2: Virtual Network & Subnet Range ................... [FAILED] (0/4)")
+            print("TC2: Virtual Network (vnet-<prefix> 10.0.0.0/16) and subnets default (10.0.0.0/24) & AzureBastionSubnet (10.0.1.0/26) ... [FAILED] (0/4)")
             print(f"     └─ [Reason]: Virtual network or subnet query failed. Details: {str(e)}")
 
         results['tc2'] = tc2_passed
@@ -189,12 +190,12 @@ def verify_task():
             if nsg:
                 nsg_name = nsg.name
                 tc3_passed = True
-                print("TC3: NSG Existence .................................... [PASSED] (4/4)")
+                print("TC3: NSG (nsg-<prefix>) exists and is associated .................................... [PASSED] (4/4)")
             else:
-                print("TC3: NSG Existence .................................... [FAILED] (0/4)")
+                print("TC3: NSG (nsg-<prefix>) exists and is associated .................................... [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Network Security Group '{nsg_name}' not found.")
         except Exception as e:
-            print("TC3: NSG Existence .................................... [FAILED] (0/4)")
+            print("TC3: NSG (nsg-<prefix>) exists and is associated .................................... [FAILED] (0/4)")
             print(f"     └─ [Reason]: NSG query failed. Details: {str(e)}")
 
         results['tc3'] = tc3_passed
@@ -222,15 +223,15 @@ def verify_task():
                         
                 if ssh_allowed:
                     tc4_passed = True
-                    print("TC4: NSG Inbound SSH Port 22 Rule ..................... [PASSED] (4/4)")
+                    print("TC4: NSG rules check (Inbound SSH traffic allowed on Port 22) ..................... [PASSED] (4/4)")
                 else:
-                    print("TC4: NSG Inbound SSH Port 22 Rule ..................... [FAILED] (0/4)")
+                    print("TC4: NSG rules check (Inbound SSH traffic allowed on Port 22) ..................... [FAILED] (0/4)")
                     print("     └─ [Reason]: No inbound rule allowing TCP/SSH traffic on port 22 found.")
             except Exception as e:
-                print("TC4: NSG Inbound SSH Port 22 Rule ..................... [FAILED] (0/4)")
+                print("TC4: NSG rules check (Inbound SSH traffic allowed on Port 22) ..................... [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Error querying rules: {e}")
         else:
-            print("TC4: NSG Inbound SSH Port 22 Rule ..................... [FAILED] (0/4)")
+            print("TC4: NSG rules check (Inbound SSH traffic allowed on Port 22) ..................... [FAILED] (0/4)")
             print("     └─ [Reason]: NSG verification failed.")
 
         results['tc4'] = tc4_passed
@@ -256,20 +257,20 @@ def verify_task():
                                 pass
 
             if not vm:
-                print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Virtual machine '{vm_name}' not found.")
             else:
                 statuses = [s.code for s in vm.instance_view.statuses] if vm.instance_view else []
                 is_running = any("PowerState/running" in status for status in statuses)
                 
                 if not is_running:
-                    print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                    print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                     print(f"     └─ [Reason]: Virtual machine '{vm_name}' is not in a running state.")
                 else:
                     attached_to_vnet = False
                     interfaces = vm.network_profile.network_interfaces if vm.network_profile else []
                     if not interfaces:
-                        print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                        print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                         print(f"     └─ [Reason]: No network interface attached to VM '{vm_name}'.")
                     else:
                         nic_ref = interfaces[0].id
@@ -286,7 +287,7 @@ def verify_task():
                             pass
                             
                         if not attached_to_vnet:
-                            print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                            print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                             print(f"     └─ [Reason]: Virtual machine '{vm_name}' is not attached to Virtual Network '{vnet_name}'.")
                         else:
                             has_bastion_subnet = False
@@ -298,7 +299,7 @@ def verify_task():
                                 pass
                                 
                             if not has_bastion_subnet:
-                                print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                                print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                                 print(f"     └─ [Reason]: Subnet 'AzureBastionSubnet' not found in Virtual Network '{vnet_name}'.")
                             else:
                                 bastion_host_name = f"bastion-{prefix}"
@@ -315,7 +316,7 @@ def verify_task():
                                         pass
                                         
                                 if not bastion:
-                                    print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                                    print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                                     print(f"     └─ [Reason]: Bastion host '{bastion_host_name}' not found in resource group '{rg_name}'.")
                                 else:
                                     associated_with_vnet = False
@@ -336,17 +337,17 @@ def verify_task():
                                                     pass
                                                     
                                     if not associated_with_vnet:
-                                        print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                                        print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                                         print(f"     └─ [Reason]: Bastion host '{bastion_host_name}' is not associated with the subnet 'AzureBastionSubnet' of VNet '{vnet_name}'.")
                                     elif not has_std_ip:
-                                        print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+                                        print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
                                         print(f"     └─ [Reason]: Bastion host '{bastion_host_name}' is not associated with a Standard SKU Public IP address.")
                                     else:
                                         tc5_passed = True
-                                        print("TC5: VM Specifications & Running State ................ [PASSED] (4/4)")
+                                        print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [PASSED] (4/4)")
                                         
         except Exception as e:
-            print("TC5: VM Specifications & Running State ................ [FAILED] (0/4)")
+            print("TC5: VM Bastion deployment validation (VM is running and connected to VNet, Bastion is associated with Standard SKU Public IP) ................ [FAILED] (0/4)")
             print(f"     └─ [Reason]: Bastion-based VM workflow validation failed. Details: {e}")
 
         results['tc5'] = tc5_passed
@@ -360,15 +361,15 @@ def verify_task():
                 os_prof = vm.os_profile
                 if os_prof and (os_prof.admin_username or os_prof.linux_configuration):
                     tc6_passed = True
-                    print("TC6: SSH Key Authentication Enforced .................. [PASSED] (4/4)")
+                    print("TC6: VM Authentication Security (Authentication method is properly configured) .................. [PASSED] (4/4)")
                 else:
-                    print("TC6: SSH Key Authentication Enforced .................. [FAILED] (0/4)")
+                    print("TC6: VM Authentication Security (Authentication method is properly configured) .................. [FAILED] (0/4)")
                     print("     └─ [Reason]: VM Authentication configuration not found.")
             except Exception as e:
-                print("TC6: SSH Key Authentication Enforced .................. [FAILED] (0/4)")
+                print("TC6: VM Authentication Security (Authentication method is properly configured) .................. [FAILED] (0/4)")
                 print(f"     └─ [Reason]: Error checking VM credentials: {e}")
         else:
-            print("TC6: SSH Key Authentication Enforced .................. [FAILED] (0/4)")
+            print("TC6: VM Authentication Security (Authentication method is properly configured) .................. [FAILED] (0/4)")
             print("     └─ [Reason]: Prerequisite VM not found.")
 
         results['tc6'] = tc6_passed
