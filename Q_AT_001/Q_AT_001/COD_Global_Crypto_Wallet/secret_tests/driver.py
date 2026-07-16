@@ -15,8 +15,14 @@ def test_student_code(solution_path):
     # 2. Preparation: Copy student code to the testable location
     shutil.copy(solution_path, build_dest)
     
-    print("Running Tests for: Global Crypto Wallet (Intermediate LLD)\n")
-    report_lines = ["Running Tests for: Global Crypto Wallet (Intermediate LLD)\n"]
+    print("-" * 65)
+    print(f"{'GLOBAL CRYPTO WALLET LLD AUDIT':^65}")
+    print("-" * 65)
+    report_lines = [
+        "-" * 65,
+        f"{'GLOBAL CRYPTO WALLET LLD AUDIT':^65}",
+        "-" * 65
+    ]
     
     # 3. Execution: Run Gradle
     try:
@@ -74,7 +80,7 @@ def test_student_code(solution_path):
         result = subprocess.run([gradle_path, "cleanTest", "test"], capture_output=True, text=True, shell=shell_exec, cwd=base_dir, env=env)
         
         # 4. Parsing (More granular parsing for 7 Test Cases)
-        total_score = 0.0
+        total_score = 0
         
         # Mapping markers from JUnit output
         results_text = result.stdout + result.stderr
@@ -86,28 +92,36 @@ def test_student_code(solution_path):
             print("--- END DEBUG OUTPUT ---")
         
         test_mapping = {
-            "testInstantiation": ("TC1 [Instantiate complex structures]", 0.0),
-            "testCreateWallet": ("TC2 [Add wallet with initial log]", 1.0),
-            "testReceiveCrypto": ("TC3 [Receive with log tracking]", 2.0),
-            "testSpendCrypto": ("TC4 [Spend with zero-balance logic]", 3.0),
-            "testGetTransactionLog": ("TC5 [Retrieve full audit trail of wallet]", 1.0),
-            "testTotalLiquidity": ("TC6 [Calculate total network liquidity]", 1.0),
-            "testStakingRewards": ("TC7 [Perform bulk staking sweep]", 2.0)
+            "testInstantiation": ("TC1", "Instantiate complex structures", 0),
+            "testCreateWallet": ("TC2", "Add wallet with initial log", 1),
+            "testReceiveCrypto": ("TC3", "Receive with log tracking", 2),
+            "testSpendCrypto": ("TC4", "Spend with zero-balance logic", 3),
+            "testGetTransactionLog": ("TC5", "Retrieve full audit trail of wallet", 1),
+            "testTotalLiquidity": ("TC6", "Calculate total network liquidity", 1),
+            "testStakingRewards": ("TC7", "Perform bulk staking sweep", 2)
         }
         
-        for method, (tc_name, marks) in test_mapping.items():
+        total_width = 70
+        for method, (tc_id, tc_desc, marks) in test_mapping.items():
             # Check if the method name appears in the "passed" list of Gradle output
-            # (Note: This is a simplified parser; in real scenarios, we'd parse the XML report)
-            if f" > {method}() PASSED" in results_text:
-                msg = f"PASS {tc_name} ({marks}/{marks})"
+            passed = f" > {method}() PASSED" in results_text
+            
+            status_str = "[PASSED]" if passed else "[FAILED]"
+            tc_prefix = f"{tc_id}: {tc_desc} "
+            dot_count = max(2, total_width - len(tc_prefix))
+            dots = "." * dot_count
+            
+            score_earned = marks if passed else 0
+            score_str = f"({score_earned}/{marks})"
+            
+            msg = f"{tc_prefix}{dots} {status_str} {score_str}"
+            if passed:
                 total_score += marks
-            else:
-                msg = f"FAIL {tc_name} (0/{marks})"
             
             print(msg)
             report_lines.append(msg)
         
-        score_line = f"\nTOTAL SCORE: {total_score}/10.0"
+        score_line = f"\n[SCORE] {total_score}"
         print(score_line)
         report_lines.append(score_line)
         
