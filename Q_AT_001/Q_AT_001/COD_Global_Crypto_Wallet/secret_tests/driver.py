@@ -71,7 +71,7 @@ def test_student_code(solution_path):
             if java_home_norm.lower().endswith("/bin"):
                 env["JAVA_HOME"] = java_home_norm[:-4]
 
-        result = subprocess.run([gradle_path, "test"], capture_output=True, text=True, shell=shell_exec, cwd=base_dir, env=env)
+        result = subprocess.run([gradle_path, "cleanTest", "test"], capture_output=True, text=True, shell=shell_exec, cwd=base_dir, env=env)
         
         # 4. Parsing (More granular parsing for 7 Test Cases)
         total_score = 0.0
