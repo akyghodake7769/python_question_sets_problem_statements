@@ -21,13 +21,48 @@ def test_student_code(solution_path):
     # 3. Execution: Run Gradle
     try:
         print("Warming up Gradle... (Initial run may take several minutes to download dependencies)\n")
-        # Run gradle test
-        gradle_path = "C:/gradle-9.4.1/bin/gradle.bat"
-        if not os.path.exists(gradle_path):
-            user_profile = os.environ.get("USERPROFILE") or "C:/Users/nandi"
-            alt_path = os.path.join(user_profile, "gradle-9.4.1", "bin", "gradle.bat").replace("\\", "/")
-            if os.path.exists(alt_path):
-                gradle_path = alt_path
+        # Determine the gradle executable and shell execution style
+        import platform
+        is_windows = platform.system().lower() == "windows"
+        shell_exec = True if is_windows else False
+        
+        # 1. First, check if gradle is globally available in PATH
+        gradle_path = "gradle"
+        try:
+            subprocess.run([gradle_path, "--version"], capture_output=True, text=True, shell=shell_exec)
+            has_global_gradle = True
+        except Exception:
+            has_global_gradle = False
+
+        if not has_global_gradle:
+            # 2. If not globally available, look in common locations
+            if is_windows:
+                gradle_path = "C:/gradle-9.4.1/bin/gradle.bat"
+                if not os.path.exists(gradle_path):
+                    user_profile = os.environ.get("USERPROFILE") or "C:/Users/nandi"
+                    alt_path = os.path.join(user_profile, "gradle-9.4.1", "bin", "gradle.bat").replace("\\", "/")
+                    if os.path.exists(alt_path):
+                        gradle_path = alt_path
+            else:
+                # Ubuntu/Linux common paths
+                linux_paths = [
+                    "/opt/gradle/gradle-9.4.1/bin/gradle",
+                    "/usr/bin/gradle",
+                    "/usr/local/bin/gradle"
+                ]
+                found_linux_path = False
+                for lp in linux_paths:
+                    if os.path.exists(lp):
+                        gradle_path = lp
+                        found_linux_path = True
+                        break
+                if not found_linux_path:
+                    # Fallback to home folder
+                    home = os.environ.get("HOME") or "/home/ubuntu"
+                    alt_path = os.path.join(home, "gradle-9.4.1", "bin", "gradle")
+                    if os.path.exists(alt_path):
+                        gradle_path = alt_path
+
         # Fix JAVA_HOME if it points to bin directory
         env = os.environ.copy()
         java_home = env.get("JAVA_HOME")
@@ -36,7 +71,7 @@ def test_student_code(solution_path):
             if java_home_norm.lower().endswith("/bin"):
                 env["JAVA_HOME"] = java_home_norm[:-4]
 
-        result = subprocess.run([gradle_path, "test"], capture_output=True, text=True, shell=True, cwd=base_dir, env=env)
+        result = subprocess.run([gradle_path, "test"], capture_output=True, text=True, shell=shell_exec, cwd=base_dir, env=env)
         
         # 4. Parsing (More granular parsing for 7 Test Cases)
         total_score = 0.0
