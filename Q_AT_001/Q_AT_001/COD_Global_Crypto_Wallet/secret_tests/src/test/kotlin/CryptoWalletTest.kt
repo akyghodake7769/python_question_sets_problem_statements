@@ -5,6 +5,12 @@ import kotlin.test.assertTrue
 class CryptoWalletTest {
 
     @Test
+    fun testInstantiation() {
+        val system = CryptoExchangeSystem()
+        kotlin.test.assertNotNull(system)
+    }
+
+    @Test
     fun testCreateWallet() {
         val system = CryptoExchangeSystem()
         val res = system.createWallet("W1", 1234, 100.0)
