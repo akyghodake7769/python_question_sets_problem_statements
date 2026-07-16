@@ -29,8 +29,8 @@ def test_student_code(solution_path):
         # 1. First, check if gradle is globally available in PATH
         gradle_path = "gradle"
         try:
-            subprocess.run([gradle_path, "--version"], capture_output=True, text=True, shell=shell_exec)
-            has_global_gradle = True
+            check_res = subprocess.run([gradle_path, "--version"], capture_output=True, text=True, shell=shell_exec)
+            has_global_gradle = (check_res.returncode == 0)
         except Exception:
             has_global_gradle = False
 
@@ -39,8 +39,8 @@ def test_student_code(solution_path):
             if is_windows:
                 gradle_path = "C:/gradle-9.4.1/bin/gradle.bat"
                 if not os.path.exists(gradle_path):
-                    user_profile = os.environ.get("USERPROFILE") or "C:/Users/nandi"
-                    alt_path = os.path.join(user_profile, "gradle-9.4.1", "bin", "gradle.bat").replace("\\", "/")
+                    home = os.path.expanduser("~")
+                    alt_path = os.path.join(home, "gradle-9.4.1", "bin", "gradle.bat").replace("\\", "/")
                     if os.path.exists(alt_path):
                         gradle_path = alt_path
             else:
@@ -58,7 +58,7 @@ def test_student_code(solution_path):
                         break
                 if not found_linux_path:
                     # Fallback to home folder
-                    home = os.environ.get("HOME") or "/home/ubuntu"
+                    home = os.path.expanduser("~")
                     alt_path = os.path.join(home, "gradle-9.4.1", "bin", "gradle")
                     if os.path.exists(alt_path):
                         gradle_path = alt_path
@@ -86,12 +86,13 @@ def test_student_code(solution_path):
             print("--- END DEBUG OUTPUT ---")
         
         test_mapping = {
-            "testCreateWallet": ("TC2 [Account Registration Logic]", 1.0),
-            "testReceiveCrypto": ("TC3 [Secure Deposit/Receive Logic]", 2.0),
-            "testSpendCrypto": ("TC4 [Withdrawal/Spend Overdraft Logic]", 3.0),
-            "testGetTransactionLog": ("TC5 [Audit Trail Retrieval]", 1.0),
-            "testTotalLiquidity": ("TC6 [Network Liquidity Summation]", 1.0),
-            "testStakingRewards": ("TC7 [Bulk Interest/Reward Sweep]", 2.0)
+            "testInstantiation": ("TC1 [Instantiate complex structures]", 0.0),
+            "testCreateWallet": ("TC2 [Add wallet with initial log]", 1.0),
+            "testReceiveCrypto": ("TC3 [Receive with log tracking]", 2.0),
+            "testSpendCrypto": ("TC4 [Spend with zero-balance logic]", 3.0),
+            "testGetTransactionLog": ("TC5 [Retrieve full audit trail of wallet]", 1.0),
+            "testTotalLiquidity": ("TC6 [Calculate total network liquidity]", 1.0),
+            "testStakingRewards": ("TC7 [Perform bulk staking sweep]", 2.0)
         }
         
         for method, (tc_name, marks) in test_mapping.items():
