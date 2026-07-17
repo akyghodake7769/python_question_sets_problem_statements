@@ -171,7 +171,6 @@ def test_student_code(solution_path):
         shell_exec = True if is_windows else False
         
         # 1. First, check if gradle is globally available in PATH
-        import shutil
         gradle_path = shutil.which("gradle") or "gradle"
         has_global_gradle = False
         if gradle_path != "gradle":
