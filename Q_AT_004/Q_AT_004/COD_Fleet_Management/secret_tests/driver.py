@@ -16,9 +16,19 @@ def test_student_code(solution_path):
                 gradle_cwd = candidate_dir
                 break
 
-    # Dynamically write build.gradle.kts if missing
+    # Dynamically write build.gradle.kts if missing or incorrect
     build_gradle_path = os.path.join(gradle_cwd, "build.gradle.kts")
-    if not os.path.exists(build_gradle_path):
+    write_needed = True
+    if os.path.exists(build_gradle_path):
+        try:
+            with open(build_gradle_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if "junit-platform-launcher" in content:
+                write_needed = False
+        except Exception:
+            pass
+            
+    if write_needed:
         try:
             build_gradle_content = """plugins {
     kotlin("jvm") version "1.9.24"
@@ -31,6 +41,7 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 sourceSets {
@@ -71,8 +82,8 @@ tasks.test {
     # 2. Preparation: Copy student code to the testable location
     shutil.copy(solution_path, build_dest)
     
-    print("Running Tests for: Fleet Management System (Intermediate LLD)\n")
-    report_lines = ["Running Tests for: Fleet Management System (Intermediate LLD)\n"]
+    print("Running Tests for: COD Fleet Management System (Intermediate LLD)\n")
+    report_lines = ["Running Tests for: COD Fleet Management System (Intermediate LLD)\n"]
     
     # 3. Execution: Run Gradle
     try:
@@ -204,10 +215,10 @@ tasks.test {
             if java_home_norm.lower().endswith("/bin"):
                 env["JAVA_HOME"] = java_home_norm[:-4]
 
-        result = subprocess.run([gradle_path, "test"], capture_output=True, text=True, shell=shell_exec, cwd=gradle_cwd, env=env)
+        result = subprocess.run([gradle_path, "cleanTest", "test"], capture_output=True, text=True, shell=shell_exec, cwd=gradle_cwd, env=env)
         
         # 4. Parsing (More granular parsing for 7 Test Cases)
-        total_score = 0.0
+        total_score = 0
         
         # Mapping markers from JUnit output
         results_text = result.stdout + result.stderr
@@ -218,27 +229,35 @@ tasks.test {
             print(results_text)
             print("--- END DEBUG OUTPUT ---")
         
-        test_mapping = {
-            "testRegisterVehicle": ("TC2 [Vehicle Registration Logic]", 1.0),
-            "testDispatchVehicle": ("TC3 [Dispatch State Logic]", 2.0),
-            "testCompleteTrip": ("TC4 [Trip Completion & Earnings]", 3.0),
-            "testGetVehicleHistory": ("TC5 [Audit Trail Retrieval]", 1.0),
-            "testTotalFleetEarnings": ("TC6 [Network Earnings Summation]", 1.0),
-            "testApplySurgeBonus": ("TC7 [Bulk Bonus Sweep]", 2.0)
-        }
+        test_mapping = [
+            ("TC1", "testRegisterVehicle", "Instantiate complex structures", 0),
+            ("TC2", "testRegisterVehicle", "Add vehicle with initial log", 1),
+            ("TC3", "testDispatchVehicle", "Dispatch vehicle with log tracking", 2),
+            ("TC4", "testCompleteTrip", "Complete trip with earnings calculation", 3),
+            ("TC5", "testGetVehicleHistory", "Retrieve full trip trail of vehicle", 1),
+            ("TC6", "testTotalFleetEarnings", "Calculate total fleet earnings", 1),
+            ("TC7", "testApplySurgeBonus", "Perform bulk surge bonus sweep", 2)
+        ]
         
-        for method, (tc_name, marks) in test_mapping.items():
-            # Check if the method name appears in the "passed" list of Gradle output
-            if f" > {method}() PASSED" in results_text:
-                msg = f"PASS {tc_name} ({marks}/{marks})"
+        total_width = 70
+        for tc_id, method, tc_desc, marks in test_mapping:
+            passed = f" > {method}() PASSED" in results_text
+            status_str = "[PASSED]" if passed else "[FAILED]"
+            tc_prefix = f"{tc_id}: {tc_desc} "
+            dot_count = max(2, total_width - len(tc_prefix))
+            dots = "." * dot_count
+            
+            score_earned = marks if passed else 0
+            score_str = f"({score_earned}/{marks})"
+            
+            msg = f"{tc_prefix}{dots} {status_str} {score_str}"
+            if passed:
                 total_score += marks
-            else:
-                msg = f"FAIL {tc_name} (0/{marks})"
             
             print(msg)
             report_lines.append(msg)
         
-        score_line = f"\nTOTAL SCORE: {total_score}/10.0"
+        score_line = f"\n[SCORE] {total_score}"
         print(score_line)
         report_lines.append(score_line)
         
