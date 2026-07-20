@@ -6,6 +6,12 @@ import kotlin.test.assertFalse
 class FleetManagerTest {
 
     @Test
+    fun testInstantiation() {
+        val manager = FleetManager()
+        assertTrue(manager != null)
+    }
+
+    @Test
     fun testRegisterVehicle() {
         val manager = FleetManager()
         val res = manager.registerVehicle("V1", "Alice")
