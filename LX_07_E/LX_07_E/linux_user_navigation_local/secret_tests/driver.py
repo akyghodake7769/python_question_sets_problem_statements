@@ -2,7 +2,11 @@ import json
 import os
 import sys
 from datetime import datetime, timezone, timedelta
-import socket
+
+# Capture Assessment Start Time
+START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
+START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
+USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
 # Fix encoding for Windows consoles printing emojis
 if hasattr(sys.stdout, 'reconfigure'):
@@ -11,33 +15,33 @@ if hasattr(sys.stdout, 'reconfigure'):
     except Exception:
         pass
 
-HOME = os.path.expanduser('~')
+def get_home_dir():
+    # Prioritize /home/ubuntu if it exists, otherwise fall back to LabsKraft/labskraft or default ~
+    for p in ['/home/ubuntu', '/home/LabsKraft', '/home/labskraft', os.path.expanduser('~')]:
+        if os.path.isdir(p):
+            return p
+    return os.path.expanduser('~')
 
-START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
-START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
-USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
+HOME = get_home_dir()
 
-def get_aws_metadata():
-    import urllib.request
-    try:
-        token_req = urllib.request.Request("http://169.254.169.254/latest/api/token", headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'}, method='PUT')
-        token = urllib.request.urlopen(token_req, timeout=1).read().decode()
-        id_req = urllib.request.Request("http://169.254.169.254/latest/meta-data/instance-id", headers={'X-aws-ec2-metadata-token': token})
-        instance_id = urllib.request.urlopen(id_req, timeout=1).read().decode()
-        region_req = urllib.request.Request("http://169.254.169.254/latest/meta-data/placement/region", headers={'X-aws-ec2-metadata-token': token})
-        region = urllib.request.urlopen(region_req, timeout=1).read().decode()
-        return instance_id, region
-    except Exception:
-        return None, None
+def resolve_username(default_prefix):
+    return default_prefix
 
 def verify_task():
+    username = resolve_username(USER_PREFIX)
+    start_time = START_TIME_STR
+
     print("\n" + "-" * 60)
-    print(f"{'KODEBUCK LOCAL LINUX VERIFICATION':^60}")
+    print(f"{'KODEBUCK USER NAVIGATION VERIFICATION':^60}")
     print("-" * 60)
 
     total_score = 0
     results = {}
-    
+
+    workspace_dir = "/var/tmp/backup_workspace"
+    initial_file = "/var/tmp/backup_workspace/meta_log.txt"
+    target_file = os.path.join(HOME, "meta_backup.log")
+
     def check_mtime(path):
         if not START_TIME:
             return True
@@ -47,79 +51,132 @@ def verify_task():
         except Exception:
             return False
 
-    # TC1: Environment active and verified
-    tc1_passed = os.path.exists(HOME) and os.path.isdir(HOME)
-    results['tc1'] = tc1_passed
-    total_score += 0
-    print(f"TC1: {'Local VM Environment active':<35} [{'PASSED' if tc1_passed else 'FAILED'}] (0/0)")
-
-    # TC2: Backup workspace directory created
-    tc2_passed = False
-    if tc1_passed:
-        if os.path.isdir('/var/tmp/backup_workspace'):
-            if check_mtime('/var/tmp/backup_workspace'):
-                tc2_passed = True
-    results['tc2'] = tc2_passed
-    total_score += 2 if tc2_passed else 0
-    print(f"TC2: {'Backup workspace created':<35} [{'PASSED' if tc2_passed else 'FAILED'}] ({2 if tc2_passed else 0}/2)")
-
-    # TC3: Initial file created / managed
-    tc3_passed = False
-    if tc1_passed:
-        if os.path.isfile(f'{HOME}/meta_backup.log') or os.path.isfile('/var/tmp/backup_workspace/meta_log.txt'):
-            tc3_passed = True
-    results['tc3'] = tc3_passed
-    total_score += 2 if tc3_passed else 0
-    print(f"TC3: {'Initial log file processed':<35} [{'PASSED' if tc3_passed else 'FAILED'}] ({2 if tc3_passed else 0}/2)")
-
-    # TC4: File moved and renamed to meta_backup.log
-    tc4_passed = False
-    if tc1_passed:
-        if os.path.isfile(f'{HOME}/meta_backup.log'):
-            if check_mtime(f'{HOME}/meta_backup.log'):
-                tc4_passed = True
-    results['tc4'] = tc4_passed
-    total_score += 3 if tc4_passed else 0
-    print(f"TC4: {'File moved to meta_backup.log':<35} [{'PASSED' if tc4_passed else 'FAILED'}] ({3 if tc4_passed else 0}/3)")
-
-    # TC5: Cleanup verified
-    tc5_passed = False
-    if tc1_passed and tc4_passed:
-        if not os.path.exists('/var/tmp/backup_workspace/meta_log.txt'):
-            tc5_passed = True
-    results['tc5'] = tc5_passed
-    total_score += 3 if tc5_passed else 0
-    print(f"TC5: {'Original file cleaned from workspace':<35} [{'PASSED' if tc5_passed else 'FAILED'}] ({3 if tc5_passed else 0}/3)")
-
-    print("-" * 60)
-    print(f"{'TOTAL SCORE:':<44} {total_score}/10")
-    print("-" * 60 + "\n")
-
-    ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
-    os.makedirs(ws_path, exist_ok=True)
-    
-    output_data = {'score': total_score, 'results': results}
-    instance_id, aws_region = get_aws_metadata()
-    if instance_id:
-        output_data['instance_id'] = instance_id
-        output_data['aws_region'] = aws_region
-        
-    legacy_metadata_path = os.path.join(HOME, 'KodeBuck_Workspace', 'linux_user_navigation_local', 'student_workspace', 'solution.json')
     try:
-        if os.path.isfile(legacy_metadata_path):
-            with open(legacy_metadata_path, 'r') as f:
-                metadata = json.load(f)
-                metadata.update(output_data)
-                output_data = metadata
-    except Exception:
-        pass
+        session_start = START_TIME
+        if not session_start:
+            session_start = datetime.now(timezone.utc)
+            start_time = session_start.isoformat()
+
+        now = datetime.now(timezone.utc)
+        elapsed_minutes = (now - session_start).total_seconds() / 60
+        max_duration_env = os.getenv('KODEBUCK_ASSESSMENT_DURATION') or os.getenv('KODEARENA_ASSESSMENT_DURATION')
+        max_duration = int(max_duration_env) if max_duration_env else 60
+
+        if elapsed_minutes > max_duration + 10:
+            print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
+            raise Exception("Time Limit Exceeded")
+
+        print(f"[SYSTEM] Validating Local Linux Environment for: {username}")
+        print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
+
+        # --- TC1: Local Environment Verification --- (0 Marks)
+        tc1_passed = os.path.exists(HOME) and os.path.isdir(HOME)
+        print(f"TC1: Local Environment active .................... [PASSED] (0/0)")
+        results['tc1'] = tc1_passed
+        total_score += 0
+
+        # --- TC2: Backup Workspace Directory Creation --- (2 Marks)
+        tc2_passed = False
+        if tc1_passed:
+            if os.path.isdir(workspace_dir):
+                if check_mtime(workspace_dir):
+                    tc2_passed = True
+        if tc2_passed:
+            print(f"TC2: Backup workspace created .................... [PASSED] (2/2)")
+        else:
+            print(f"TC2: Backup workspace created .................... [FAILED] (0/2)")
+            print(f"     - [Reason]: Directory '{workspace_dir}' does not exist.")
+        results['tc2'] = tc2_passed
+        if tc2_passed:
+            total_score += 2
+
+        # --- TC3: Initial Log File Creation --- (2 Marks)
+        tc3_passed = False
+        if tc1_passed:
+            if os.path.isfile(target_file) or os.path.isfile(initial_file):
+                tc3_passed = True
+        if tc3_passed:
+            print(f"TC3: Initial log file processed .................. [PASSED] (2/2)")
+        else:
+            print(f"TC3: Initial log file processed .................. [FAILED] (0/2)")
+            print(f"     - [Reason]: File 'meta_log.txt' is missing from workspace.")
+        results['tc3'] = tc3_passed
+        if tc3_passed:
+            total_score += 2
+
+        # --- TC4: File Migration & Renaming --- (3 Marks)
+        tc4_passed = False
+        if tc1_passed:
+            if os.path.isfile(target_file):
+                if check_mtime(target_file):
+                    tc4_passed = True
+        if tc4_passed:
+            print(f"TC4: File moved to meta_backup.log ............... [PASSED] (3/3)")
+        else:
+            print(f"TC4: File moved to meta_backup.log ............... [FAILED] (0/3)")
+            print(f"     - [Reason]: Target file '{target_file}' does not exist.")
+        results['tc4'] = tc4_passed
+        if tc4_passed:
+            total_score += 3
+
+        # --- TC5: Workspace Cleanup Verification --- (3 Marks)
+        tc5_passed = False
+        if tc1_passed and tc4_passed:
+            if not os.path.exists(initial_file):
+                tc5_passed = True
+        if tc5_passed:
+            print(f"TC5: Original file cleaned from workspace ........ [PASSED] (3/3)")
+        else:
+            print(f"TC5: Original file cleaned from workspace ........ [FAILED] (0/3)")
+            print(f"     - [Reason]: File 'meta_log.txt' is still present inside workspace.")
+        results['tc5'] = tc5_passed
+        if tc5_passed:
+            total_score += 3
+
+        print("-" * 60)
+        print(f"{'TOTAL SCORE:':<44} {total_score}/10")
+        print("-" * 60 + "\n")
+
+    except Exception as e:
+        print(f"[ERROR] Verification failed: {str(e)}")
+        total_score = 0
+
+    # Save Metadata for Central Evaluation
+    solution_data = {
+        'candidate_prefix': username,
+        'assessment_start_time': start_time,
+        'max_duration_minutes': max_duration,
+        'evaluation_type': 'LOCAL_VM_VERIFICATION',
+        'score': total_score,
+        'results': results
+    }
+
+    try:
+        ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
+        os.makedirs(ws_path, exist_ok=True)
         
-    with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
-        json.dump(output_data, f, indent=4)
+        sol_path = os.path.join(ws_path, 'solution.json')
+        existing_data = {}
+        if os.path.exists(sol_path):
+            try:
+                with open(sol_path, 'r') as f:
+                    existing_data = json.load(f)
+            except Exception: pass
         
-    root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
-    with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
-        json.dump(output_data, f, indent=4)
+        existing_data.update(solution_data)
+        
+        with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
+            json.dump(existing_data, f, indent=4)
+        with open(os.path.join(ws_path, 'solution.py'), 'w') as f:
+            json.dump(existing_data, f, indent=4)
+            
+        root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+        with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
+            json.dump(existing_data, f, indent=4)
+        with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
+            json.dump(existing_data, f, indent=4)
+    except Exception as e:
+        print(f"[ERROR] Could not write solution.json: {e}")
 
 if __name__ == "__main__":
     verify_task()
