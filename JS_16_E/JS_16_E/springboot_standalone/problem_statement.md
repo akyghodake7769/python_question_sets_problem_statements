@@ -23,8 +23,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `pom.xml` exists | 3.33 Marks |
-| **TC2**   | Compiler source and target versions set to 17 | 3.33 Marks |
-| **TC3**   | Packaging type set to JAR | 3.34 Marks |
+| **TC1   | `pom.xml` exists | 3 Marks |
+| **TC2   | Java compilation properties set to 17 | 3 Marks |
+| **TC3   | Packaging type set to JAR | 4 Marks |
 
 **Total Score: 10 Marks**
