@@ -19,13 +19,13 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `configuration/standalone.xml` exists | 2.5 Marks |
-| **TC2**   | HTTP port set to `8082` | 2.5 Marks |
-| **TC3**   | XML structure is parsed correctly | 2.5 Marks |
-| **TC4**   | WildFly server port offset configuration active | 2.5 Marks |
-| **TC5**   | HTTP interface listener registered | 2.5 Marks |
-| **TC6**   | Standalone profile deployment context valid | 2.5 Marks |
-| **TC7**   | Bindings socket offset configured | 2.5 Marks |
-| **TC8**   | HTTP routing socket parameters enabled | 2.5 Marks |
+| **TC1   | standalone WildFly mode check | 2 Marks |
+| **TC2   | custom port offset set to 2 | 2 Marks |
+| **TC3   | standalone.xml XML matches | 2 Marks |
+| **TC4   | HTTP port bound to 8082 | 2 Marks |
+| **TC5   | deployment.properties exists | 3 Marks |
+| **TC6   | Active deployment scanner properties | 3 Marks |
+| **TC7   | Standalone deployment scanner configured | 3 Marks |
+| **TC8   | App deployment listener running | 3 Marks |
 
 **Total Score: 20 Marks**

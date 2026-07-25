@@ -67,9 +67,10 @@ if __name__ == "__main__":
         for k, v in test_results.items():
             tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
+            marks = 2 if k in ['tc1', 'tc2', 'tc3', 'tc4'] else 3
             if v:
-                total_score += 2.5
-                print(f"PASS TC{tc_num} [{desc}] (2.5/2.5)")
+                total_score += marks
+                print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
             else:
-                print(f"FAIL TC{tc_num} [{desc}] (0/2.5)")
+                print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
         print(f"\nSCORE: {total_score}/20.0")
