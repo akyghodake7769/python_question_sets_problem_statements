@@ -19,8 +19,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `exception.txt` exists | 3.33 Marks |
-| **TC2**   | File is not empty and matches exception format | 3.33 Marks |
-| **TC3**   | Root cause exception identified as NullPointerException | 3.34 Marks |
+| **TC1   | `exception.txt` exists | 3 Marks |
+| **TC2   | File is not empty and matches exception format | 3 Marks |
+| **TC3   | Root cause exception identified as NullPointerException | 4 Marks |
 
 **Total Score: 10 Marks**

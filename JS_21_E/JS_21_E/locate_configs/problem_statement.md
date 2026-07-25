@@ -21,8 +21,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `additional-config.properties` exists on classpath | 3.33 Marks |
-| **TC2**   | custom value property defined | 3.33 Marks |
-| **TC3**   | `app.custom.value` set exactly to 42 | 3.34 Marks |
+| **TC1   | `additional-config.properties` exists on classpath | 3 Marks |
+| **TC2   | custom value property defined | 3 Marks |
+| **TC3   | `app.custom.value` set exactly to 42 | 4 Marks |
 
 **Total Score: 10 Marks**

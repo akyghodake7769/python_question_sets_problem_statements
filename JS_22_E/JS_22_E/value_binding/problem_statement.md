@@ -20,8 +20,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `application.properties` exists | 3.33 Marks |
-| **TC2**   | `app.timeout` configuration key defined | 3.33 Marks |
-| **TC3**   | `app.timeout` set exactly to 3000 | 3.34 Marks |
+| **TC1   | `application.properties` exists | 3 Marks |
+| **TC2   | `app.timeout` configuration key defined | 3 Marks |
+| **TC3   | `app.timeout` set exactly to 3000 | 4 Marks |
 
 **Total Score: 10 Marks**

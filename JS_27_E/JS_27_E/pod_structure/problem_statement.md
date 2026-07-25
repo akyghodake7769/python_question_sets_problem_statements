@@ -20,8 +20,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `pod.yaml` exists | 3.33 Marks |
-| **TC2**   | container definition spec present | 3.33 Marks |
-| **TC3**   | image set exactly to openjdk:17 | 3.34 Marks |
+| **TC1   | `pod.yaml` exists | 3 Marks |
+| **TC2   | container definition spec present | 3 Marks |
+| **TC3   | image set exactly to openjdk:17 | 4 Marks |
 
 **Total Score: 10 Marks**

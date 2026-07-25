@@ -23,8 +23,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `application.properties` file exists | 3.33 Marks |
-| **TC2**   | `spring.datasource.hikari.leak-detection-threshold` is set exactly to 2000 | 3.33 Marks |
-| **TC3**   | `spring.datasource.hikari.connection-timeout` is set exactly to 5000 | 3.34 Marks |
+| **TC1   | `application.properties` file exists | 3 Marks |
+| **TC2   | `spring.datasource.hikari.leak-detection-threshold` is set exactly to 2000 | 3 Marks |
+| **TC3   | `spring.datasource.hikari.connection-timeout` is set exactly to 5000 | 4 Marks |
 
 **Total Score: 10 Marks**

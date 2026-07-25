@@ -20,8 +20,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `configmap.yaml` exists | 3.33 Marks |
-| **TC2**   | `kind` attribute set to ConfigMap | 3.33 Marks |
-| **TC3**   | `metadata.name` set exactly to app-config | 3.34 Marks |
+| **TC1   | `configmap.yaml` exists | 3 Marks |
+| **TC2   | `kind` attribute set to ConfigMap | 3 Marks |
+| **TC3   | `metadata.name` set exactly to app-config | 4 Marks |
 
 **Total Score: 10 Marks**

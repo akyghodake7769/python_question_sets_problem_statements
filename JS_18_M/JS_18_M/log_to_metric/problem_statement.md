@@ -22,8 +22,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `pipeline.json` exists and is valid JSON | 3.33 Marks |
-| **TC2**   | `pattern` is set exactly to `"HTTP 500"` | 3.33 Marks |
-| **TC3**   | `metric_name` is `"http_5xx_errors"` and `metric_type` is `"counter"` | 3.34 Marks |
+| **TC1   | `pipeline.json` exists and is valid JSON | 3 Marks |
+| **TC2   | `pattern` is set exactly to `"HTTP 500"` | 3 Marks |
+| **TC3   | `metric_name` is `"http_5xx_errors"` and `metric_type` is `"counter"` | 4 Marks |
 
 **Total Score: 10 Marks**

@@ -23,8 +23,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `application.yml` exists and is valid YAML | 3.33 Marks |
-| **TC2**   | `server` root key is present | 3.33 Marks |
-| **TC3**   | `port` is set to 8080 | 3.34 Marks |
+| **TC1   | `application.yml` exists | 3 Marks |
+| **TC2   | `server` root key is present | 3 Marks |
+| **TC3   | `port` is set to 8080 | 4 Marks |
 
 **Total Score: 10 Marks**

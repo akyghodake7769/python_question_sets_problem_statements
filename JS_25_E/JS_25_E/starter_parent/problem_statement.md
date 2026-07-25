@@ -22,8 +22,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `pom.xml` exists | 3.33 Marks |
-| **TC2**   | `<parent>` tag is defined with spring-boot parent artifact | 3.33 Marks |
-| **TC3**   | version is set to 3.1.5 | 3.34 Marks |
+| **TC1   | `pom.xml` exists | 3 Marks |
+| **TC2   | `<parent>` tag is defined with spring-boot parent artifact | 3 Marks |
+| **TC3   | version is set to 3.1.5 | 4 Marks |
 
 **Total Score: 10 Marks**

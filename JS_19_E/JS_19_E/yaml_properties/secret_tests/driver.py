@@ -51,8 +51,8 @@ if __name__ == "__main__":
             tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
             if v:
-                total_score += 3.33
-                print(f"PASS TC{tc_num} [{desc}] (3.33/3.33)")
+                total_score += 3 if k in ["tc1", "tc2"] else 4
+                print(f"PASS TC{tc_num} [{desc}] ({3 if k in ["tc1", "tc2"] else 4}/{3 if k in ["tc1", "tc2"] else 4})")
             else:
-                print(f"FAIL TC{tc_num} [{desc}] (0/3.33)")
-        print(f"\nSCORE: {round(total_score, 2)}/10.0")
+                print(f"FAIL TC{tc_num} [{desc}] (0/{3 if k in ["tc1", "tc2"] else 4})")
+        print(f"\nSCORE: {total_score}/10.0")

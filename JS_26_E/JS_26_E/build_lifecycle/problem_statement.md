@@ -20,8 +20,8 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `pom.xml` exists | 3.33 Marks |
-| **TC2**   | `<project.build.sourceEncoding>` property is defined | 3.33 Marks |
-| **TC3**   | source encoding is set to UTF-8 | 3.34 Marks |
+| **TC1   | `pom.xml` exists | 3 Marks |
+| **TC2   | `<project.build.sourceEncoding>` property is defined | 3 Marks |
+| **TC3   | source encoding is set to UTF-8 | 4 Marks |
 
 **Total Score: 10 Marks**
