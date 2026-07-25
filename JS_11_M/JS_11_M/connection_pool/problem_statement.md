@@ -22,13 +22,13 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `spring.datasource.hikari.maximum-pool-size=50` configured | 2.5 Marks |
-| **TC2**   | `spring.datasource.hikari.connection-timeout=15000` configured | 2.5 Marks |
-| **TC3**   | `spring.datasource.hikari.minimum-idle=10` configured | 2.5 Marks |
-| **TC4**   | `spring.datasource.hikari.idle-timeout=600000` configured | 2.5 Marks |
-| **TC5**   | Configuration contains no syntax/parsing errors | 2.5 Marks |
-| **TC6**   | Pool settings are active and load correctly | 2.5 Marks |
-| **TC7**   | Connection timeouts set under the maximum allowed threshold | 2.5 Marks |
-| **TC8**   | Min-idle capacity configured for background performance | 2.5 Marks |
+| **TC1   | maximum-pool-size set to 50 | 2 Marks |
+| **TC2   | connection-timeout set to 15000 | 2 Marks |
+| **TC3   | minimum-idle set to 10 | 2 Marks |
+| **TC4   | idle-timeout set to 600000 | 2 Marks |
+| **TC5   | Properties syntax valid | 3 Marks |
+| **TC6   | Active connection settings loaded | 3 Marks |
+| **TC7   | Starvation timeout limit active | 3 Marks |
+| **TC8   | Min-idle background capacity active | 3 Marks |
 
 **Total Score: 20 Marks**
