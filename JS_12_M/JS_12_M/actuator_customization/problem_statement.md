@@ -19,13 +19,13 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1**   | `health` endpoint exposed | 2.5 Marks |
-| **TC2**   | `info` endpoint exposed | 2.5 Marks |
-| **TC3**   | `loggers` endpoint exposed | 2.5 Marks |
-| **TC4**   | `show-details` configured to `always` | 2.5 Marks |
-| **TC5**   | Configuration properties parsed successfully | 2.5 Marks |
-| **TC6**   | Diagnostics API visibility enabled | 2.5 Marks |
-| **TC7**   | Custom logger adjustment active | 2.5 Marks |
-| **TC8**   | Health endpoint detail visibility authorized | 2.5 Marks |
+| **TC1   | health endpoint exposed | 2 Marks |
+| **TC2   | info endpoint exposed | 2 Marks |
+| **TC3   | show-details set to always | 2 Marks |
+| **TC4   | loggers endpoint exposed | 2 Marks |
+| **TC5   | Properties syntax valid | 3 Marks |
+| **TC6   | Active connection settings loaded | 3 Marks |
+| **TC7   | Endpoint security limits active | 3 Marks |
+| **TC8   | Detailed health status metrics active | 3 Marks |
 
 **Total Score: 20 Marks**
