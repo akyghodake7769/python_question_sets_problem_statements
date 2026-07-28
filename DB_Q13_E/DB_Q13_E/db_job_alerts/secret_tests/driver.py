@@ -78,7 +78,7 @@ def verify_task():
         try:
             for j in client.jobs.list():
                 if j.settings.name.lower() == job_name.lower():
-                    job_obj = j
+                    job_obj = client.jobs.get(job_id=j.job_id)
                     break
         except Exception:
             pass
