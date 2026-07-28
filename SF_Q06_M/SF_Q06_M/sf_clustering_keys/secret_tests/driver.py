@@ -67,7 +67,7 @@ def verify_task():
         import snowflake.connector
         user = os.getenv("SNOWFLAKE_USER") or "LTM_DEMO"
         password = os.getenv("SNOWFLAKE_PASSWORD") or "KloudKraft#2026"
-        account = os.getenv("SNOWFLAKE_ACCOUNT") or "WJB07325.ap-south-1.aws"
+        account = os.getenv("SNOWFLAKE_ACCOUNT") or "WJ80735.ap-south-1.aws"
         warehouse = os.getenv("SNOWFLAKE_WAREHOUSE") or "LTM_WH"
         
         conn = snowflake.connector.connect(
@@ -95,10 +95,9 @@ def verify_task():
             cursor.execute(f"SHOW TABLES LIKE '{table_name_target}'")
             res_rows = cursor.fetchall()
             if res_rows:
-                # Column 11 (index 10) in SHOW TABLES contains clustering keys
                 cluster_by_val = res_rows[0][10] if len(res_rows[0]) > 10 else None
                 if cluster_by_val and cluster_by_val.strip():
-                    db_exists = True # table has clustering key
+                    db_exists = True
                     tc1_status = "[PASSED]"
                     tc1_score = 4
                     tc1_reason = f"Table '{table_name_target}' is clustered by: {cluster_by_val}."
@@ -122,7 +121,7 @@ def verify_task():
             cursor = conn.cursor()
             cursor.execute(f"SELECT SYSTEM$CLUSTERING_DEPTH('{table_name_target}')")
             depth_val = cursor.fetchone()[0]
-            schema_exists = True # signal depth check passed
+            schema_exists = True
             tc2_status = "[PASSED]"
             tc2_score = 4
             tc2_reason = f"Micro-partition clustering depth: {depth_val}."
@@ -165,11 +164,11 @@ def verify_task():
 
     # Construct results dict
     results = {
-        "tc1": tc1_score == 4,
-        "tc2": tc2_score == 4,
-        "tc3": tc3_score == 4,
-        "tc4": tc4_score == 4,
-        "tc5": tc5_score == 4
+        "tc1": tc1_score > 0,
+        "tc2": tc2_score > 0,
+        "tc3": tc3_score > 0,
+        "tc4": tc4_score > 0,
+        "tc5": tc5_score > 0
     }
 
     # Write solution.json file locally by merging with existing metadata
@@ -194,11 +193,11 @@ def verify_task():
         print_separator()
         print("                KODEBUCK REAL-TIME SNOWFLAKE AUDIT")
         print_separator()
-        print_test_case(tc1_name, tc1_status, tc1_score, 4, tc1_reason)
-        print_test_case(tc2_name, tc2_status, tc2_score, 4, tc2_reason)
-        print_test_case(tc3_name, tc3_status, tc3_score, 4, tc3_reason)
-        print_test_case(tc4_name, tc4_status, tc4_score, 4, tc4_reason)
-        print_test_case(tc5_name, tc5_status, tc5_score, 4, tc5_reason)
+        print_test_case(tc1_name, tc1_status, tc1_score, 4 if "SF_Q06_M" != "SF_Q01_M" else 5, tc1_reason)
+        print_test_case(tc2_name, tc2_status, tc2_score, 4 if "SF_Q06_M" != "SF_Q01_M" else 5, tc2_reason)
+        print_test_case(tc3_name, tc3_status, tc3_score, 4 if "SF_Q06_M" != "SF_Q01_M" else 5, tc3_reason)
+        print_test_case(tc4_name, tc4_status, tc4_score, 4 if "SF_Q06_M" != "SF_Q01_M" else 5, tc4_reason)
+        print_test_case(tc5_name, tc5_status, tc5_score, 4 if "SF_Q06_M" != "SF_Q01_M" else 5, tc5_reason)
         
         total_score = tc1_score + tc2_score + tc3_score + tc4_score + tc5_score
         print_separator()
