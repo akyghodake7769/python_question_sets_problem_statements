@@ -187,7 +187,6 @@
 
 # if __name__ == '__main__':
 #     verify_task()
-
 import os
 import sys
 import json
@@ -265,7 +264,7 @@ def verify_task():
     table_name = f"{username}_{exam_code}_bronze_sales"
     table_obj = None
     if client:
-        for cat in ["main", "hive_metastore"]:
+        for cat in ["main", "hive_metastore", "kraft_data"]:
             try:
                 table_obj = client.tables.get(f"{cat}.default.{table_name}")
                 if table_obj:
