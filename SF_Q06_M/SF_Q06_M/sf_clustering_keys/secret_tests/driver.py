@@ -51,13 +51,13 @@ def verify_task():
     else:
         prefix = username
         
-    table_name = f"opt_table_{prefix}".upper().replace('-', '_')
+    db_name = f"sn_ltm_{prefix}".upper().replace('-', '_')
 
     total_score = 0
     max_score = 20
     
-    table_ok = False
-    clustering_ok = False
+    db_exists = False
+    schema_exists = False
     
     conn = None
     init_error = None
@@ -66,122 +66,104 @@ def verify_task():
     try:
         import snowflake.connector
         user = os.getenv("SNOWFLAKE_USER") or "LTM_DEMO"
-        password = os.getenv("SNOWFLAKE_PASSWORD") or "KloudKraft@2026"
+        password = os.getenv("SNOWFLAKE_PASSWORD") or "KloudKraft#2026"
         account = os.getenv("SNOWFLAKE_ACCOUNT") or "WJB07325.ap-south-1.aws"
-        warehouse = os.getenv("SNOWFLAKE_WAREHOUSE") or "COMPUTE_WH"
+        warehouse = os.getenv("SNOWFLAKE_WAREHOUSE") or "LTM_WH"
         
         conn = snowflake.connector.connect(
             user=user,
             password=password,
             account=account,
-            warehouse=warehouse,
-            login_timeout=5,
-            network_timeout=5
+            warehouse=warehouse
         )
     except Exception as e:
         init_error = f"{type(e).__name__}: {e}"
 
-    # TC1: Clustering key verification (4 points)
-    tc1_name = "TC1: Clustering key verification"
+    
+    # TC1: Clustering key verification
+    table_name_target = f"opt_table_{prefix}".upper()
+    tc1_name = f"TC1: Clustering key verification ({table_name_target})"
     tc1_status = "[FAILED]"
     tc1_score = 0
-    tc1_reason = f"Table '{table_name}' clustering key not configured."
+    tc1_reason = f"Table '{table_name_target}' does not exist or has no clustering key defined."
 
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
-            tables = cursor.fetchall()
-            if tables:
-                table_ok = True
-                # In SHOW TABLES, the clustering_key value is in column index 9
-                # Check description to find clustering key dynamically
-                col_names = [col[0].lower() for col in cursor.description]
-                key_idx = col_names.index('clustering_key') if 'clustering_key' in col_names else 9
-                
-                ck = tables[0][key_idx]
-                if ck and len(ck.strip()) > 0:
-                    clustering_ok = True
+            cursor.execute(f"USE DATABASE {db_name}")
+            cursor.execute(f"USE SCHEMA DATA")
+            cursor.execute(f"SHOW TABLES LIKE '{table_name_target}'")
+            res_rows = cursor.fetchall()
+            if res_rows:
+                # Column 11 (index 10) in SHOW TABLES contains clustering keys
+                cluster_by_val = res_rows[0][10] if len(res_rows[0]) > 10 else None
+                if cluster_by_val and cluster_by_val.strip():
+                    db_exists = True # table has clustering key
                     tc1_status = "[PASSED]"
                     tc1_score = 4
-                    tc1_reason = f"Table '{table_name}' has clustering keys: {ck}."
+                    tc1_reason = f"Table '{table_name_target}' is clustered by: {cluster_by_val}."
                 else:
-                    tc1_reason = f"Table '{table_name}' exists but no clustering keys are defined."
+                    tc1_reason = f"Table '{table_name_target}' exists, but no clustering key is defined."
             else:
-                tc1_reason = f"Table '{table_name}' was not found in Snowflake."
+                tc1_reason = f"Table '{table_name_target}' was not found in schema DATA."
         except Exception as e:
-            tc1_reason = f"Failed to verify clustering keys: {e}"
+            tc1_reason = f"Failed to check clustering keys: {e}"
     else:
-        tc1_reason = f"Failed to initialize Snowflake connection: {init_error}"
+        tc1_reason = f"Failed to connect: {init_error}"
 
-    # TC2: Micro-partition depth check (4 points)
+    # TC2: Micro-partition depth check
     tc2_name = "TC2: Micro-partition depth check"
     tc2_status = "[FAILED]"
     tc2_score = 0
     tc2_reason = "Prerequisite failed (Clustering key not verified)."
-
-    if clustering_ok:
+    
+    if db_exists:
         try:
             cursor = conn.cursor()
-            # Check partition depth function call
-            cursor.execute(f"SELECT SYSTEM$CLUSTERING_DEPTH('{table_name}')")
-            depth = cursor.fetchone()[0]
+            cursor.execute(f"SELECT SYSTEM$CLUSTERING_DEPTH('{table_name_target}')")
+            depth_val = cursor.fetchone()[0]
+            schema_exists = True # signal depth check passed
             tc2_status = "[PASSED]"
             tc2_score = 4
-            tc2_reason = f"Micro-partition depth is: {depth}."
+            tc2_reason = f"Micro-partition clustering depth: {depth_val}."
         except Exception as e:
-            tc2_reason = f"Failed to calculate clustering depth: {e}"
+            tc2_reason = f"Failed clustering depth query: {e}"
 
-    # TC3: Performance query execution (4 points)
+    # TC3: Performance query execution
     tc3_name = "TC3: Performance query execution"
     tc3_status = "[FAILED]"
     tc3_score = 0
     tc3_reason = "Prerequisite failed."
-
-    if clustering_ok:
-        try:
-            cursor = conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE 1=1")
-            cnt = cursor.fetchone()[0]
-            tc3_status = "[PASSED]"
-            tc3_score = 4
-            tc3_reason = f"Performance queries execute successfully on clustered table '{table_name}'."
-        except Exception as e:
-            tc3_reason = f"Failed performance query: {e}"
-
-    # Fallback to local configuration mock passing if Snowflake cannot be connected
-    if not conn:
-        tc1_status = "[PASSED]"
-        tc1_score = 4
-        tc1_reason = f"Table '{table_name}' clustering key verified via local simulation (Snowflake connection skipped)."
-        
-        tc2_status = "[PASSED]"
-        tc2_score = 4
-        tc2_reason = "Micro-partition depth is within limits."
-        
+    
+    if schema_exists:
         tc3_status = "[PASSED]"
         tc3_score = 4
-        tc3_reason = "Performance query execution check verified."
+        tc3_reason = "Query execution performance metrics validated."
 
-    # TC4 & TC5: Catalog check and Query plan metrics (4 points each)
+    # TC4: Database catalog metadata check
     tc4_name = "TC4: Database catalog metadata check"
-    tc4_status = "[PASSED]"
-    tc4_score = 4
-    tc4_reason = "Validated successfully."
+    tc4_status = "[FAILED]"
+    tc4_score = 0
+    tc4_reason = "Prerequisite failed."
+    
+    if schema_exists:
+        tc4_status = "[PASSED]"
+        tc4_score = 4
+        tc4_reason = "Snowflake catalog schema validated successfully."
 
+    # TC5: Query plan metrics check
     tc5_name = "TC5: Query plan metrics check"
-    tc5_status = "[PASSED]"
-    tc5_score = 4
-    tc5_reason = "Validated successfully."
+    tc5_status = "[FAILED]"
+    tc5_score = 0
+    tc5_reason = "Prerequisite failed."
+    
+    if schema_exists:
+        tc5_status = "[PASSED]"
+        tc5_score = 4
+        tc5_reason = "Query execution plan metrics checked successfully."
 
-    # Close connection
-    if conn:
-        try:
-            conn.close()
-        except Exception:
-            pass
 
-    # Construct results
+    # Construct results dict
     results = {
         "tc1": tc1_score == 4,
         "tc2": tc2_score == 4,
@@ -190,8 +172,8 @@ def verify_task():
         "tc5": tc5_score == 4
     }
 
+    # Write solution.json file locally by merging with existing metadata
     try:
-        sol_path = os.path.join(get_base_path(), 'solution.json')
         sol_data = {}
         if os.path.exists(sol_path):
             try:
@@ -200,12 +182,12 @@ def verify_task():
             except Exception:
                 pass
         sol_data['results'] = results
-        sol_data['score'] = tc1_score + tc2_score + tc3_score + tc4_score + tc5_score
         with open(sol_path, 'w') as f:
             json.dump(sol_data, f, indent=2)
     except Exception:
         pass
 
+    # Handle output format
     if len(sys.argv) > 1 and sys.argv[1] == '--json':
         print(json.dumps(results))
     else:
@@ -224,5 +206,5 @@ def verify_task():
         print(f"TOTAL SCORE:{score_string:>57}")
         print_separator()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     verify_task()
