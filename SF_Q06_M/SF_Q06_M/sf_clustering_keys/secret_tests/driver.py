@@ -87,6 +87,16 @@ def verify_task():
     if conn:
         try:
             cursor = conn.cursor()
+            # Set warehouse context explicitly
+            try:
+                cursor.execute("SHOW WAREHOUSES")
+                wh_list = [w[0] for w in cursor.fetchall()]
+                chosen_wh = "LTM_WH" if "LTM_WH" in [w.upper() for w in wh_list] else (wh_list[0] if wh_list else None)
+                if chosen_wh:
+                    cursor.execute(f"USE WAREHOUSE {chosen_wh}")
+            except Exception:
+                pass
+
             cursor.execute("SHOW DATABASES")
             for db in cursor.fetchall():
                 db_name_curr = db[1].upper()
