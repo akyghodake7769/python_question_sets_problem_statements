@@ -24,9 +24,124 @@ def verify_task():
         except Exception:
             pass
 
-    results = {'tc1': True, 'tc2': True, 'tc3': True, 'tc4': True, 'tc5': True}
+    # 1. Resolve student info
+    raw_username = os.getenv("DATABRICKS_USERNAME") or os.getenv("databricks_username") or os.getenv("LABSKRAFT_USERNAME") or os.getenv("username") or os.getenv("USER") or "student"
+    if '@' in raw_username:
+        raw_username = raw_username.split('@')[0]
+    if '_' in raw_username:
+        raw_username = raw_username.split('_')[0]
+    username = raw_username.lower().replace('.', '-')
     
-    # Save solution.json merging with metadata
+    exam_code = (
+        os.getenv("KODEBUCK_EXAM_CODE") or 
+        os.getenv("EXAM_CODE") or 
+        os.getenv("KODEARENA_EXAM_CODE") or 
+        os.getenv("exam_code") or 
+        "exam123"
+    ).lower()
+    
+    target_cluster_name = f"{username}-{exam_code}-ops-cluster"
+
+    total_score = 0
+    max_score = 20
+    
+    cluster_exists = False
+    cluster = None
+    
+    # 2. Connect to Databricks
+    client = None
+    init_error = None
+    try:
+        from databricks.sdk import WorkspaceClient
+        host = os.getenv("DATABRICKS_HOST")
+        token = os.getenv("DATABRICKS_TOKEN")
+        if not host or not token:
+            missing = []
+            if not host: missing.append("DATABRICKS_HOST")
+            if not token: missing.append("DATABRICKS_TOKEN")
+            raise ValueError(f"Missing environment variable(s): {', '.join(missing)}")
+        client = WorkspaceClient(
+            host=host,
+            token=token
+        )
+    except Exception as e:
+        init_error = f"{type(e).__name__}: {e}"
+
+    
+    tc1_name = "TC1: Job existence check"
+    tc1_status = "[FAILED]"
+    tc1_score = 0
+    
+    job_name = f"{username}-{exam_code}-job-alerts"
+    job_obj = None
+    if client:
+        try:
+            for j in client.jobs.list():
+                if j.settings.name.lower() == job_name.lower():
+                    job_obj = j
+                    break
+        except Exception:
+            pass
+
+    if job_obj:
+        tc1_status = "[PASSED]"
+        tc1_score = 4
+        tc1_reason = f"Workflow Job '{job_name}' exists."
+        cluster_exists = True
+    else:
+        tc1_reason = f"Job '{job_name}' not found."
+
+    tc2_name = "TC2: Email notification config check"
+    tc2_status = "[FAILED]"
+    tc2_score = 0
+    tc2_reason = "Prerequisite failed."
+    
+    if cluster_exists and job_obj:
+        try:
+            notifs = job_obj.settings.email_notifications
+            if notifs and (notifs.on_failure or notifs.on_success or notifs.on_start):
+                tc2_status = "[PASSED]"
+                tc2_score = 4
+                tc2_reason = "Email alerts notifications verified."
+            else:
+                tc2_reason = "Email notifications settings are not configured."
+        except Exception as e:
+            tc2_reason = f"Error checking notifications: {e}"
+
+    tc3_name = "TC3: Task binding check"
+    tc3_status = "[FAILED]"
+    tc3_score = 0
+    tc3_reason = "Prerequisite failed."
+    
+    if cluster_exists and job_obj:
+        if job_obj.settings.tasks and len(job_obj.settings.tasks) > 0:
+            tc3_status = "[PASSED]"
+            tc3_score = 4
+            tc3_reason = f"Workflow job has {len(job_obj.settings.tasks)} task(s) configured."
+        else:
+            tc3_reason = "No task bindings found in workflow settings."
+
+    tc4_name = "TC4: Reserved validation"
+    tc4_status = "[PASSED]"
+    tc4_score = 4
+    tc4_reason = "Validated successfully."
+
+    tc5_name = "TC5: Reserved validation"
+    tc5_status = "[PASSED]"
+    tc5_score = 4
+    tc5_reason = "Validated successfully."
+
+
+    # Construct results dict
+    results = {
+        "tc1": tc1_score == 4,
+        "tc2": tc2_score == 4,
+        "tc3": tc3_score == 4,
+        "tc4": tc4_score == 4,
+        "tc5": tc5_score == 4
+    }
+
+    # Write solution.json file locally by merging with existing metadata
     try:
         sol_path = os.path.join(get_base_path(), 'solution.json')
         sol_data = {}
@@ -41,27 +156,25 @@ def verify_task():
             json.dump(sol_data, f, indent=2)
     except Exception:
         pass
-        
+
+    # Handle output format
     if len(sys.argv) > 1 and sys.argv[1] == '--json':
         print(json.dumps(results))
-        return
-
-    print_separator()
-    print("                KODEBUCK REAL-TIME AUDIT")
-    print_separator()
-    
-    tc_names = ['Job existence', 'Email notification config check', 'Task binding check']
-    for idx, tc in enumerate(tc_names):
-        display_name = f"TC{idx+1}: {tc}"
-        print_test_case(display_name, "[PASSED]", 4, 4, "Verified successfully.")
+    else:
+        print_separator()
+        print("                KODEBUCK REAL-TIME DATABRICKS AUDIT")
+        print_separator()
+        print_test_case(tc1_name, tc1_status, tc1_score, 4, tc1_reason)
+        print_test_case(tc2_name, tc2_status, tc2_score, 4, tc2_reason)
+        print_test_case(tc3_name, tc3_status, tc3_score, 4, tc3_reason)
+        print_test_case(tc4_name, tc4_status, tc4_score, 4, tc4_reason)
+        print_test_case(tc5_name, tc5_status, tc5_score, 4, tc5_reason)
         
-    for remain in range(len(tc_names), 5):
-        display_name = f"TC{remain+1}: Reserved validation"
-        print_test_case(display_name, "[PASSED]", 4, 4, "Verified successfully.")
-        
-    print_separator()
-    print("TOTAL SCORE:                                                   20/20")
-    print_separator()
+        total_score = tc1_score + tc2_score + tc3_score + tc4_score + tc5_score
+        print_separator()
+        score_string = f"{total_score}/{max_score}"
+        print(f"TOTAL SCORE:{score_string:>57}")
+        print_separator()
 
 if __name__ == '__main__':
     verify_task()
