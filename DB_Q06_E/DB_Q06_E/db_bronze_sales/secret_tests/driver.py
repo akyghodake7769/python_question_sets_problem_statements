@@ -303,7 +303,8 @@ def verify_task():
     tc3_reason = "Prerequisite failed."
     
     if cluster_exists and table_obj:
-        if str(table_obj.data_source_format).upper() == "DELTA":
+        fmt_str = str(table_obj.data_source_format).upper()
+        if "DELTA" in fmt_str:
             tc3_status = "[PASSED]"
             tc3_score = 4
             tc3_reason = "Table data format is DELTA."
