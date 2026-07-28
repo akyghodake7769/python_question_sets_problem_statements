@@ -80,19 +80,52 @@ def verify_task():
         init_error = f"{type(e).__name__}: {e}"
 
     
-    # TC1: Clustering key verification
-    table_name_target = f"opt_table_{prefix}".upper()
-    tc1_name = f"TC1: Clustering key verification ({table_name_target})"
-    tc1_status = "[FAILED]"
-    tc1_score = 0
-    tc1_reason = f"Table '{table_name_target}' does not exist or has no clustering key defined."
-
+    # Auto-detect target database and table
+    target_db = None
+    target_schema = None
+    target_table = None
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"USE DATABASE {db_name}")
-            cursor.execute(f"USE SCHEMA DATA")
-            cursor.execute(f"SHOW TABLES LIKE '{table_name_target}'")
+            cursor.execute("SHOW DATABASES")
+            for db in cursor.fetchall():
+                db_name_curr = db[1].upper()
+                if db_name_curr.startswith("SN_LTM_"):
+                    target_db = db_name_curr
+                    break
+            
+            if target_db:
+                cursor.execute(f"SHOW SCHEMAS IN DATABASE {target_db}")
+                for sch in cursor.fetchall():
+                    sch_name_curr = sch[1].upper()
+                    if sch_name_curr in ["DATA", "PUBLIC"]:
+                        cursor.execute(f"SHOW TABLES IN {target_db}.{sch_name_curr}")
+                        for tbl in cursor.fetchall():
+                            tbl_name_curr = tbl[1].upper()
+                            if "OPT_TABLE_" in tbl_name_curr:
+                                target_schema = sch_name_curr
+                                target_table = tbl_name_curr
+                                break
+                        if target_table:
+                            break
+        except Exception:
+            pass
+
+    final_db = target_db or db_name
+    final_schema = target_schema or "DATA"
+    final_table = target_table or f"OPT_TABLE_{prefix}".upper().replace('-', '_')
+
+    # TC1: Clustering key verification
+    tc1_name = f"TC1: Clustering key verification ({final_table})"
+    tc1_status = "[FAILED]"
+    tc1_score = 0
+    tc1_reason = f"Table '{final_table}' does not exist or has no clustering key defined."
+
+    cluster_by_val = None
+    if target_table:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SHOW TABLES LIKE '{final_table}' IN SCHEMA {final_db}.{final_schema}")
             res_rows = cursor.fetchall()
             if res_rows:
                 cluster_by_val = res_rows[0][10] if len(res_rows[0]) > 10 else None
@@ -100,15 +133,13 @@ def verify_task():
                     db_exists = True
                     tc1_status = "[PASSED]"
                     tc1_score = 4
-                    tc1_reason = f"Table '{table_name_target}' is clustered by: {cluster_by_val}."
+                    tc1_reason = f"Table '{final_table}' is clustered by: {cluster_by_val}."
                 else:
-                    tc1_reason = f"Table '{table_name_target}' exists, but no clustering key is defined."
-            else:
-                tc1_reason = f"Table '{table_name_target}' was not found in schema DATA."
+                    tc1_reason = f"Table '{final_table}' exists, but no clustering key is defined."
         except Exception as e:
             tc1_reason = f"Failed to check clustering keys: {e}"
     else:
-        tc1_reason = f"Failed to connect: {init_error}"
+        tc1_reason = f"Table '{final_table}' not found in database '{final_db}' schema '{final_schema}'."
 
     # TC2: Micro-partition depth check
     tc2_name = "TC2: Micro-partition depth check"
@@ -119,7 +150,7 @@ def verify_task():
     if db_exists:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT SYSTEM$CLUSTERING_DEPTH('{table_name_target}')")
+            cursor.execute(f"SELECT SYSTEM$CLUSTERING_DEPTH('{final_db}.{final_schema}.{final_table}')")
             depth_val = cursor.fetchone()[0]
             schema_exists = True
             tc2_status = "[PASSED]"
