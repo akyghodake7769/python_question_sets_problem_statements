@@ -51,14 +51,17 @@ if __name__ == "__main__":
             "tc1": "File server.js exists in workspace", "tc2": "File worker.js exists in workspace", "tc3": "Worker pools utilized for processing CPU-intensive operations", "tc4": "Main execution threads remain non-blocked during hashing execution", "tc5": "Asynchronous response payloads correctly formatted", "tc6": "Worker data pbkdf2 properties configurations matched", "tc7": "System handles thread messaging error events", "tc8": "Node.js worker_threads module integrated successfully"
         }
         print("Running Tests for: Sync Offloading / Worker Pool\n")
-        total_score = 0.0
+        total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
             marks = 2.5
+            display_marks = int(marks) if marks % 1 == 0 else marks
             if v:
                 total_score += marks
-                print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
+                print(f"PASS TC{tc_num} [{desc}] ({display_marks}/{display_marks})")
             else:
-                print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
-        print(f"\nSCORE: {total_score}/20.0")
+                print(f"FAIL TC{tc_num} [{desc}] (0/{display_marks})")
+        display_score = int(total_score) if total_score % 1 == 0 else total_score
+        display_max = int(20) if 20 % 1 == 0 else 20
+        print(f"\nSCORE: {display_score}/{display_max}")

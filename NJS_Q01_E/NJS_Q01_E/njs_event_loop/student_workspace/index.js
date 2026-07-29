@@ -1,20 +1,14 @@
-// Complete the order of execution checks
+// TODO: Wrap these logs inside the appropriate Event Loop hooks (setTimeout, setImmediate, process.nextTick, and Promise callbacks)
+// to make them output in the correct execution order: "start" -> "end" -> "nextTick" -> "promise" -> "timeout" -> "immediate"
+
 console.log("start");
 
-setTimeout(() => {
-    console.log("timeout");
-}, 0);
+console.log("timeout");
 
-setImmediate(() => {
-    console.log("immediate");
-});
+console.log("immediate");
 
-Promise.resolve().then(() => {
-    console.log("promise");
-});
+console.log("promise");
 
-process.nextTick(() => {
-    console.log("nextTick");
-});
+console.log("nextTick");
 
 console.log("end");

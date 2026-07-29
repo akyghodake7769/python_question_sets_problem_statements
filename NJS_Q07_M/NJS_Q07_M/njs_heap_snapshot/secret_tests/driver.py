@@ -40,14 +40,17 @@ if __name__ == "__main__":
             "tc1": "File diagnostics.js exists and runs successfully", "tc2": "V8 write heap snapshot native helper is integrated", "tc3": "Heap snapshot triggers at correct threshold limit", "tc4": "Dumps saved with timestamp details to target directories"
         }
         print("Running Tests for: Automated Heap Snapshots\n")
-        total_score = 0.0
+        total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
             marks = 5
+            display_marks = int(marks) if marks % 1 == 0 else marks
             if v:
                 total_score += marks
-                print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
+                print(f"PASS TC{tc_num} [{desc}] ({display_marks}/{display_marks})")
             else:
-                print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
-        print(f"\nSCORE: {total_score}/20.0")
+                print(f"FAIL TC{tc_num} [{desc}] (0/{display_marks})")
+        display_score = int(total_score) if total_score % 1 == 0 else total_score
+        display_max = int(20) if 20 % 1 == 0 else 20
+        print(f"\nSCORE: {display_score}/{display_max}")

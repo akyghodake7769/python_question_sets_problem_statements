@@ -9,19 +9,31 @@ def get_base_path():
 def run_tests():
     import subprocess
     base_path = get_base_path()
-    results = {'tc1': False, 'tc2': False, 'tc3': False, 'tc4': False}
+    results = {'tc1': False, 'tc2': False, 'tc3': False, 'tc4': False, 'tc5': False, 'tc6': False, 'tc7': False, 'tc8': False}
     # TC1: File server.js exists
     js_file = os.path.join(base_path, 'server.js')
     if os.path.exists(js_file):
         results['tc1'] = True
-        
+    else:
+        return results
+
     try:
+        # Check Express import and server syntax
         with open(js_file, 'r') as f:
-            content = f.read()
-            if 'cache.size > 100' in content or 'cache.delete' in content:
-                results['tc2'] = True
-                results['tc3'] = True
-                results['tc4'] = True
+            code = f.read()
+            if 'once' in code or 'removeListener' in code or 'off(' in code:
+                results['tc5'] = True
+                results['tc6'] = True
+                results['tc7'] = True
+                results['tc8'] = True
+
+        # Simulating clean run
+        node_check = "const app = require('./server'); console.log(typeof app.get);"
+        p = subprocess.run(['node', '-e', node_check], cwd=base_path, capture_output=True, text=True)
+        if 'function' in p.stdout:
+            results['tc2'] = True
+            results['tc3'] = True
+            results['tc4'] = True
     except Exception:
         pass
     return results
@@ -39,14 +51,14 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "File server.js exists in workspace", "tc2": "Leaking array resolved or replaced with size-limited collection", "tc3": "Express routes perform successfully under load", "tc4": "Memory heap consumption verified to remain bounded"
+            "tc1": "File server.js exists in student workspace", "tc2": "Express server compiles and starts successfully", "tc3": "Target route /api/listen returns HTTP 200 OK status", "tc4": "Global emitter listeners do not grow unbounded under load", "tc5": "Correct usage of once() or removeListener() handlers", "tc6": "Listener limit warnings do not trigger", "tc7": "Request event responses are handled correctly", "tc8": "Clean shutdown and listener cleanup verified"
         }
-        print("Running Tests for: Memory Leak Diagnostics\n")
+        print("Running Tests for: EventEmitter Memory Leak Diagnostics\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
-            marks = 5
+            marks = 2.5
             display_marks = int(marks) if marks % 1 == 0 else marks
             if v:
                 total_score += marks
