@@ -127,6 +127,10 @@ def verify_task():
     final_schema = target_schema or "DATA"
     final_table = target_table or "CANDIDATE_DATA"
 
+    db_exists = False
+    schema_exists = False
+    table_exists = False
+
     # TC1: Database Existence
     tc1_name = f"TC1: Database Existence ({final_db})"
     tc1_status = "[FAILED]"
