@@ -141,7 +141,7 @@ def verify_task():
         if target_db:
             db_exists = True
             tc1_status = "[PASSED]"
-            tc1_score = 5
+            tc1_score = 4
             tc1_reason = f"Database '{final_db}' found successfully."
         else:
             tc1_reason = f"Database '{final_db}' was not found in Snowflake."
@@ -158,7 +158,7 @@ def verify_task():
         if target_schema:
             schema_exists = True
             tc2_status = "[PASSED]"
-            tc2_score = 5
+            tc2_score = 4
             tc2_reason = f"Schema '{final_schema}' exists inside database '{final_db}'."
         else:
             tc2_reason = f"Expected schema 'DATA' or 'PUBLIC' was not found inside database '{final_db}'."
@@ -173,7 +173,7 @@ def verify_task():
         if target_table:
             table_exists = True
             tc3_status = "[PASSED]"
-            tc3_score = 5
+            tc3_score = 4
             tc3_reason = f"Table '{final_table}' found inside schema '{final_schema}'."
         else:
             tc3_reason = f"No tables found inside schema '{final_schema}'."
@@ -186,15 +186,28 @@ def verify_task():
 
     if table_exists:
         tc4_status = "[PASSED]"
-        tc4_score = 5
+        tc4_score = 4
         tc4_reason = "Database query execution validated successfully."
 
-    # TC5: Reserved
-    tc5_name = "TC5: Reserved validation"
-    tc5_status = "[PASSED]"
+    # TC5: Table Data Verification
+    tc5_name = f"TC5: Table Data Verification ({final_table} Data Ingestion Check)"
+    tc5_status = "[FAILED]"
     tc5_score = 0
-    tc5_reason = "Validated successfully."
+    tc5_reason = "Prerequisite failed (Table does not exist)."
 
+    if table_exists:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) FROM {final_db}.{final_schema}.{final_table}")
+            row_count = cursor.fetchone()[0]
+            if row_count > 0:
+                tc5_status = "[PASSED]"
+                tc5_score = 4
+                tc5_reason = f"Table data verified. Found {row_count} rows ingested."
+            else:
+                tc5_reason = "Table is empty (0 rows found)."
+        except Exception as e:
+            tc5_reason = f"Failed to retrieve table row count: {e}"
 
     # Construct results dict
     results = {
@@ -227,11 +240,11 @@ def verify_task():
         print_separator()
         print("                KODEBUCK REAL-TIME SNOWFLAKE AUDIT")
         print_separator()
-        print_test_case(tc1_name, tc1_status, tc1_score, 4 if "SF_Q01_M" != "SF_Q01_M" else 5, tc1_reason)
-        print_test_case(tc2_name, tc2_status, tc2_score, 4 if "SF_Q01_M" != "SF_Q01_M" else 5, tc2_reason)
-        print_test_case(tc3_name, tc3_status, tc3_score, 4 if "SF_Q01_M" != "SF_Q01_M" else 5, tc3_reason)
-        print_test_case(tc4_name, tc4_status, tc4_score, 4 if "SF_Q01_M" != "SF_Q01_M" else 5, tc4_reason)
-        print_test_case(tc5_name, tc5_status, tc5_score, 4 if "SF_Q01_M" != "SF_Q01_M" else 5, tc5_reason)
+        print_test_case(tc1_name, tc1_status, tc1_score, 4, tc1_reason)
+        print_test_case(tc2_name, tc2_status, tc2_score, 4, tc2_reason)
+        print_test_case(tc3_name, tc3_status, tc3_score, 4, tc3_reason)
+        print_test_case(tc4_name, tc4_status, tc4_score, 4, tc4_reason)
+        print_test_case(tc5_name, tc5_status, tc5_score, 4, tc5_reason)
         
         total_score = tc1_score + tc2_score + tc3_score + tc4_score + tc5_score
         print_separator()
