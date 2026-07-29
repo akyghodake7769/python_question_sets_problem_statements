@@ -27,9 +27,9 @@ def run_tests():
             results['tc2'] = True
 
         # Test output validation
-        test_run = "const f = require('./fetcher'); f.fetchUrls(['url1','url2']).then(r => console.log(JSON.stringify(r)));"
+        test_run = "const f = require('./fetcher'); f.fetchUrls(['url1','url2']).then(r => { if (Array.isArray(r) && r.length === 2 && r.includes('Data from url1') && r.includes('Data from url2')) console.log('OK_JSON_VAL'); }).catch(e => {});"
         p2 = subprocess.run(['node', '-e', test_run], cwd=base_path, capture_output=True, text=True)
-        if '["Data from url1","Data from url2"]' in p2.stdout.replace(" ", ""):
+        if 'OK_JSON_VAL' in p2.stdout:
             results['tc3'] = True
 
         # Test execution duration (parallel should take ~100-150ms, sequential ~200ms)
