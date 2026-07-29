@@ -52,10 +52,20 @@ if __name__ == "__main__":
         }
         print("Running Tests for: Sync Offloading / Worker Pool\n")
         total_score = 0
+        TC_MARKS = {
+            "tc1": 0,
+            "tc2": 0,
+            "tc3": 3,
+            "tc4": 3,
+            "tc5": 3,
+            "tc6": 3,
+            "tc7": 4,
+            "tc8": 4
+        }
         for k, v in test_results.items():
             tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
-            marks = 2.5
+            marks = TC_MARKS.get(k, 0)
             display_marks = int(marks) if marks % 1 == 0 else marks
             if v:
                 total_score += marks
