@@ -1,27 +1,30 @@
-# NJS_Q02_E: Node.js Environment Configuration
-    
-## Difficulty: EASY
+# Node.js Lab: Node.js Environment Configuration
+
+Duration : 30 Min.
 
 ## Scenario
-A Node.js web application is exhibiting runtime anomalies or configuration errors in production. You are tasked with writing clean, async, and correct JavaScript code to solve the requirements.
-
-## Username & Naming Conventions
-- Resources must utilize your candidate suffix prefix (`<username>-<exam_code>`).
+A deployment pipeline crashes because the Node.js application attempts to connect using wrong or missing environment properties.
 
 ## Task Objectives
-1. **Node.js Optimization & Code Resolution**: Write a utility config.js that reads environment variables and outputs a validated JSON config metadata file.
-2. Ensure your changes pass all local verification tests.
+Perform the following actions inside the `student_workspace` directory:
+- Write a script `config.js` that reads PORT, NODE_ENV, and DB_URL from environment variables, sets defaults if missing, and writes a verified JSON config metadata report to `config_report.json`.
 
-## Verification
-- Local run test script `run.py` can be executed to verify local workspace properties.
-- Central validation runs queries against the live workspace to verify integration.
+## Instructions to Perform the Task
+1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
+2. Navigate to and click the specific files mentioned in the Task Objectives.
+3. Make the necessary code edits in the editor.
+4. Press `Ctrl + S` (Windows) or `Cmd + S` (Mac) to save your changes.
+5. If you need to run commands, open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+
+## Validation
+Once you have saved your files and are ready to submit, return to the platform dashboard and click the **"Run Test" / "Verify"** button. This will automatically evaluate your changes and generate your score!
 
 ## Grading Criteria
-- **TC1: File config.js exists in workspace** (4 Marks)
-- **TC2: Execution creates config_report.json** (4 Marks)
-- **TC3: config_report.json contains valid JSON content** (4 Marks)
-- **TC4: Metadata matches environment configuration values** (4 Marks)
-- **TC5: Missing variables handles default values** (4 Marks)
+Your performance will be evaluated based on the following test cases:
 
-## Important Notes
-- Always check that your syntax compiles without errors.
+| Test Case | Requirement | Marks |
+| --------- | ----------- | ----- |
+| **TC1** | File config.js exists and runs successfully | 5 Marks |
+| **TC2** | JSON report config_report.json is correctly generated | 5 Marks |
+
+**Total Score: 10 Marks**

@@ -1,27 +1,32 @@
-# NJS_Q06_M: Memory Leak Diagnostics
-    
-## Difficulty: MEDIUM
+# Node.js Lab: Memory Leak Diagnostics
+
+Duration : 60 Min.
 
 ## Scenario
-A Node.js web application is exhibiting runtime anomalies or configuration errors in production. You are tasked with writing clean, async, and correct JavaScript code to solve the requirements.
-
-## Username & Naming Conventions
-- Resources must utilize your candidate suffix prefix (`<username>-<exam_code>`).
+An Express application endpoint `/api/track` accumulates client metadata in a global data structure without eviction, resulting in an active memory leak.
 
 ## Task Objectives
-1. **Node.js Optimization & Code Resolution**: Diagnose and patch a memory leak caused by unbounded array accumulation in Express route handlers.
-2. Ensure your changes pass all local verification tests.
+Perform the following actions inside the `student_workspace` directory:
+- Identify the leaky array/collection pattern inside `server.js` and restrict cache sizing to a maximum threshold of 100 elements using Map eviction.
 
-## Verification
-- Local run test script `run.py` can be executed to verify local workspace properties.
-- Central validation runs queries against the live workspace to verify integration.
+## Instructions to Perform the Task
+1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
+2. Navigate to and click the specific files mentioned in the Task Objectives.
+3. Make the necessary code edits in the editor.
+4. Press `Ctrl + S` (Windows) or `Cmd + S` (Mac) to save your changes.
+5. If you need to run commands, open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+
+## Validation
+Once you have saved your files and are ready to submit, return to the platform dashboard and click the **"Run Test" / "Verify"** button. This will automatically evaluate your changes and generate your score!
 
 ## Grading Criteria
-- **TC1: File server.js exists in workspace** (4 Marks)
-- **TC2: Memory leak diagnostic report created** (4 Marks)
-- **TC3: Leaking array resolved or replaced with size-limited collection** (4 Marks)
-- **TC4: Express routes perform successfully under load** (4 Marks)
-- **TC5: Memory heap consumption verified to remain bounded** (4 Marks)
+Your performance will be evaluated based on the following test cases:
 
-## Important Notes
-- Always check that your syntax compiles without errors.
+| Test Case | Requirement | Marks |
+| --------- | ----------- | ----- |
+| **TC1** | File server.js exists in workspace | 5 Marks |
+| **TC2** | Leaking array resolved or replaced with size-limited collection | 5 Marks |
+| **TC3** | Express routes perform successfully under load | 5 Marks |
+| **TC4** | Memory heap consumption verified to remain bounded | 5 Marks |
+
+**Total Score: 20 Marks**

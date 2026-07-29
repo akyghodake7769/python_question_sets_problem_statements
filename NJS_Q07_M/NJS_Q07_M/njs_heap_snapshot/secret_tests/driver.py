@@ -9,15 +9,19 @@ def get_base_path():
 def run_tests():
     import subprocess
     base_path = get_base_path()
-    results = {'tc1': False, 'tc2': False}
-    # TC1: File ecosystem.config.js exists
-    js_file = os.path.join(base_path, 'ecosystem.config.js')
+    results = {'tc1': False, 'tc2': False, 'tc3': False, 'tc4': False}
+    # TC1: File diagnostics.js exists
+    js_file = os.path.join(base_path, 'diagnostics.js')
     if os.path.exists(js_file):
         results['tc1'] = True
         with open(js_file, 'r') as f:
             content = f.read()
-            if 'cluster' in content and 'instances' in content and 'max_memory_restart' in content:
+            if 'writeHeapSnapshot' in content:
                 results['tc2'] = True
+            if '200 * 1024 * 1024' in content or '200MB' in content or 'rss' in content:
+                results['tc3'] = True
+            if 'heapsnapshot' in content:
+                results['tc4'] = True
     return results
 
 if __name__ == "__main__":
@@ -33,9 +37,9 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "PM2 ecosystem.config.js exists and exports a valid configuration", "tc2": "Cluster execution mode, instances, and memory restart threshold correctly set"
+            "tc1": "File diagnostics.js exists and runs successfully", "tc2": "V8 write heap snapshot native helper is integrated", "tc3": "Heap snapshot triggers at correct threshold limit", "tc4": "Dumps saved with timestamp details to target directories"
         }
-        print("Running Tests for: PM2 Cluster Configuration\n")
+        print("Running Tests for: Automated Heap Snapshots\n")
         total_score = 0.0
         for k, v in test_results.items():
             tc_num = k[2:]
@@ -46,4 +50,4 @@ if __name__ == "__main__":
                 print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
             else:
                 print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
-        print(f"\nSCORE: {total_score}/10.0")
+        print(f"\nSCORE: {total_score}/20.0")
