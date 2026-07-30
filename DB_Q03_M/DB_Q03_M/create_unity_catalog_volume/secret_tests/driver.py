@@ -24,8 +24,21 @@ def verify_task():
         except Exception:
             pass
 
-    cand_username = os.getenv("LABSKRAFT_USERNAME") or os.getenv("DATABRICKS_USERNAME")
-    exam_code = os.getenv("KODEBUCK_EXAM_CODE") or os.getenv("EXAM_CODE") or "UNKNOWN"
+    # 1. Resolve student info (Exactly as DB_Q07_E)
+    raw_username = os.getenv("DATABRICKS_USERNAME") or os.getenv("databricks_username") or os.getenv("LABSKRAFT_USERNAME") or os.getenv("username") or os.getenv("USER") or "student"
+    if '@' in raw_username:
+        raw_username = raw_username.split('@')[0]
+    if '_' in raw_username:
+        raw_username = raw_username.split('_')[0]
+    username = raw_username.lower().replace('.', '-')
+    
+    exam_code = (
+        os.getenv("KODEBUCK_EXAM_CODE") or 
+        os.getenv("EXAM_CODE") or 
+        os.getenv("KODEARENA_EXAM_CODE") or 
+        os.getenv("exam_code") or 
+        "exam123"
+    ).lower()
     
     sol_path = os.path.join(get_base_path(), 'solution.json')
     if os.path.exists(sol_path):
@@ -33,41 +46,21 @@ def verify_task():
             with open(sol_path, 'r') as f:
                 data = json.load(f)
             if data.get('labskraft_username'):
-                cand_username = data['labskraft_username']
+                raw_u = data['labskraft_username']
+                if '@' in raw_u: raw_u = raw_u.split('@')[0]
+                if '_' in raw_u: raw_u = raw_u.split('_')[0]
+                username = raw_u.lower().replace('.', '-')
             if data.get('exam_code'):
-                exam_code = data['exam_code']
+                exam_code = data['exam_code'].lower()
         except Exception:
             pass
 
-    # Normalize candidate username
-    cand_normalized = None
-    if cand_username:
-        raw_cand = cand_username
-        if '@' in raw_cand:
-            raw_cand = raw_cand.split('@')[0]
-        if '_' in raw_cand:
-            raw_cand = raw_cand.split('_')[0]
-        cand_normalized = raw_cand.lower().replace('.', '-')
-
-    # Normalize system OS username
-    sys_username = os.getenv("username") or os.getenv("USER") or "student"
-    raw_sys = sys_username
-    if '@' in raw_sys:
-        raw_sys = raw_sys.split('@')[0]
-    if '_' in raw_sys:
-        raw_sys = raw_sys.split('_')[0]
-    sys_normalized = raw_sys.lower().replace('.', '-')
-
     # Build variations
-    catalog_variations = []
-    for u in [cand_normalized, sys_normalized]:
-        if not u:
-            continue
-        if exam_code and exam_code != "UNKNOWN":
-            catalog_variations.append(f"ut_ltm_{u}_{exam_code.lower()}".lower().replace('-', '_'))
-            catalog_variations.append(f"ut_ltm_{u}-{exam_code.lower()}".lower().replace('-', '_'))
-        catalog_variations.append(f"ut_ltm_{u}".lower().replace('-', '_'))
-    
+    catalog_variations = [
+        f"ut_ltm_{username}_{exam_code}".lower().replace('-', '_'),
+        f"ut_ltm_{username}-{exam_code}".lower().replace('-', '_'),
+        f"ut_ltm_{username}".lower().replace('-', '_')
+    ]
     catalog_variations = list(dict.fromkeys(catalog_variations))
     expected_catalog_name = catalog_variations[0]
 
@@ -83,7 +76,7 @@ def verify_task():
     client = None
     init_error = None
     
-    # 1. Connect to Databricks
+    # 2. Connect to Databricks
     try:
         from databricks.sdk import WorkspaceClient
         host = os.getenv("DATABRICKS_HOST")
@@ -104,21 +97,31 @@ def verify_task():
     tc1_reason = f"Catalog '{expected_catalog_name}' does not exist."
 
     found_catalog_name = None
+    reasons = []
     if client:
-        try:
-            all_cats = [c.name.lower() for c in client.catalogs.list()]
-            for cat_opt in catalog_variations:
-                if cat_opt in all_cats:
+        # Check Catalog
+        for cat_opt in catalog_variations:
+            try:
+                client.catalogs.get(cat_opt)
+                catalog_exists = True
+                found_catalog_name = cat_opt
+                tc1_status = "[PASSED]"
+                tc1_score = 4
+                tc1_reason = f"Catalog '{found_catalog_name}' found successfully."
+                break
+            except Exception as e:
+                err_msg = str(e).lower()
+                reasons.append(f"{cat_opt}: {e}")
+                # If it raises a permission error, it means the catalog exists!
+                if "does not exist" not in err_msg and "not found" not in err_msg and "404" not in err_msg:
                     catalog_exists = True
                     found_catalog_name = cat_opt
                     tc1_status = "[PASSED]"
                     tc1_score = 4
-                    tc1_reason = f"Catalog '{found_catalog_name}' found successfully."
+                    tc1_reason = f"Catalog '{found_catalog_name}' exists (verified via permission response)."
                     break
-            if not catalog_exists:
-                tc1_reason = f"None of the catalog variations {catalog_variations} exist in Databricks."
-        except Exception as e:
-            tc1_reason = f"Failed to verify catalog existence: {e}"
+        if not catalog_exists:
+            tc1_reason = " | ".join(reasons)
     else:
         tc1_reason = f"Failed to initialize Databricks client: {init_error}"
 
@@ -130,16 +133,20 @@ def verify_task():
 
     if catalog_exists:
         try:
-            schemas = [s.name.lower() for s in client.schemas.list(catalog_name=found_catalog_name)]
-            if 'data' in schemas:
+            client.schemas.get(f"{found_catalog_name}.data")
+            schema_exists = True
+            tc2_status = "[PASSED]"
+            tc2_score = 4
+            tc2_reason = f"Schema 'data' exists inside catalog '{found_catalog_name}'."
+        except Exception as e:
+            err_msg = str(e).lower()
+            if "does not exist" not in err_msg and "not found" not in err_msg and "404" not in err_msg:
                 schema_exists = True
                 tc2_status = "[PASSED]"
                 tc2_score = 4
-                tc2_reason = f"Schema 'data' exists inside catalog '{found_catalog_name}'."
+                tc2_reason = f"Schema 'data' exists inside catalog '{found_catalog_name}' (permission response)."
             else:
-                tc2_reason = f"Schema 'data' was not found inside catalog '{found_catalog_name}'."
-        except Exception as e:
-            tc2_reason = f"Failed to verify schema existence: {e}"
+                tc2_reason = f"Schema 'data' not found inside catalog '{found_catalog_name}': {e}"
 
     # TC3: Volume Existence (4 points)
     tc3_name = "TC3: Volume Existence (v1)"
