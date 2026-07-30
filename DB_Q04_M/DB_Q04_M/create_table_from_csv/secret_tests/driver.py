@@ -104,6 +104,7 @@ def verify_task():
     tc1_reason = f"Catalog '{expected_catalog_name}' does not exist."
 
     found_catalog_name = None
+    reasons = []
     if client:
         # Check Catalog
         for cat_opt in catalog_variations:
@@ -117,6 +118,7 @@ def verify_task():
                 break
             except Exception as e:
                 err_msg = str(e).lower()
+                reasons.append(f"{cat_opt}: {e}")
                 if "forbidden" in err_msg or "permission" in err_msg or "403" in err_msg:
                     catalog_exists = True
                     found_catalog_name = cat_opt
@@ -125,7 +127,7 @@ def verify_task():
                     tc1_reason = f"Catalog '{found_catalog_name}' exists (verified via permission response)."
                     break
         if not catalog_exists:
-            tc1_reason = f"None of the catalog variations {catalog_variations} exist in Databricks."
+            tc1_reason = " | ".join(reasons)
     else:
         tc1_reason = f"Failed to initialize Databricks client: {init_error}"
 
