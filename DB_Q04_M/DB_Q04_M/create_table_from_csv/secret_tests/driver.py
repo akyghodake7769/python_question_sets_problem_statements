@@ -24,7 +24,7 @@ def verify_task():
         except Exception:
             pass
 
-    labskraft_username = os.getenv("LABSKRAFT_USERNAME") or os.getenv("DATABRICKS_USERNAME") or "student"
+    cand_username = os.getenv("LABSKRAFT_USERNAME") or os.getenv("DATABRICKS_USERNAME")
     exam_code = os.getenv("KODEBUCK_EXAM_CODE") or os.getenv("EXAM_CODE") or "UNKNOWN"
     
     sol_path = os.path.join(get_base_path(), 'solution.json')
@@ -33,31 +33,41 @@ def verify_task():
             with open(sol_path, 'r') as f:
                 data = json.load(f)
             if data.get('labskraft_username'):
-                labskraft_username = data['labskraft_username']
+                cand_username = data['labskraft_username']
             if data.get('exam_code'):
                 exam_code = data['exam_code']
         except Exception:
             pass
 
-    raw_username = labskraft_username
-    if '@' in raw_username:
-        raw_username = raw_username.split('@')[0]
-    if '_' in raw_username:
-        raw_username = raw_username.split('_')[0]
-    username = raw_username.lower().replace('.', '-')
+    # Normalize candidate username
+    cand_normalized = None
+    if cand_username:
+        raw_cand = cand_username
+        if '@' in raw_cand:
+            raw_cand = raw_cand.split('@')[0]
+        if '_' in raw_cand:
+            raw_cand = raw_cand.split('_')[0]
+        cand_normalized = raw_cand.lower().replace('.', '-')
 
-    if exam_code and exam_code != "UNKNOWN":
-        prefix = f"{username}_{exam_code.lower()}"
-        prefix_hyphen = f"{username}-{exam_code.lower()}"
-    else:
-        prefix = username
-        prefix_hyphen = username
+    # Normalize system OS username
+    sys_username = os.getenv("username") or os.getenv("USER") or "student"
+    raw_sys = sys_username
+    if '@' in raw_sys:
+        raw_sys = raw_sys.split('@')[0]
+    if '_' in raw_sys:
+        raw_sys = raw_sys.split('_')[0]
+    sys_normalized = raw_sys.lower().replace('.', '-')
 
-    catalog_variations = [
-        f"ut_ltm_{prefix}".lower().replace('-', '_'),
-        f"ut_ltm_{prefix_hyphen}".lower().replace('-', '_'),
-        f"ut_ltm_{username}".lower().replace('-', '_'),
-    ]
+    # Build variations
+    catalog_variations = []
+    for u in [cand_normalized, sys_normalized]:
+        if not u:
+            continue
+        if exam_code and exam_code != "UNKNOWN":
+            catalog_variations.append(f"ut_ltm_{u}_{exam_code.lower()}".lower().replace('-', '_'))
+            catalog_variations.append(f"ut_ltm_{u}-{exam_code.lower()}".lower().replace('-', '_'))
+        catalog_variations.append(f"ut_ltm_{u}".lower().replace('-', '_'))
+    
     catalog_variations = list(dict.fromkeys(catalog_variations))
     expected_catalog_name = catalog_variations[0]
 
@@ -105,6 +115,8 @@ def verify_task():
                     tc1_score = 4
                     tc1_reason = f"Catalog '{found_catalog_name}' found successfully."
                     break
+            if not catalog_exists:
+                tc1_reason = f"None of the catalog variations {catalog_variations} exist in Databricks."
         except Exception as e:
             tc1_reason = f"Failed to verify catalog existence: {e}"
     else:
