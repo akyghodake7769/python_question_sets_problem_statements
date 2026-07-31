@@ -19,12 +19,12 @@ def run_tests():
         results['tc2'] = True
         try:
             with open(found_file, 'r') as f:
-                content = f.read()
-            if 'aspnetcore_environment' in content.lower() and 'production' in content.lower():
+                content = f.read().lower()
+            if 'aspnetcore_environment' in content and 'production' in content:
                 results['tc3'] = True
-            if 'logging__loglevel__default' in content:
+            if 'logging__loglevel__default' in content or 'logging:loglevel:default' in content:
                 results['tc4'] = True
-            if 'warning' in content or 'Warning' in content:
+            if 'warning' in content:
                 results['tc5'] = True
         except Exception:
             pass
