@@ -30,6 +30,8 @@ def run_tests():
             results['tc7'] = True
         if 'foreach' not in content or 'Include' in content:
             results['tc8'] = True
+        if 'foreach' not in content:
+            results['tc9'] = True
     except Exception:
         pass
 
