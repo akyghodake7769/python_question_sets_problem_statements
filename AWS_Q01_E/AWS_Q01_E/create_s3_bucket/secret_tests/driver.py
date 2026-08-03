@@ -110,13 +110,32 @@
 #         print("TC3 [Region Check] (0/5) - Failed: Error retrieving location.")
 #         results['tc3'] = False
 
-#     print("-" * 40)
-#     print(f"TOTAL SCORE: {total_score}/15")
-#     print("-" * 40)
+#     # Save Metadata for Central Evaluation
+#     start_time_str = os.getenv('KODEBUCK_START_TIME')
+#     start_time = start_time_str if start_time_str else datetime.now(timezone.utc).isoformat()
+    
+#     solution_data = {
+#         'candidate_prefix': username,
+#         'assessment_start_time': start_time,
+#         'max_duration_minutes': 30,
+#         'evaluation_type': 'REAL_TIME_API',
+#         'score': total_score,
+#         'results': results,
+#         'exam_code': exam_code_arg
+#     }
+
+#     try:
+#         ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
+#         os.makedirs(ws_path, exist_ok=True)
+#         with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
+#             json.dump(solution_data, f, indent=4)
+#     except Exception as e:
+#         print(f"[ERROR] Could not write solution.json: {e}")
 
 #     return total_score, results
 # if __name__ == "__main__":
 #     verify_task()
+
 import boto3
 import os
 import sys
