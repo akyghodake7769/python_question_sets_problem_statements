@@ -25,9 +25,9 @@ Your performance will be evaluated based on the following test cases:
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
 | **TC1** | Local VM Environment active and verified | 0 Marks |
-| **TC2** | Program.cs exists in workspace | 4 Marks |
-| **TC3** | Transient / Scoped services are not injected into Singleton class constructors | 4 Marks |
-| **TC4** | Register target scopes correctly under builder.Services | 4 Marks |
-| **TC5** | No syntax or compilation issues in Program.cs | 3 Marks |
+| **TC2** | Program.cs exists in workspace | 5 Marks |
+| **TC3** | Transient / Scoped services are not injected into Singleton class constructors | 5 Marks |
+| **TC4** | Register target scopes correctly under builder.Services | 5 Marks |
+| **TC5** | No syntax or compilation issues in Program.cs | 5 Marks |
 
-**Total Score: 15 Marks**
+**Total Score: 20 Marks**

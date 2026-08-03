@@ -48,7 +48,7 @@ if __name__ == "__main__":
         }
         print("Running Tests for: ASP.NET Core Health Checks Configuration\n")
         total_score = 0
-        marks_list = [5, 5, 5]
+        marks_list = [4, 3, 3]
         for k, v in test_results.items():
             tc_num = int(k[2:])
             desc = TC_NAMES.get(k, '')
@@ -58,4 +58,4 @@ if __name__ == "__main__":
                 print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
             else:
                 print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
-        print(f"\nSCORE: {total_score}/15")
+        print(f"\nSCORE: {total_score}/10")

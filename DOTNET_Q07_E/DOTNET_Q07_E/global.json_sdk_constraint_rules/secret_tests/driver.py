@@ -9,25 +9,22 @@ def get_base_path():
 def run_tests():
     import subprocess
     base_path = get_base_path()
-    results = {'tc1': True, 'tc2': False, 'tc3': False, 'tc4': False, 'tc5': False}
+    results = {'tc1': True, 'tc2': False, 'tc3': False, 'tc4': False}
 
-    program_path = os.path.join(base_path, 'Program.cs')
-    if os.path.exists(program_path):
+    global_path = os.path.join(base_path, 'global.json')
+    if os.path.exists(global_path):
         results['tc2'] = True
     else:
         return results
 
     try:
-        with open(program_path, 'r') as f:
-            content = f.read()
-        
-        # Check that Scoped is not captive in Singleton
-        if 'builder.Services.AddSingleton<ServiceSingleton>();' not in content:
+        with open(global_path, 'r') as f:
+            data = json.load(f)
+        sdk = data.get("sdk", {})
+        if sdk.get("version") == "8.0.100":
             results['tc3'] = True
-        if 'AddScoped<ServiceSingleton>' in content or 'AddTransient<ServiceSingleton>' in content or 'AddSingleton<ServiceSingleton>(provider =>' in content or 'IServiceScopeFactory' in content:
+        if sdk.get("rollForward") == "latestPatch":
             results['tc4'] = True
-        if 'public class ServiceSingleton' in content:
-            results['tc5'] = True
     except Exception:
         pass
 
@@ -47,11 +44,11 @@ if __name__ == "__main__":
     else:
         TC_NAMES = {
             "tc1": "Local VM Environment active and verified",
-            "tc2": "Program.cs exists in workspace", "tc3": "Transient / Scoped services are not injected into Singleton class constructors", "tc4": "Register target scopes correctly under builder.Services", "tc5": "No syntax or compilation issues in Program.cs"
+            "tc2": "File global.json exists in workspace root", "tc3": "SDK version is configured to 8.0.100", "tc4": "rollForward logic is set to latestPatch"
         }
-        print("Running Tests for: Dependency Injection captive lifetime validation\n")
+        print("Running Tests for: global.json SDK Constraint Rules\n")
         total_score = 0
-        marks_list = [5, 5, 5, 5]
+        marks_list = [4, 3, 3]
         for k, v in test_results.items():
             tc_num = int(k[2:])
             desc = TC_NAMES.get(k, '')
@@ -61,4 +58,4 @@ if __name__ == "__main__":
                 print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
             else:
                 print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
-        print(f"\nSCORE: {total_score}/20")
+        print(f"\nSCORE: {total_score}/10")
