@@ -64,14 +64,14 @@ if __name__ == "__main__":
             with open(sol_path, 'r') as f:
                 existing_data = json.load(f)
         
-        score = (3 if results.get('tc1') else 0) + (4 if results.get('tc2') else 0) + (3 if results.get('tc3') else 0)
+        score = (3 if test_results.get('tc1') else 0) + (4 if test_results.get('tc2') else 0) + (3 if test_results.get('tc3') else 0)
         existing_data['score'] = score
         existing_data['results'] = test_results
         
         with open(sol_path, 'w') as f:
             json.dump(existing_data, f, indent=4)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[ERROR] Failed to update solution.json: {e}")
 
     if len(sys.argv) > 1 and sys.argv[1] == '--json':
         print(json.dumps(test_results))
