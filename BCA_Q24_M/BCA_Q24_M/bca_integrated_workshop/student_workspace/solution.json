@@ -1,0 +1,8 @@
+{
+    "root_cause": "TODO",
+    "mismatched_property": "TODO",
+    "leak_class": "TODO",
+    "leak_method": "TODO",
+    "outage_duration_minutes": 0,
+    "remediation": "TODO"
+}

@@ -1,0 +1,7 @@
+{
+    "classification": "TODO",
+    "deadlock_transaction": "TODO",
+    "timeout_seconds": 0,
+    "correlation_id": "TODO",
+    "mitigation_steps": "TODO"
+}
