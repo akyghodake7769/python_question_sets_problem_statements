@@ -70,8 +70,8 @@ if __name__ == "__main__":
         
         with open(sol_path, 'w') as f:
             json.dump(existing_data, f, indent=4)
-    except Exception as e:
-        print(f"[ERROR] Failed to update solution.json: {e}")
+    except Exception:
+        pass
 
     if len(sys.argv) > 1 and sys.argv[1] == '--json':
         print(json.dumps(test_results))
