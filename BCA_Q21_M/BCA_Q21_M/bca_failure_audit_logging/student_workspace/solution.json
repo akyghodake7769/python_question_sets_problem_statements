@@ -1,4 +1,6 @@
 {
+    "question_id": "BCA_Q21_M",
+    "problem_code": "bca_failure_audit_logging",
     "classification": "TODO",
     "deadlock_transaction": "TODO",
     "timeout_seconds": 0,

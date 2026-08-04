@@ -76,7 +76,7 @@ if __name__ == "__main__":
             with open(sol_path, 'r') as f:
                 existing_data = json.load(f)
         
-        score = (3 if results.get('tc1') else 0) + (3 if results.get('tc2') else 0) + (3 if results.get('tc3') else 0) + (3 if results.get('tc4') else 0) + (2 if results.get('tc5') else 0) + (2 if results.get('tc6') else 0) + (2 if results.get('tc7') else 0) + (2 if results.get('tc8') else 0)
+        score = (3 if test_results.get('tc1') else 0) + (3 if test_results.get('tc2') else 0) + (3 if test_results.get('tc3') else 0) + (3 if test_results.get('tc4') else 0) + (2 if test_results.get('tc5') else 0) + (2 if test_results.get('tc6') else 0) + (2 if test_results.get('tc7') else 0) + (2 if test_results.get('tc8') else 0)
         existing_data['score'] = score
         existing_data['results'] = test_results
         
@@ -101,6 +101,7 @@ if __name__ == "__main__":
         print("Running Auto-Evaluation for: Basic Code Analysis: Integrated Outage Troubleshooting Workshop\n")
         total_score = 0
         for k, v in test_results.items():
+            tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
             if k == 'tc1':
                 marks = 3
@@ -123,7 +124,7 @@ if __name__ == "__main__":
 
             if v:
                 total_score += marks
-                print(f"PASS [{desc}] ({marks}/{marks})")
+                print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
             else:
-                print(f"FAIL [{desc}] (0/{marks})")
+                print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
         print(f"\nSCORE: {total_score}/20.0")

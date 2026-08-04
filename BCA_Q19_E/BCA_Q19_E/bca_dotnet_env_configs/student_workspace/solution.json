@@ -1,4 +1,6 @@
 {
+    "question_id": "BCA_Q19_E",
+    "problem_code": "bca_dotnet_env_configs",
     "Logging": {
         "LogLevel": {
             "Default": "TODO",
