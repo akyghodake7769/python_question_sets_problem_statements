@@ -1,0 +1,7 @@
+{
+    "question_id": "LARC_Q11_M",
+    "problem_code": "larc_mdc_distributed_tracing",
+    "trace_id": "TODO",
+    "failing_span_service": "TODO",
+    "total_latency_ms": 0
+}

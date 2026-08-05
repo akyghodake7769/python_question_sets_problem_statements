@@ -1,0 +1,11 @@
+{
+    "question_id": "LARC_Q21_M",
+    "problem_code": "larc_integrated_workshop",
+    "root_cause": "TODO",
+    "correlation_id": "TODO",
+    "failing_class": "TODO",
+    "failing_line_number": 0,
+    "outage_duration_minutes": 0,
+    "log_evidence": "TODO",
+    "remediation_plan": "TODO"
+}

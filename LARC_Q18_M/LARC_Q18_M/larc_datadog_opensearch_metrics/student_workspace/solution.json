@@ -1,0 +1,8 @@
+{
+    "question_id": "LARC_Q18_M",
+    "problem_code": "larc_datadog_opensearch_metrics",
+    "opensearch_agg_syntax": "TODO",
+    "p99_latency_ms": 0,
+    "datadog_query": "TODO",
+    "sla_breach": false
+}
