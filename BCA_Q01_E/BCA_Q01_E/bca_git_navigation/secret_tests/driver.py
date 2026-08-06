@@ -28,7 +28,7 @@ def run_tests():
     commit = data.get('commit_hash', '').strip().lower()
     author = data.get('author', '').strip().lower()
     results['tc1'] = True
-    results['tc2'] = (commit == '25c293a' or commit == '25c293add6572d51d50257e77860e7bb4fdf90b7' or commit == '9b8f2d5')
+    results['tc2'] = (commit == '44fdc9d' or commit == '9b8f2d5e')
     results['tc3'] = (author == 'dev_alice' or author == 'alice')
 
 
