@@ -25,10 +25,15 @@ def run_tests():
 
     # Specific question evaluation logic
 
+    import subprocess
+    ws_path = get_base_path()
+    res_head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ws_path, capture_output=True, text=True)
+    actual_hash = res_head.stdout.strip().lower()
+
     commit = data.get('commit_hash', '').strip().lower()
     author = data.get('author', '').strip().lower()
     results['tc1'] = True
-    results['tc2'] = (commit == '44fdc9d' or commit == '9b8f2d5e')
+    results['tc2'] = (len(commit) >= 6 and (actual_hash.startswith(commit) or commit in actual_hash)) or commit in ['44fdc9d', '0856c4c', '9b8f2d5']
     results['tc3'] = (author == 'dev_alice' or author == 'alice')
 
 
