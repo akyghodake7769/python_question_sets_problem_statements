@@ -1,9 +1,7 @@
 {
     "question_id": "BCA_Q21_M",
     "problem_code": "bca_incident_rca",
-    "classification": "TODO",
-    "deadlock_transaction": "TODO",
-    "timeout_seconds": 0,
-    "correlation_id": "TODO",
-    "mitigation_steps": "TODO"
+    "rca_commit_hash": "TODO",
+    "trigger_exception": "TODO",
+    "prevention_plan": "TODO"
 }

@@ -1,21 +1,25 @@
-# Basic Code Analysis: Advanced Incident RCA Audit Logging
+# Basic Code Analysis: Root Cause Analysis of Production Outage
 
-Duration : 90 Min.
+Duration : 60 Min.
 
 ## Scenario
-Analyze a multi-system failure involving a network gateway timeout and a database deadlock, classify the issues, and generate a structured post-mortem log.
+A major production outage occurred during peak hours. Perform a complete RCA by auditing Git commits and application logs. Document findings in 'outage_rca.json'.
+
+## Target File Location & Creation
+**File to Create/Update**: `student_workspace/outage_rca.json`
 
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Fill out 'rca_audit_log.json' detailing the incident correlation timeline and classification category.
+- Create/update 'outage_rca.json' inside 'student_workspace/' with fields 'rca_commit_hash', 'trigger_exception', and 'prevention_plan'.
 
 ## Instructions to Perform the Task
-1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
-2. Navigate to and click the specific files mentioned in the Task Objectives.
-3. Make the necessary code edits in the editor.
-4. Press `Ctrl + S` (Windows) or `Cmd + S` (Mac) to save your changes.
-5. If you need to run commands, open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
-6. Verify your progress by running `python run.py` locally in the terminal.
+1. When your workspace loads in **VS Code**, open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+2. Initialize the repository history by running:
+   `python setup_git.py`
+3. Use Git CLI tools in the terminal to inspect the commit history.
+4. Create/update `student_workspace/outage_rca.json` and record the extracted commit hash and author username.
+5. Save your changes (`Ctrl + S` or `Cmd + S`).
+6. Verify your work by running `python run.py` in the terminal before submitting.
 
 ## Validation
 Once you have saved your files and verified your progress, return to the platform dashboard and click the **"Run Test" / "Verify"** button. This will automatically evaluate your changes and generate your score!
@@ -25,14 +29,10 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1** | rca_audit_log.json exists and is valid JSON | 3 Marks |
-| **TC2** | Primary classification mapped to INTEGRATION/INFRA | 3 Marks |
-| **TC3** | Deadlock trigger transaction correctly identified | 3 Marks |
-| **TC4** | Gateway timeout duration correctly calculated | 3 Marks |
-| **TC5** | Correlation ID matched | 2 Marks |
-| **TC6** | Post-mortem timeline entries are sequential | 2 Marks |
-| **TC7** | Mitigation steps are documented | 2 Marks |
-| **TC8** | Severity level correctly identified | 2 Marks |
+| **TC1** | outage_rca.json exists in student_workspace/ and is valid JSON | 5 Marks |
+| **TC2** | Root cause commit hash identified | 5 Marks |
+| **TC3** | Triggering error exception class identified | 5 Marks |
+| **TC4** | Long-term prevention plan documented | 5 Marks |
 
 **Total Score: 20 Marks**
 

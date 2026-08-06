@@ -42,18 +42,13 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    import subprocess
-    ws_path = get_base_path()
-    res_head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ws_path, capture_output=True, text=True)
-    actual_hash = res_head.stdout.strip().lower()
-
-    hash_val = data.get('rca_commit_hash', '').strip().lower()
-    exc_val = data.get('trigger_exception', '').strip().lower()
-    plan_val = data.get('prevention_plan', '').strip().lower()
+    aws_k = data.get('aws_access_key', '').strip()
+    jwt_s = data.get('jwt_secret', '').strip()
+    rem = data.get('remediation', '').strip()
     results['tc1'] = True
-    results['tc2'] = (len(hash_val) >= 6 and (actual_hash.startswith(hash_val) or hash_val in actual_hash)) or hash_val in ['8c9e012', '9b8f2d5']
-    results['tc3'] = ('connectiontimeout' in exc_val or 'timeout' in exc_val or 'pool' in exc_val or 'exception' in exc_val)
-    results['tc4'] = (len(plan_val) > 10)
+    results['tc2'] = ('AKIA' in aws_k or 'EXAMPLE' in aws_k or len(aws_k) > 10)
+    results['tc3'] = ('jwt' in jwt_s.lower() or 'secret' in jwt_s.lower() or len(jwt_s) > 10)
+    results['tc4'] = (len(rem) > 10)
 
 
     return results
@@ -99,12 +94,12 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "outage_rca.json exists in student_workspace/ and is valid JSON",
-            "tc2": "Root cause commit hash identified",
-            "tc3": "Triggering error exception class identified",
-            "tc4": "Long-term prevention plan documented"
+            "tc1": "security_audit.json exists in student_workspace/ and is valid JSON",
+            "tc2": "Hardcoded AWS Access Key identified",
+            "tc3": "Hardcoded JWT secret token identified",
+            "tc4": "Remediation recommendation provided"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Root Cause Analysis of Production Outage\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: Security Audit of Hardcoded Credentials\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]

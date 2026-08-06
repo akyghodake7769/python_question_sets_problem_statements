@@ -10,8 +10,7 @@ def run_tests():
     results = {
         "tc1": False,
         "tc2": False,
-        "tc3": False,
-        "tc4": False
+        "tc3": False
     }
     
     sol_path = os.path.join(get_base_path(), 'solution.json')
@@ -42,30 +41,23 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    import subprocess
-    ws_path = get_base_path()
-    res_head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ws_path, capture_output=True, text=True)
-    actual_hash = res_head.stdout.strip().lower()
-
-    hash_val = data.get('rca_commit_hash', '').strip().lower()
-    exc_val = data.get('trigger_exception', '').strip().lower()
-    plan_val = data.get('prevention_plan', '').strip().lower()
+    proc = data.get('killed_process', '').strip().lower()
+    pid = int(data.get('pid', 0))
     results['tc1'] = True
-    results['tc2'] = (len(hash_val) >= 6 and (actual_hash.startswith(hash_val) or hash_val in actual_hash)) or hash_val in ['8c9e012', '9b8f2d5']
-    results['tc3'] = ('connectiontimeout' in exc_val or 'timeout' in exc_val or 'pool' in exc_val or 'exception' in exc_val)
-    results['tc4'] = (len(plan_val) > 10)
+    results['tc2'] = ('java' in proc or 'java_app' in proc)
+    results['tc3'] = (pid == 4891)
 
 
     return results
 
 def verify_task_central(vm_tag, start_time, exam_code, solution_path=None):
     results = run_tests()
-    score = (5 if results.get('tc1') else 0) + (5 if results.get('tc2') else 0) + (5 if results.get('tc3') else 0) + (5 if results.get('tc4') else 0)
+    score = (3 if results.get('tc1') else 0) + (4 if results.get('tc2') else 0) + (3 if results.get('tc3') else 0)
     
     solution_data = {
         'candidate_prefix': vm_tag,
         'assessment_start_time': start_time,
-        'max_duration_minutes': 60,
+        'max_duration_minutes': 30,
         'evaluation_type': 'AUTO_EVALUATION',
         'score': score,
         'results': results,
@@ -86,7 +78,7 @@ if __name__ == "__main__":
             with open(sol_path, 'r') as f:
                 existing_data = json.load(f)
         
-        score = (5 if test_results.get('tc1') else 0) + (5 if test_results.get('tc2') else 0) + (5 if test_results.get('tc3') else 0) + (5 if test_results.get('tc4') else 0)
+        score = (3 if test_results.get('tc1') else 0) + (4 if test_results.get('tc2') else 0) + (3 if test_results.get('tc3') else 0)
         existing_data['score'] = score
         existing_data['results'] = test_results
         
@@ -99,24 +91,23 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "outage_rca.json exists in student_workspace/ and is valid JSON",
-            "tc2": "Root cause commit hash identified",
-            "tc3": "Triggering error exception class identified",
-            "tc4": "Long-term prevention plan documented"
+            "tc1": "solution.json exists in student_workspace/",
+            "tc2": "Killed process name ('java_app') identified",
+            "tc3": "PID (4891) correctly extracted"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Root Cause Analysis of Production Outage\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: System Metrics & Resource Utilization Triage\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]
             desc = TC_NAMES.get(k, '')
             if k == 'tc1':
-                marks = 5
+                marks = 3
             elif k == 'tc2':
-                marks = 5
+                marks = 4
             elif k == 'tc3':
-                marks = 5
+                marks = 3
             elif k == 'tc4':
-                marks = 5
+                marks = 0
             else:
                 marks = 0
 
@@ -125,4 +116,4 @@ if __name__ == "__main__":
                 print(f"PASS TC{tc_num} [{desc}] ({marks}/{marks})")
             else:
                 print(f"FAIL TC{tc_num} [{desc}] (0/{marks})")
-        print(f"\nSCORE: {total_score}/20.0")
+        print(f"\nSCORE: {total_score}/10.0")
