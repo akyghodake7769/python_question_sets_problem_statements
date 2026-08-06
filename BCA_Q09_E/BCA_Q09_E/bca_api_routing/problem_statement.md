@@ -1,0 +1,38 @@
+# Basic Code Analysis: REST API Endpoint Routing & Status Codes
+
+Duration : 30 Min.
+
+## Scenario
+An API route returns HTTP 200 OK for invalid resource creation requests instead of HTTP 400 Bad Request. Create 'server.js' in student_workspace/ with proper status codes.
+
+## Target File Location & Creation
+**File to Create/Update**: `student_workspace/server.js`
+
+## Task Objectives
+Perform the following actions inside the `student_workspace` directory:
+- Create 'server.js' inside 'student_workspace/' and configure Express routes to return status 400 for invalid inputs and status 201 for creation.
+
+## Instructions to Perform the Task
+1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
+2. Open and inspect the scenario input files in `student_workspace/`.
+3. Create/update the file `student_workspace/server.js` and populate it with valid parameters and configurations.
+4. Save your changes (`Ctrl + S` or `Cmd + S`).
+5. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+6. Verify your work by running `python run.py` in the terminal before submitting.
+
+## Validation
+Once you have saved your files and verified your progress, return to the platform dashboard and click the **"Run Test" / "Verify"** button. This will automatically evaluate your changes and generate your score!
+
+## Grading Criteria
+Your performance will be evaluated based on the following test cases:
+
+| Test Case | Requirement | Marks |
+| --------- | ----------- | ----- |
+| **TC1** | server.js exists in student_workspace/ with valid JS code | 3 Marks |
+| **TC2** | HTTP status 400 set for missing payload validation | 4 Marks |
+| **TC3** | HTTP status 201 set for successful creation | 3 Marks |
+
+**Total Score: 10 Marks**
+
+## Important Notes
+- This is an auto-evaluated question. Ensure all code edits are properly saved and the 'run.py' checks pass before submission.

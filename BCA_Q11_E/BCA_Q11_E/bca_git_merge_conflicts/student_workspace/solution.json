@@ -1,4 +1,6 @@
 {
     "question_id": "BCA_Q11_E",
-    "problem_code": "bca_git_merge_conflicts"
+    "problem_code": "bca_git_merge_conflicts",
+    "conflicting_branch": "TODO",
+    "conflict_file": "TODO"
 }

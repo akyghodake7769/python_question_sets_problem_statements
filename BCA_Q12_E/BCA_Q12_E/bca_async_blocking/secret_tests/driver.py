@@ -41,11 +41,13 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    br = data.get('conflicting_branch', '').strip().lower()
-    fl = data.get('conflict_file', '').strip().lower()
-    results['tc1'] = True
-    results['tc2'] = ('feature/login' in br or 'login' in br)
-    results['tc3'] = ('auth.js' in fl or 'auth' in fl)
+    js_path = os.path.join(get_base_path(), 'app.js')
+    if os.path.exists(js_path):
+        with open(js_path, 'r') as f:
+            code = f.read()
+        results['tc1'] = True
+        results['tc2'] = ('readFileSync' not in code)
+        results['tc3'] = ('await' in code or 'promises' in code or 'readFile' in code)
 
 
     return results
@@ -91,11 +93,11 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "solution.json exists in student_workspace/",
-            "tc2": "Conflicting branch name ('feature/login') identified",
-            "tc3": "Conflict marker file ('auth.js') correctly identified"
+            "tc1": "app.js exists in student_workspace/ with valid JS code",
+            "tc2": "readFileSync removed from handler",
+            "tc3": "async/await or promises readFile implemented"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Git Branching & Merge Conflict Identification\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: Async/Await & Thread Blocking Analysis\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]

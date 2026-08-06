@@ -1,24 +1,23 @@
-# Basic Code Analysis: Git Branching & Merge Conflict Identification
+# Basic Code Analysis: SQL Query Performance & Indexing Analysis
 
 Duration : 30 Min.
 
 ## Scenario
-A pull request failed due to merge conflicts between feature branch 'feature/login' and 'main'. Inspect the Git conflict markers and record conflicting line details in solution.json.
+A database query on `orders (customer_id, status)` takes 12 seconds due to full table scans. Inspect 'query_plan.txt' and identify the missing index column.
 
 ## Target File Location & Creation
 **File to Create/Update**: `student_workspace/solution.json`
 
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Create/update 'solution.json' inside 'student_workspace/' with fields 'conflicting_branch' ('feature/login') and 'conflict_file' ('auth.js').
+- Create/update 'solution.json' inside 'student_workspace/' with fields 'table_name' ('orders') and 'index_column' ('customer_id').
 
 ## Instructions to Perform the Task
-1. When your workspace loads in **VS Code**, open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
-2. Initialize the repository history by running:
-   `python setup_git.py`
-3. Use Git CLI tools in the terminal to inspect the commit history.
-4. Create/update `student_workspace/solution.json` and record the extracted commit hash and author username.
-5. Save your changes (`Ctrl + S` or `Cmd + S`).
+1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
+2. Open and inspect the scenario input files in `student_workspace/`.
+3. Create/update the file `student_workspace/solution.json` and populate it with valid parameters and configurations.
+4. Save your changes (`Ctrl + S` or `Cmd + S`).
+5. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
 6. Verify your work by running `python run.py` in the terminal before submitting.
 
 ## Validation
@@ -30,8 +29,8 @@ Your performance will be evaluated based on the following test cases:
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
 | **TC1** | solution.json exists in student_workspace/ | 3 Marks |
-| **TC2** | Conflicting branch name ('feature/login') identified | 4 Marks |
-| **TC3** | Conflict marker file ('auth.js') correctly identified | 3 Marks |
+| **TC2** | Target table ('orders') identified | 4 Marks |
+| **TC3** | Missing index column ('customer_id') identified | 3 Marks |
 
 **Total Score: 10 Marks**
 

@@ -41,11 +41,13 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    br = data.get('conflicting_branch', '').strip().lower()
-    fl = data.get('conflict_file', '').strip().lower()
-    results['tc1'] = True
-    results['tc2'] = ('feature/login' in br or 'login' in br)
-    results['tc3'] = ('auth.js' in fl or 'auth' in fl)
+    py_path = os.path.join(get_base_path(), 'db_pool.py')
+    if os.path.exists(py_path):
+        with open(py_path, 'r') as f:
+            code = f.read()
+        results['tc1'] = True
+        results['tc2'] = ('close()' in code or 'with' in code)
+        results['tc3'] = ('finally' in code or 'with' in code)
 
 
     return results
@@ -91,11 +93,11 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "solution.json exists in student_workspace/",
-            "tc2": "Conflicting branch name ('feature/login') identified",
-            "tc3": "Conflict marker file ('auth.js') correctly identified"
+            "tc1": "db_pool.py exists in student_workspace/ with valid Python code",
+            "tc2": "conn.close() or context manager added",
+            "tc3": "Connection leak prevented on exceptions"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Git Branching & Merge Conflict Identification\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: Identifying Memory Leaks & Resource Cleanup\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]

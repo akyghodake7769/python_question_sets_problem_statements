@@ -41,11 +41,13 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    br = data.get('conflicting_branch', '').strip().lower()
-    fl = data.get('conflict_file', '').strip().lower()
-    results['tc1'] = True
-    results['tc2'] = ('feature/login' in br or 'login' in br)
-    results['tc3'] = ('auth.js' in fl or 'auth' in fl)
+    js_path = os.path.join(get_base_path(), 'server.js')
+    if os.path.exists(js_path):
+        with open(js_path, 'r') as f:
+            code = f.read()
+        results['tc1'] = True
+        results['tc2'] = ('400' in code)
+        results['tc3'] = ('201' in code or '200' in code)
 
 
     return results
@@ -91,11 +93,11 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "solution.json exists in student_workspace/",
-            "tc2": "Conflicting branch name ('feature/login') identified",
-            "tc3": "Conflict marker file ('auth.js') correctly identified"
+            "tc1": "server.js exists in student_workspace/ with valid JS code",
+            "tc2": "HTTP status 400 set for missing payload validation",
+            "tc3": "HTTP status 201 set for successful creation"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Git Branching & Merge Conflict Identification\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: REST API Endpoint Routing & Status Codes\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]

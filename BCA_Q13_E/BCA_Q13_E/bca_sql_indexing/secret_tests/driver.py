@@ -41,11 +41,11 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    br = data.get('conflicting_branch', '').strip().lower()
-    fl = data.get('conflict_file', '').strip().lower()
+    tbl = data.get('table_name', '').strip().lower()
+    col = data.get('index_column', '').strip().lower()
     results['tc1'] = True
-    results['tc2'] = ('feature/login' in br or 'login' in br)
-    results['tc3'] = ('auth.js' in fl or 'auth' in fl)
+    results['tc2'] = (tbl == 'orders')
+    results['tc3'] = ('customer_id' in col or 'customer' in col)
 
 
     return results
@@ -92,10 +92,10 @@ if __name__ == "__main__":
     else:
         TC_NAMES = {
             "tc1": "solution.json exists in student_workspace/",
-            "tc2": "Conflicting branch name ('feature/login') identified",
-            "tc3": "Conflict marker file ('auth.js') correctly identified"
+            "tc2": "Target table ('orders') identified",
+            "tc3": "Missing index column ('customer_id') identified"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Git Branching & Merge Conflict Identification\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: SQL Query Performance & Indexing Analysis\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]
