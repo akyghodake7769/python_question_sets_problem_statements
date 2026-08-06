@@ -41,11 +41,13 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    pom_val = data.get('pom.xml', '').strip().lower()
-    gradle_val = data.get('build.gradle', '').strip().lower()
-    results['tc1'] = True
-    results['tc2'] = ('maven' in pom_val)
-    results['tc3'] = ('gradle' in gradle_val)
+    df_path = os.path.join(get_base_path(), 'Dockerfile')
+    if os.path.exists(df_path):
+        with open(df_path, 'r') as f:
+            code = f.read()
+        results['tc1'] = True
+        results['tc2'] = ('USER' in code and ('node' in code or 'appuser' in code or '10001' in code))
+        results['tc3'] = ('CMD' in code or 'ENTRYPOINT' in code)
 
 
     return results
@@ -91,11 +93,11 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "solution.json exists in student_workspace/ and is valid JSON",
-            "tc2": "pom.xml correctly created and mapped to Maven",
-            "tc3": "build.gradle correctly created and mapped to Gradle"
+            "tc1": "Dockerfile exists in student_workspace/",
+            "tc2": "Non-root user creation (USER node / USER appuser) added",
+            "tc3": "Root privileges dropped before CMD/ENTRYPOINT"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Repository Structure & Component Identification\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: Dockerfile Security & Best Practice Audit\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]

@@ -41,11 +41,11 @@ def run_tests():
 
     # Specific question evaluation logic
 
-    pom_val = data.get('pom.xml', '').strip().lower()
-    gradle_val = data.get('build.gradle', '').strip().lower()
+    pkg = data.get('conflicting_package', '').strip().lower()
+    ver = data.get('resolved_version', '').strip().lower()
     results['tc1'] = True
-    results['tc2'] = ('maven' in pom_val)
-    results['tc3'] = ('gradle' in gradle_val)
+    results['tc2'] = (pkg == 'axios')
+    results['tc3'] = ('1.6' in ver)
 
 
     return results
@@ -91,11 +91,11 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "solution.json exists in student_workspace/ and is valid JSON",
-            "tc2": "pom.xml correctly created and mapped to Maven",
-            "tc3": "build.gradle correctly created and mapped to Gradle"
+            "tc1": "solution.json exists in student_workspace/",
+            "tc2": "Conflicting package name ('axios') identified",
+            "tc3": "Target resolved version ('1.6.0') documented"
         }
-        print("Running Auto-Evaluation for: Basic Code Analysis: Repository Structure & Component Identification\n")
+        print("Running Auto-Evaluation for: Basic Code Analysis: Dependency Version Conflict Resolution\n")
         total_score = 0
         for k, v in test_results.items():
             tc_num = k[2:]

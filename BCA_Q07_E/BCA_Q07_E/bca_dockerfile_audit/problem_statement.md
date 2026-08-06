@@ -1,21 +1,21 @@
-# Basic Code Analysis: Repository Structure & Component Identification
+# Basic Code Analysis: Dockerfile Security & Best Practice Audit
 
 Duration : 30 Min.
 
 ## Scenario
-A support ticket states that build config files are missing. You must create the missing descriptor files in student_workspace/ and fill out the technology mapping.
+A container security scanner flagged a production Dockerfile for running as the root user. Audit and create a secure Dockerfile in student_workspace/.
 
 ## Target File Location & Creation
-**File to Create/Update**: `student_workspace/pom.xml, student_workspace/build.gradle, student_workspace/solution.json`
+**File to Create/Update**: `student_workspace/Dockerfile`
 
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Create 'pom.xml' and 'build.gradle' files inside 'student_workspace/'. Then create 'solution.json' inside 'student_workspace/' mapping each descriptor file key to its build tool ('Maven', 'Gradle').
+- Create a file named 'Dockerfile' directly inside 'student_workspace/'. Add a non-root user instruction ('USER node' or 'USER appuser') before CMD/ENTRYPOINT.
 
 ## Instructions to Perform the Task
 1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
 2. Open and inspect the scenario input files in `student_workspace/`.
-3. Create/update the file `student_workspace/pom.xml, student_workspace/build.gradle, student_workspace/solution.json` and populate it with valid parameters and configurations.
+3. Create/update the file `student_workspace/Dockerfile` and populate it with valid parameters and configurations.
 4. Save your changes (`Ctrl + S` or `Cmd + S`).
 5. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
 6. Verify your work by running `python run.py` in the terminal before submitting.
@@ -28,9 +28,9 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1** | solution.json exists in student_workspace/ and is valid JSON | 3 Marks |
-| **TC2** | pom.xml correctly created and mapped to Maven | 4 Marks |
-| **TC3** | build.gradle correctly created and mapped to Gradle | 3 Marks |
+| **TC1** | Dockerfile exists in student_workspace/ | 3 Marks |
+| **TC2** | Non-root user creation (USER node / USER appuser) added | 4 Marks |
+| **TC3** | Root privileges dropped before CMD/ENTRYPOINT | 3 Marks |
 
 **Total Score: 10 Marks**
 
