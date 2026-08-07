@@ -1,0 +1,10 @@
+{
+    "question_id": "GAIO_Q30_M",
+    "problem_code": "gaio_integrated_ai_ops_workshop",
+    "root_cause": "TODO",
+    "command_audit_completed": false,
+    "logs_sanitized": false,
+    "crisp_prompt_applied": false,
+    "verification_checklist": [],
+    "remediation_plan": "TODO"
+}
