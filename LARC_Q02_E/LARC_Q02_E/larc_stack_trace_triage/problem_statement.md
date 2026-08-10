@@ -1,22 +1,22 @@
-# Log Analysis: Enterprise KQL & Lucene Log Search Queries
+# Log Analysis: Severity Filtering & Java Caused-By Stack Trace Triage
 
 Duration : 30 Min.
 
 ## Scenario
-You are building Kibana dashboard filters. Construct KQL queries to filter logs where HTTP status is 502 AND response time is greater than 2000ms.
+A Java microservice crashed with a cascading exception log. You must filter the logs by severity and locate the root-cause exception at the end of the 'Caused by' chain.
 
 ## Target File Location & Creation
 **File to Create/Update**: `student_workspace/solution.json`
-**Input Resource File to Inspect**: `student_workspace/kibana_discover.log`
+**Input Resource File to Inspect**: `student_workspace/app_trace.log`
 
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Inspect `kibana_discover.log` in `student_workspace/`.
+- Inspect `app_trace.log` in `student_workspace/`.
 - Edit `solution.json` and record the required log analytics or findings.
 
 ## Instructions to Perform the Task
 1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
-2. Open and inspect `kibana_discover.log` inside `student_workspace/`.
+2. Open and inspect `app_trace.log` inside `student_workspace/`.
 3. Open `solution.json` in `student_workspace/` and perform the required modifications.
 4. Save your changes (`Ctrl + S` or `Cmd + S`).
 5. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
@@ -30,9 +30,9 @@ Your performance will be evaluated based on the following test cases:
 
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1** | solution.json exists | 3 Marks |
-| **TC2** | KQL status code filter (status: 502) correctly constructed | 4 Marks |
-| **TC3** | Response time range condition (> 2000) included | 3 Marks |
+| **TC1** | solution.json exists and is valid | 3 Marks |
+| **TC2** | Root cause exception class (NullPointerException/ConnectException) correctly identified | 4 Marks |
+| **TC3** | Originating line number correctly extracted from stack frame | 3 Marks |
 
 **Total Score: 10 Marks**
 
