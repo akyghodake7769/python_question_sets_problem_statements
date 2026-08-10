@@ -1,8 +1,0 @@
-{
-  "trace_id": "7f8a9b0c",
-  "spans": [
-    {"name": "api-gateway", "duration_ms": 120},
-    {"name": "auth-service", "duration_ms": 280},
-    {"name": "payment-db-query", "duration_ms": 3800}
-  ]
-}
