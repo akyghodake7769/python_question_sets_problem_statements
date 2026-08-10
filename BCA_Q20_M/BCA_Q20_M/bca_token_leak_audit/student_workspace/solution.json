@@ -1,7 +1,0 @@
-{
-    "question_id": "BCA_Q20_M",
-    "problem_code": "bca_token_leak_audit",
-    "aws_access_key": "TODO",
-    "jwt_secret": "TODO",
-    "remediation": "TODO"
-}
