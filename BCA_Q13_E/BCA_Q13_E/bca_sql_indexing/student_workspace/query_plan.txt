@@ -1,4 +1,0 @@
-EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 9021 AND status = 'PENDING';
-Seq Scan on orders (cost=0.00..18420.00 rows=12 width=102)
-Filter: (customer_id = 9021)
-Planner Info: Missing index on orders(customer_id)
