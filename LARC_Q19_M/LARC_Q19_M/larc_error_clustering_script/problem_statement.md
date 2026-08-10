@@ -5,16 +5,21 @@ Duration : 90 Min.
 ## Scenario
 You need to write a Python script that reads raw application logs, normalizes stack trace signatures, clusters identical errors, and matches them to runbook entries.
 
+## Target File Location & Creation
+**File to Create/Update**: `student_workspace/cluster_errors.py`
+**Input Resource File to Inspect**: `student_workspace/system_errors.log`
+
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Complete the Python script 'cluster_errors.py' to produce 'error_clusters.json'.
+- Inspect `system_errors.log` in `student_workspace/`.
+- Edit `cluster_errors.py` and record the required log analytics or findings.
 
 ## Instructions to Perform the Task
 1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
-2. Navigate to and click the specific files mentioned in the Task Objectives.
-3. Make the necessary code edits in the editor.
-4. Press `Ctrl + S` (Windows) or `Cmd + S` (Mac) to save your changes.
-5. If you need to run commands, open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+2. Open and inspect `system_errors.log` inside `student_workspace/`.
+3. Open `cluster_errors.py` in `student_workspace/` and perform the required modifications.
+4. Save your changes (`Ctrl + S` or `Cmd + S`).
+5. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
 6. Verify your progress by running `python run.py` locally in the terminal.
 
 ## Validation

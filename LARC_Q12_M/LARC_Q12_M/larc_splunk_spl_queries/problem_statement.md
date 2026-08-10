@@ -1,20 +1,25 @@
 # Log Analysis: Enterprise Splunk SPL Aggregations & Transactions
 
-Duration : 60 Min.
+Duration : 90 Min.
 
 ## Scenario
 An enterprise web portal experienced high latency. Write Splunk SPL queries using `stats` and `transaction` commands to calculate average response time per endpoint.
 
+## Target File Location & Creation
+**File to Create/Update**: `student_workspace/solution.json`
+**Input Resource File to Inspect**: `student_workspace/splunk_logs.txt`
+
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Provide SPL query strings inside 'solution.json'.
+- Inspect `splunk_logs.txt` in `student_workspace/`.
+- Edit `solution.json` and record the required log analytics or findings.
 
 ## Instructions to Perform the Task
 1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
-2. Navigate to and click the specific files mentioned in the Task Objectives.
-3. Make the necessary code edits in the editor.
-4. Press `Ctrl + S` (Windows) or `Cmd + S` (Mac) to save your changes.
-5. If you need to run commands, open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+2. Open and inspect `splunk_logs.txt` inside `student_workspace/`.
+3. Open `solution.json` in `student_workspace/` and perform the required modifications.
+4. Save your changes (`Ctrl + S` or `Cmd + S`).
+5. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
 6. Verify your progress by running `python run.py` locally in the terminal.
 
 ## Validation
