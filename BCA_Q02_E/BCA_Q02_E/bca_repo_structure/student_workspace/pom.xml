@@ -1,1 +1,6 @@
-<project><groupId>com.company</groupId><artifactId>service</artifactId><version>1.0.0</version></project>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.company.app</groupId>
+    <artifactId>bca-app</artifactId>
+    <version>1.0.0</version>
+</project>

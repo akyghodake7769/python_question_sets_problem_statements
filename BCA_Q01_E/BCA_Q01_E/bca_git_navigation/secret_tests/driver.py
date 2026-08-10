@@ -33,7 +33,7 @@ def run_tests():
     commit = data.get('commit_hash', '').strip().lower()
     author = data.get('author', '').strip().lower()
     results['tc1'] = True
-    results['tc2'] = (len(commit) >= 6 and (actual_hash.startswith(commit) or commit in actual_hash)) or commit in ['44fdc9d', '0856c4c', '9b8f2d5']
+    results['tc2'] = (len(commit) >= 6 and (actual_hash.startswith(commit) or commit in actual_hash)) or commit in ['44fdc9d', '0856c4c', '7ffd81a']
     results['tc3'] = (author == 'dev_alice' or author == 'alice')
 
 

@@ -2,27 +2,35 @@ import subprocess
 import sys
 import os
 
-def unpack_bundle_if_needed():
+def ensure_git_repo():
     ws = os.path.dirname(os.path.abspath(__file__))
-    dot_git = os.path.join(ws, ".git")
-    bundle = os.path.join(ws, "repo.bundle")
-    
-    # If .git is missing or empty but repo.bundle exists, unpack it
     res = subprocess.run(["git", "log", "-n", "1"], cwd=ws, capture_output=True, text=True)
-    if (res.returncode != 0 or "fatal" in res.stderr.lower()) and os.path.exists(bundle):
-        print("[SYSTEM] Unpacking Git history from repo.bundle...")
-        subprocess.run(["git", "clone", "repo.bundle", ".git_temp"], cwd=ws, capture_output=True)
-        temp_dot_git = os.path.join(ws, ".git_temp", ".git")
-        if os.path.exists(temp_dot_git):
-            import shutil
-            if os.path.exists(dot_git):
-                shutil.rmtree(dot_git, ignore_errors=True)
-            shutil.move(temp_dot_git, dot_git)
-            shutil.rmtree(os.path.join(ws, ".git_temp"), ignore_errors=True)
-            print("[SYSTEM] Git repository history successfully restored!")
+    if res.returncode != 0 or "fatal" in res.stderr.lower():
+        print("[SYSTEM] Initializing Git repository and commit history...")
+        subprocess.run(["git", "init"], cwd=ws, capture_output=True)
+        
+        # Commit 1 by dev_bob
+        subprocess.run(["git", "config", "user.name", "dev_bob"], cwd=ws, capture_output=True)
+        subprocess.run(["git", "config", "user.email", "dev_bob@company.com"], cwd=ws, capture_output=True)
+        app_js = os.path.join(ws, "app.js")
+        if not os.path.exists(app_js):
+            with open(app_js, "w", encoding="utf-8") as f:
+                f.write("// User registration baseline\nfunction signup(user) {\n  return true;\n}\n")
+        subprocess.run(["git", "add", "."], cwd=ws, capture_output=True)
+        subprocess.run(["git", "commit", "-m", "Initial commit: signup baseline"], cwd=ws, capture_output=True)
+        
+        # Commit 2 by dev_alice (Target Commit)
+        subprocess.run(["git", "config", "user.name", "dev_alice"], cwd=ws, capture_output=True)
+        subprocess.run(["git", "config", "user.email", "dev_alice@company.com"], cwd=ws, capture_output=True)
+        if os.path.exists(app_js):
+            with open(app_js, "w", encoding="utf-8") as f:
+                f.write("// User registration logic\nfunction signup(user) {\n  if (!user.email || !user.password) return false;\n  return true;\n}\n")
+        subprocess.run(["git", "add", "."], cwd=ws, capture_output=True)
+        subprocess.run(["git", "commit", "-m", "Fix: modified signup validation rule"], cwd=ws, capture_output=True)
+        print("[SYSTEM] Git repository initialized successfully!")
 
 def main():
-    unpack_bundle_if_needed()
+    ensure_git_repo()
     print("[SYSTEM] Running local tests...")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     driver_path = os.path.normpath(os.path.join(current_dir, "..", "secret_tests", "driver.py"))
@@ -34,5 +42,4 @@ def main():
     sys.exit(result.returncode)
 
 if __name__ == "__main__":
-    unpack_bundle_if_needed()
     main()

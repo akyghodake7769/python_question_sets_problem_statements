@@ -15,29 +15,13 @@ def run_tests():
     
     sol_path = os.path.join(get_base_path(), 'solution.json')
     if not os.path.exists(sol_path):
-        # Fallback check if student created target file directly
-        target_files = ['user_lookup.js', 'Dockerfile', 'db_pool.py', 'server.js', 'config.js', 'application.yml', 'regex_pattern.json', 'comments.js', 'cache_service.py', 'security_audit.json', 'outage_rca.json']
-        for tf in target_files:
-            alt_p = os.path.join(get_base_path(), tf)
-            if os.path.exists(alt_p):
-                try:
-                    if tf.endswith('.json'):
-                        with open(alt_p, 'r') as f:
-                            data = json.load(f)
-                        break
-                    else:
-                        data = {}
-                        break
-                except Exception:
-                    data = {}
-        else:
-            data = {}
-    else:
-        try:
-            with open(sol_path, 'r') as f:
-                data = json.load(f)
-        except Exception:
-            data = {}
+        return results
+
+    try:
+        with open(sol_path, 'r') as f:
+            data = json.load(f)
+    except Exception:
+        return results
 
     # Specific question evaluation logic
 
@@ -56,6 +40,7 @@ def verify_task_central(vm_tag, start_time, exam_code, solution_path=None):
     results = run_tests()
     score = (3 if results.get('tc1') else 0) + (4 if results.get('tc2') else 0) + (3 if results.get('tc3') else 0)
     
+    # Save solution data for central evaluation registry
     solution_data = {
         'candidate_prefix': vm_tag,
         'assessment_start_time': start_time,
@@ -73,6 +58,7 @@ def verify_task_central(vm_tag, start_time, exam_code, solution_path=None):
 if __name__ == "__main__":
     test_results = run_tests()
     
+    # Write solution file for the platform grading runner
     try:
         sol_path = os.path.join(get_base_path(), 'solution.json')
         existing_data = {}
@@ -93,9 +79,9 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "user_lookup.js exists in student_workspace/ with valid JS code",
+            "tc1": "user_lookup.js contains syntax-valid JS code",
             "tc2": "Code handles non-existent/null user objects correctly",
-            "tc3": "Function returns empty string or null instead of throwing error"
+            "tc3": "Function returns an empty string or null instead of throwing an error"
         }
         print("Running Auto-Evaluation for: Basic Code Analysis: Spotting Logical & Null Errors\n")
         total_score = 0
@@ -109,6 +95,14 @@ if __name__ == "__main__":
             elif k == 'tc3':
                 marks = 3
             elif k == 'tc4':
+                marks = 0
+            elif k == 'tc5':
+                marks = 0
+            elif k == 'tc6':
+                marks = 0
+            elif k == 'tc7':
+                marks = 0
+            elif k == 'tc8':
                 marks = 0
             else:
                 marks = 0
