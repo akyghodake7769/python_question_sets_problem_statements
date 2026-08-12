@@ -80,7 +80,7 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "root_cause_analysis.json exists and is valid JSON",
+            "tc1": "solution.json exists and is valid JSON",
             "tc2": "Root exception correctly identified as SqlException",
             "tc3": "Deadlock error code (1205) correctly located in log trace",
             "tc4": "Class name of blocking query correctly mapped"
