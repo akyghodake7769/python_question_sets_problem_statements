@@ -1,9 +1,9 @@
-# Basic Code Analysis: Integrated Outage Troubleshooting Workshop
+# Basic Code Analysis: Advanced Incident RCA Audit Logging
 
 Duration : 90 Min.
 
 ## Scenario
-A major production crash occurred in the checkout cluster. Correlate Apache logs, Java Spring exceptions, database deadlocks, and configuration properties. Identify the root cause and draft a developer-ready post-mortem.
+Analyze a multi-system failure involving a network gateway timeout and a database deadlock, classify the issues, and generate a structured post-mortem log.
 
 ## Target File Location & Creation
 **File to Create/Update**: `student_workspace/solution.json`
@@ -11,7 +11,7 @@ A major production crash occurred in the checkout cluster. Correlate Apache logs
 
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Fill out 'post_mortem_report.json' in your workspace.
+- Fill out 'rca_audit_log.json' detailing the incident correlation timeline and classification category.
 
 ## Instructions to Perform the Task
 1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
@@ -27,14 +27,14 @@ Once you have saved your files and verified your progress, return to the platfor
 ## Grading Criteria
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1** | post_mortem_report.json exists and is valid JSON | 3 Marks |
-| **TC2** | Root cause correctly identified as database connection pool exhaustion | 3 Marks |
-| **TC3** | Mismatched environment property config parameter mapped correctly | 3 Marks |
-| **TC4** | File name, class, and method of leak suspect correct | 3 Marks |
-| **TC5** | Outage timeline (start/end) correctly parsed from log lines | 2 Marks |
-| **TC6** | Business impact metrics correctly logged | 2 Marks |
-| **TC7** | Immediate recovery steps documented | 2 Marks |
-| **TC8** | Long-term architectural remediations included | 2 Marks |
+| **TC1** | rca_audit_log.json exists and is valid JSON | 3 Marks |
+| **TC2** | Primary classification mapped to INTEGRATION/INFRA | 3 Marks |
+| **TC3** | Deadlock trigger transaction correctly identified | 3 Marks |
+| **TC4** | Gateway timeout duration correctly calculated | 3 Marks |
+| **TC5** | Correlation ID matched | 2 Marks |
+| **TC6** | Post-mortem timeline entries are sequential | 2 Marks |
+| **TC7** | Mitigation steps are documented | 2 Marks |
+| **TC8** | Severity level correctly identified | 2 Marks |
 
 **Total Score: 20 Marks**
 
