@@ -89,7 +89,7 @@ if __name__ == "__main__":
         print(json.dumps(test_results))
     else:
         TC_NAMES = {
-            "tc1": "rca_audit_log.json exists and is valid JSON",
+            "tc1": "solution.json exists and is valid JSON",
             "tc2": "Primary classification mapped to INTEGRATION/INFRA",
             "tc3": "Deadlock trigger transaction correctly identified",
             "tc4": "Gateway timeout duration correctly calculated",

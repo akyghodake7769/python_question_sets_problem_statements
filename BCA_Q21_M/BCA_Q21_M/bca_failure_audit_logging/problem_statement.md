@@ -11,14 +11,14 @@ Analyze a multi-system failure involving a network gateway timeout and a databas
 
 ## Task Objectives
 Perform the following actions inside the `student_workspace` directory:
-- Fill out 'rca_audit_log.json' detailing the incident correlation timeline and classification category.
+- Fill out 'solution.json' detailing the incident correlation timeline and classification category.
 
 ## Instructions to Perform the Task
 1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files.
-2. Open and inspect `outage_trace.log` inside `student_workspace/`.
-3. Open `solution.json` in `student_workspace/` and perform the required modifications.
-4. Save your changes (`Ctrl + S` or `Cmd + S`).
-5. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+2. To initialize the environment log file, run `python setup_git.py` in the terminal inside `student_workspace/` (or inspect `outage_trace.log`).
+3. Open and inspect `outage_trace.log` inside `student_workspace/`.
+4. Open `solution.json` in `student_workspace/` and perform the required modifications.
+5. Save your changes (`Ctrl + S` or `Cmd + S`).
 6. Verify your progress by running `python run.py` locally in the terminal.
 
 ## Validation
@@ -27,7 +27,7 @@ Once you have saved your files and verified your progress, return to the platfor
 ## Grading Criteria
 | Test Case | Requirement | Marks |
 | --------- | ----------- | ----- |
-| **TC1** | rca_audit_log.json exists and is valid JSON | 3 Marks |
+| **TC1** | solution.json exists and is valid JSON | 3 Marks |
 | **TC2** | Primary classification mapped to INTEGRATION/INFRA | 3 Marks |
 | **TC3** | Deadlock trigger transaction correctly identified | 3 Marks |
 | **TC4** | Gateway timeout duration correctly calculated | 3 Marks |
