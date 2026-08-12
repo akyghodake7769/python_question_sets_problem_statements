@@ -34,14 +34,14 @@ def run_tests():
     if os.path.exists(ts_path):
         with open(ts_path, 'r') as f:
             code = f.read()
-        results['tc1'] = ('class SanitizeInterceptor' in code)
-        results['tc2'] = ('intercept(' in code)
-        results['tc3'] = ('replace' in code or 'sanitize' in code or 'regex' in code or '<' in code)
-        results['tc4'] = ('Observable' in code or 'next.handle()' in code)
-        results['tc5'] = True
-        results['tc6'] = True
-        results['tc7'] = True
-        results['tc8'] = ('export' in code)
+        results['tc1'] = ('class SanitizeInterceptor' in code and 'NestInterceptor' in code)
+        results['tc2'] = ('intercept(' in code and ('switchToHttp' in code or 'getRequest' in code or 'request' in code))
+        results['tc3'] = ('.replace(' in code or 'replace(/' in code)
+        results['tc4'] = ('next.handle()' in code and 'Observable' in code)
+        results['tc5'] = ('replace(/' in code or '/<' in code or 'RegExp' in code or ('<' in code and '.replace(' in code))
+        results['tc6'] = ('typeof' in code or 'for (' in code or 'for(' in code or 'Object.keys' in code)
+        results['tc7'] = ('return next.handle()' in code and 'TODO' not in code)
+        results['tc8'] = ('export class SanitizeInterceptor' in code)
 
 
     return results
