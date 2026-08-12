@@ -1,7 +1,0 @@
-{
-    "question_id": "BCA_Q21_M",
-    "problem_code": "bca_incident_rca",
-    "rca_commit_hash": "TODO",
-    "trigger_exception": "TODO",
-    "prevention_plan": "TODO"
-}

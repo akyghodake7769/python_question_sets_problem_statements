@@ -1,1 +1,0 @@
-2026-08-06 10:00:00 [CRITICAL] Database connection pool exhausted by commit 8c9e012. Exception: ConnectionTimeoutException at Pool.java:98
