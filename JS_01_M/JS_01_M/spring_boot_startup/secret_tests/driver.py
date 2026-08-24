@@ -121,6 +121,7 @@
 
 
 
+
 import sys
 import json
 import os
@@ -148,29 +149,72 @@ def run_tests():
     # TC1: Compile codebase
     try:
         if os.name == 'nt':
-            mvn_cmds = [
-                [r'C:\Program Files\Maven\apache-maven-3.9.16\bin\mvn.cmd', 'clean', 'compile'],
-                ['mvn.cmd', 'clean', 'compile'],
-                ['mvn', 'clean', 'compile']
+            mvn_execs = [
+                r'C:\Program Files\Maven\apache-maven-3.9.16\bin\mvn.cmd',
             ]
-        else:
-            mvn_cmds = [
-                ['mvn', 'clean', 'compile']
-            ]
+            for env_var in ['MAVEN_HOME', 'M2_HOME']:
+                val = os.environ.get(env_var)
+                if val:
+                    mvn_execs.append(os.path.join(val, 'bin', 'mvn.cmd'))
+            mvn_execs.extend([
+                r'C:\Program Files\apache-maven-3.9.16\bin\mvn.cmd',
+                r'C:\Program Files\Maven\bin\mvn.cmd',
+                r'C:\Program Files\apache-maven\bin\mvn.cmd',
+                r'C:\apache-maven-3.9.16\bin\mvn.cmd',
+                r'C:\Maven\bin\mvn.cmd',
+                'mvn.cmd',
+                'mvn'
+            ])
 
-        for cmd in mvn_cmds:
-            try:
-                process = subprocess.run(
-                    cmd,
-                    cwd=base_path,
-                    capture_output=True,
-                    text=True
-                )
-                if process.returncode == 0:
-                    results['tc1'] = True
+            cmds_to_try = []
+            for ex in mvn_execs:
+                if os.path.isabs(ex):
+                    if os.path.exists(ex) and ex not in cmds_to_try:
+                        cmds_to_try.append(ex)
+                elif ex not in cmds_to_try:
+                    cmds_to_try.append(ex)
+
+            for mvn_bin in cmds_to_try:
+                for sub_args in ['clean compile', 'compile']:
+                    full_cmd = f'"{mvn_bin}" {sub_args}' if os.path.isabs(mvn_bin) else f'{mvn_bin} {sub_args}'
+                    try:
+                        proc = subprocess.run(
+                            full_cmd,
+                            cwd=base_path,
+                            capture_output=True,
+                            text=True,
+                            shell=True
+                        )
+                        if proc.returncode == 0:
+                            results['tc1'] = True
+                            break
+                    except Exception:
+                        pass
+                    try:
+                        cmd_list = [mvn_bin] + sub_args.split()
+                        proc = subprocess.run(
+                            cmd_list,
+                            cwd=base_path,
+                            capture_output=True,
+                            text=True,
+                            shell=False
+                        )
+                        if proc.returncode == 0:
+                            results['tc1'] = True
+                            break
+                    except Exception:
+                        pass
+                if results['tc1']:
                     break
-            except Exception:
-                continue
+        else:
+            process = subprocess.run(
+                ['mvn', 'clean', 'compile'],
+                cwd=base_path,
+                capture_output=True,
+                text=True
+            )
+            if process.returncode == 0:
+                results['tc1'] = True
     except Exception:
         pass
 
