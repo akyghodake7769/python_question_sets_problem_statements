@@ -1,10 +1,13 @@
 const fs = require('fs');
 
+// TODO: Read PORT, NODE_ENV, and DB_URL from environment variables, sets defaults if missing:
+// PORT default: 3000
+// NODE_ENV default: 'development'
+// DB_URL default: 'mongodb://localhost:27017/test'
+// Write the JSON metadata report to 'config_report.json'
+
 const config = {
-    port: process.env.PORT || 3000,
-    env: process.env.NODE_ENV || 'development',
-    dbUrl: process.env.DB_URL || 'mongodb://localhost:27017/test'
+    // Add environment configuration properties here
 };
 
-fs.writeFileSync('config_report.json', JSON.stringify(config, null, 2));
-console.log("Config report generated successfully.");
+console.log("Config setup ready.");
