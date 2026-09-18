@@ -1,4 +1,3 @@
-
 # Guided Project: PDF-Based Knowledge Base RAG System
 
 Duration: 60 Min.
@@ -19,13 +18,18 @@ Build a complete Retrieval-Augmented Generation (RAG) pipeline using LangChain, 
 
 ## Instructions to Perform the Task
 
-1. Open `Participant_Problem.ipynb` and follow the guided step-by-step tasks.
-2. Complete Task 1 (Document Loading), Task 2 (Chunking), Task 3 (Embeddings & ChromaDB), and Task 4 (RAG Pipeline).
-3. Assemble the complete standalone interactive CLI application in `rag_app.py` (Task 5) with loop and `exit` condition.
-4. Verify your implementation locally by running `python run.py` in the terminal.
-5. Once all test cases pass, click **"Run Test" / "Verify"** on the KodeBuck dashboard to submit.
+1. When your workspace loads in **VS Code**, use the **Explorer** panel on the left to locate your files under `student_workspace/`.
+2. Open `Participant_Problem.ipynb` and follow the guided step-by-step tasks.
+3. Complete Task 1 (Document Loading), Task 2 (Chunking), Task 3 (Embeddings & ChromaDB), and Task 4 (RAG Pipeline).
+4. Assemble the complete standalone interactive CLI application in `rag_app.py` (Task 5) with loop and `exit` condition.
+5. Save your changes (`Ctrl + S` or `Cmd + S`).
+6. Open the built-in terminal by clicking **Terminal > New Terminal** from the top menu.
+7. Verify your progress by running `python run.py` locally in the terminal.
+8. Once all test cases pass, return to the platform dashboard and click the **"Run Test" / "Verify"** button.
 
 ## Validation & Scoring Rubric
+
+Your performance will be evaluated based on the following test cases:
 
 | Test Case     | Requirement                                                                                                         | Marks    |
 | :------------ | :------------------------------------------------------------------------------------------------------------------ | :------- |
@@ -36,3 +40,8 @@ Build a complete Retrieval-Augmented Generation (RAG) pipeline using LangChain, 
 | **TC5** | **Task 5: Final Interactive App (`rag_app.py`)** (Complete CLI loop, answers queries, handles exit)         | 25 Marks |
 
 **Total Score: 100 Marks**
+
+## Important Notes
+
+- This is an auto-evaluated question. Ensure all code edits are properly saved and the `run.py` checks pass before submission.
+- Do not modify files in `secret_tests/` or change directory structures under `student_workspace/`.
