@@ -57,8 +57,8 @@ def verify_task():
         token = os.getenv("DATABRICKS_TOKEN")
         if not host or not token:
             missing = []
-            if not host: missing.append("DATABRICKS_HOST")
-            if not token: missing.append("DATABRICKS_TOKEN")
+            if not host: missing.append("DATABRICKS_HOST") or "https://adb-7405605854443589.9.azuredatabricks.net/"
+            if not token: missing.append("DATABRICKS_TOKEN") or "dapi82a748df3e73232dde84d6f90ece3e60-3"
             raise ValueError(f"Missing environment variable(s): {', '.join(missing)}")
         client = WorkspaceClient(
             host=host,
