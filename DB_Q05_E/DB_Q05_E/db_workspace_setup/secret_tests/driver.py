@@ -201,16 +201,30 @@ def verify_task():
     max_score = 20
 
     # 2. Connect to Databricks
+    client = None
+    init_error = None
     host = os.getenv("DATABRICKS_HOST")
     token = os.getenv("DATABRICKS_TOKEN")
-    
-    client = None
     try:
         from databricks.sdk import WorkspaceClient
-        if host and token:
-            client = WorkspaceClient(host=host, token=token)
-    except Exception:
-        pass
+        if not host or not token:
+            missing = []
+            if not host: missing.append("DATABRICKS_HOST")
+            if not token: missing.append("DATABRICKS_TOKEN")
+            raise ValueError(f"Missing environment variable(s): {', '.join(missing)}")
+        try:
+            client = WorkspaceClient(
+                host=host,
+                token=token,
+                auth_type="pat"
+            )
+        except Exception:
+            client = WorkspaceClient(
+                host=host,
+                token=token
+            )
+    except Exception as e:
+        init_error = f"{type(e).__name__}: {e}"
 
     # TC1: Directory existence
     tc1_name = "TC1: Directory existence (/Shared/<prefix>-workspace exists)"
@@ -228,7 +242,10 @@ def verify_task():
             tc1_reason = f"Directory '{actual_dir_path}' verified."
             dir_ok = True
         else:
-            tc1_reason = f"Directory '/Shared/{target_folder_name}' not found in workspace."
+            if init_error:
+                tc1_reason = f"Databricks client error: {init_error}"
+            else:
+                tc1_reason = f"Directory '/Shared/{target_folder_name}' not found in workspace."
     except Exception as e:
         tc1_reason = f"Error locating directory: {e}"
 
