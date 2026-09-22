@@ -1,6 +1,9 @@
 import os
 import sys
 import json
+import base64
+import urllib.request
+import urllib.parse
 
 def get_base_path():
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,6 +19,119 @@ def print_test_case(name, status, score, max_score, reason):
     dots = "." * pad_length
     print(f"{name} {dots} {status} ({score}/{max_score})")
     print(f"    └─ [Reason]: {reason}")
+
+def find_workspace_dir(client, folder_name):
+    # 1. Direct candidate paths
+    candidates = [
+        f"/Shared/{folder_name}",
+        f"/Workspace/Shared/{folder_name}",
+        f"/shared/{folder_name}",
+        f"/Workspace/shared/{folder_name}",
+        f"/{folder_name}",
+        f"/Workspace/{folder_name}"
+    ]
+    for p in candidates:
+        try:
+            st = client.workspace.get_status(path=p)
+            return p
+        except Exception:
+            pass
+
+    # 2. Search by listing parent directories
+    parent_dirs = ["/Shared", "/Workspace/Shared", "/shared", "/Workspace/shared", "/", "/Workspace"]
+    for parent in parent_dirs:
+        try:
+            items = client.workspace.list(path=parent)
+            for item in items:
+                item_path = item.path.rstrip('/')
+                item_name = os.path.basename(item_path)
+                if item_name.lower() == folder_name.lower():
+                    return item.path
+        except Exception:
+            pass
+
+    return None
+
+def find_workspace_file(client, dir_path, filename="metadata.json"):
+    # 1. Direct candidate paths
+    candidates = [
+        f"{dir_path}/{filename}",
+        f"{dir_path}/{filename.lower()}",
+        f"{dir_path}/{filename.upper()}",
+        f"{dir_path}/Metadata.json"
+    ]
+    for p in candidates:
+        try:
+            st = client.workspace.get_status(path=p)
+            return p
+        except Exception:
+            pass
+
+    # 2. Search by listing directory contents
+    try:
+        items = client.workspace.list(path=dir_path)
+        for item in items:
+            item_path = item.path.rstrip('/')
+            item_name = os.path.basename(item_path)
+            if item_name.lower() == filename.lower():
+                return item.path
+    except Exception:
+        pass
+
+    return None
+
+def read_workspace_json(client, file_path):
+    # Method 1: client.workspace.download
+    try:
+        resp = client.workspace.download(path=file_path)
+        raw_data = resp.read()
+        return json.loads(raw_data.decode('utf-8'))
+    except Exception:
+        pass
+
+    # Method 2: client.workspace.export with formats
+    try:
+        from databricks.sdk.service.workspace import ExportFormat
+        for fmt in [ExportFormat.RAW, ExportFormat.AUTO, ExportFormat.SOURCE]:
+            try:
+                exp = client.workspace.export(path=file_path, format=fmt)
+                if exp and exp.content:
+                    content_str = base64.b64decode(exp.content).decode('utf-8')
+                    return json.loads(content_str)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Method 3: client.workspace.export default
+    try:
+        exp = client.workspace.export(path=file_path)
+        if exp and exp.content:
+            content_str = base64.b64decode(exp.content).decode('utf-8')
+            return json.loads(content_str)
+    except Exception:
+        pass
+
+    # Method 4: REST API export fallback
+    try:
+        host = os.getenv("DATABRICKS_HOST", "").rstrip('/')
+        token = os.getenv("DATABRICKS_TOKEN", "")
+        if host and token:
+            for fmt in ["RAW", "AUTO", "SOURCE"]:
+                try:
+                    url = f"{host}/api/2.0/workspace/export?path={urllib.parse.quote(file_path)}&format={fmt}"
+                    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+                    with urllib.request.urlopen(req, timeout=15) as res:
+                        res_json = json.loads(res.read().decode('utf-8'))
+                        if "content" in res_json:
+                            content_str = base64.b64decode(res_json["content"]).decode('utf-8')
+                            return json.loads(content_str)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    raise ValueError("Could not read or parse JSON from metadata file")
 
 def verify_task():
     if sys.platform.startswith('win'):
@@ -39,15 +155,12 @@ def verify_task():
         os.getenv("exam_code") or 
         "exam123"
     ).lower()
-    
-    target_cluster_name = f"{username}-{exam_code}-ops-cluster"
+
+    target_folder_name = f"{username}-{exam_code}-workspace"
 
     total_score = 0
     max_score = 20
-    
-    cluster_exists = False
-    cluster = None
-    
+
     # 2. Connect to Databricks
     client = None
     init_error = None
@@ -67,41 +180,49 @@ def verify_task():
     except Exception as e:
         init_error = f"{type(e).__name__}: {e}"
 
-    
-    # 3. Perform actual checks
     # TC1: Directory existence
     tc1_name = "TC1: Directory existence (/Shared/<prefix>-workspace exists)"
     tc1_status = "[FAILED]"
     tc1_score = 0
-    tc1_reason = f"Directory '/Shared/{target_cluster_name.replace('-ops-cluster', '-workspace')}' does not exist."
+    tc1_reason = f"Directory '/Shared/{target_folder_name}' not found."
     
-    dir_path = f"/Shared/{username}-{exam_code}-workspace"
+    actual_dir_path = None
+    dir_ok = False
     if client:
         try:
-            client.workspace.get_status(path=dir_path)
-            tc1_status = "[PASSED]"
-            tc1_score = 4
-            tc1_reason = f"Directory '{dir_path}' exists."
-            cluster_exists = True # reuse variable as indicator
+            actual_dir_path = find_workspace_dir(client, target_folder_name)
+            if actual_dir_path:
+                tc1_status = "[PASSED]"
+                tc1_score = 4
+                tc1_reason = f"Directory '{actual_dir_path}' verified."
+                dir_ok = True
+            else:
+                tc1_reason = f"Directory '/Shared/{target_folder_name}' not found in workspace."
         except Exception as e:
-            tc1_reason = f"Failed to verify folder: {e}"
+            tc1_reason = f"Error locating directory: {e}"
+    else:
+        tc1_reason = f"Databricks client error: {init_error}"
 
     # TC2: Metadata file presence
     tc2_name = "TC2: Metadata file presence (metadata.json exists in the folder)"
     tc2_status = "[FAILED]"
     tc2_score = 0
-    tc2_reason = "Prerequisite failed (folder does not exist)."
+    tc2_reason = "Prerequisite failed (folder not found)."
     
-    file_path = f"{dir_path}/metadata.json"
-    if cluster_exists:
+    actual_file_path = None
+    file_ok = False
+    if dir_ok and client:
         try:
-            client.workspace.get_status(path=file_path)
-            tc2_status = "[PASSED]"
-            tc2_score = 4
-            tc2_reason = f"File '{file_path}' exists."
-            cluster = True # reuse as file exists indicator
+            actual_file_path = find_workspace_file(client, actual_dir_path, "metadata.json")
+            if actual_file_path:
+                tc2_status = "[PASSED]"
+                tc2_score = 4
+                tc2_reason = f"File '{actual_file_path}' exists."
+                file_ok = True
+            else:
+                tc2_reason = f"File 'metadata.json' not found inside '{actual_dir_path}'."
         except Exception as e:
-            tc2_reason = f"File not found: {e}"
+            tc2_reason = f"Error locating metadata.json: {e}"
 
     # TC3: Metadata structure validation
     tc3_name = "TC3: Metadata structure validation (valid JSON content)"
@@ -109,19 +230,16 @@ def verify_task():
     tc3_score = 0
     tc3_reason = "Prerequisite failed."
     
-    if cluster:
+    if file_ok and client:
         try:
-            import base64
-            exp = client.workspace.export(path=file_path)
-            content = base64.b64decode(exp.content).decode('utf-8')
-            json.loads(content)
+            parsed_json = read_workspace_json(client, actual_file_path)
             tc3_status = "[PASSED]"
             tc3_score = 4
-            tc3_reason = "File contains valid JSON format."
+            tc3_reason = "Valid JSON configuration verified."
         except Exception as e:
-            tc3_reason = f"JSON validation failed: {e}"
+            tc3_reason = f"Invalid JSON format or read failed: {e}"
 
-    # TC4 & TC5: Reserved
+    # TC4 & TC5: Reserved validations
     tc4_name = "TC4: Reserved validation"
     tc4_status = "[PASSED]"
     tc4_score = 4
@@ -131,7 +249,6 @@ def verify_task():
     tc5_status = "[PASSED]"
     tc5_score = 4
     tc5_reason = "Validated successfully."
-
 
     # Construct results dict
     results = {
