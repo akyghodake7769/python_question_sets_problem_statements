@@ -6,11 +6,33 @@ from datetime import datetime, timezone, timedelta
 
 import socket
 
-HOME = os.path.expanduser('~')
+def get_home():
+    for p in ['/home/LabsKraft/secure_data', '/home/ubuntu/secure_data', '/home/labskraft/secure_data']:
+        if os.path.isdir(p):
+            return os.path.dirname(p)
+    for p in ['/home/LabsKraft', '/home/ubuntu', '/home/labskraft']:
+        if os.path.isdir(p):
+            return p
+    return os.path.expanduser('~')
+
+HOME = get_home()
 
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
+
+def get_aws_metadata():
+    import urllib.request
+    try:
+        token_req = urllib.request.Request("http://169.254.169.254/latest/api/token", headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'}, method='PUT')
+        token = urllib.request.urlopen(token_req, timeout=1).read().decode()
+        id_req = urllib.request.Request("http://169.254.169.254/latest/meta-data/instance-id", headers={'X-aws-ec2-metadata-token': token})
+        instance_id = urllib.request.urlopen(id_req, timeout=1).read().decode()
+        region_req = urllib.request.Request("http://169.254.169.254/latest/meta-data/placement/region", headers={'X-aws-ec2-metadata-token': token})
+        region = urllib.request.urlopen(region_req, timeout=1).read().decode()
+        return instance_id, region
+    except Exception:
+        return None, None
 
 def verify_task():
     print("\n" + "-" * 60)
@@ -111,18 +133,39 @@ def verify_task():
                 existing_data = json.load(f)
         except Exception: pass
     
-    existing_data.update({'score': total_score, 'results': results})
+    output_data = dict(existing_data)
+    output_data.update({'score': total_score, 'results': results})
+    instance_id, aws_region = get_aws_metadata()
+    if instance_id:
+        output_data['instance_id'] = instance_id
+        output_data['aws_region'] = aws_region
     
     with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
+        json.dump(output_data, f, indent=4)
     with open(os.path.join(ws_path, 'solution.py'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
+        json.dump(output_data, f, indent=4)
         
     root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
     with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
+        json.dump(output_data, f, indent=4)
     with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
+        json.dump(output_data, f, indent=4)
+
+    extra_paths = [
+        os.path.join(HOME, 'KodeBuck_Workspace', 'LX_02_M', 'student_workspace', 'solution.json'),
+        os.path.join(HOME, 'KodeBuck_workspace', 'LX_02_M', 'student_workspace', 'solution.json'),
+        os.path.join(HOME, 'KodeBuck_Workspace', 'LX_02_M', 'student_workspace', 'solution.py'),
+        os.path.join(HOME, 'KodeBuck_workspace', 'LX_02_M', 'student_workspace', 'solution.py'),
+        os.path.join(HOME, 'KodeBuck_Workspace', 'linux_file_permissions_local', 'student_workspace', 'solution.json'),
+        os.path.join(HOME, 'KodeBuck_workspace', 'linux_file_permissions_local', 'student_workspace', 'solution.json')
+    ]
+    for ep in extra_paths:
+        try:
+            os.makedirs(os.path.dirname(ep), exist_ok=True)
+            with open(ep, 'w') as f:
+                json.dump(output_data, f, indent=4)
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     verify_task()
