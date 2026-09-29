@@ -14,7 +14,12 @@ def get_home():
 HOME = get_home()
 
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
-START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
+START_TIME = None
+if START_TIME_STR:
+    try:
+        START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00'))
+    except Exception:
+        START_TIME = None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
 def get_aws_metadata():
@@ -59,7 +64,10 @@ def verify_task():
             return True
         try:
             mtime = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
-            return mtime >= START_TIME - timedelta(minutes=15)
+            st = START_TIME
+            if hasattr(st, 'tzinfo') and st.tzinfo is None:
+                st = st.replace(tzinfo=timezone.utc)
+            return mtime >= st - timedelta(minutes=15)
         except Exception:
             return True
 
