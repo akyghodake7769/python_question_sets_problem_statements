@@ -139,12 +139,21 @@ def verify_task():
     with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
         json.dump(output_data, f, indent=4)
         
-    try:
-        if os.path.isdir(os.path.dirname(legacy_metadata_path)):
-            with open(legacy_metadata_path, 'w') as f:
+    extra_paths = [
+        os.path.join(HOME, 'KodeBuck_Workspace', 'LX_01_M', 'student_workspace', 'solution.json'),
+        os.path.join(HOME, 'KodeBuck_workspace', 'LX_01_M', 'student_workspace', 'solution.json'),
+        os.path.join(HOME, 'KodeBuck_Workspace', 'LX_01_M', 'student_workspace', 'solution.py'),
+        os.path.join(HOME, 'KodeBuck_workspace', 'LX_01_M', 'student_workspace', 'solution.py'),
+        os.path.join(HOME, 'KodeBuck_Workspace', 'linux_file_navigation_local', 'student_workspace', 'solution.json'),
+        os.path.join(HOME, 'KodeBuck_workspace', 'linux_file_navigation_local', 'student_workspace', 'solution.json')
+    ]
+    for ep in extra_paths:
+        try:
+            os.makedirs(os.path.dirname(ep), exist_ok=True)
+            with open(ep, 'w') as f:
                 json.dump(output_data, f, indent=4)
-    except Exception:
-        pass
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     verify_task()
