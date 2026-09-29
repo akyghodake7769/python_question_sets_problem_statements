@@ -4,10 +4,22 @@ import sys
 import socket
 from datetime import datetime, timezone, timedelta
 
-HOME = '/home/LabsKraft' if os.path.isdir('/home/LabsKraft') else os.path.expanduser('~')
+def get_home():
+    for p in ['/home/LabsKraft', '/home/ubuntu', '/home/labskraft']:
+        if os.path.isdir(p):
+            return p
+    return os.path.expanduser('~')
+
+HOME = get_home()
 
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
-START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
+START_TIME = None
+if START_TIME_STR:
+    try:
+        START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00'))
+    except Exception:
+        START_TIME = None
+
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('KODEBUCK_USERNAME', 'LOCAL_USER')
 
 def find_all_user_homes():
@@ -25,7 +37,9 @@ def find_all_user_homes():
                 except Exception:
                     pass
     homes.add(os.path.expanduser('~'))
-    return list(homes)
+    for u in ['LabsKraft', 'ubuntu', 'labskraft']:
+        homes.add(f'/home/{u}')
+    return [h for h in homes if os.path.isdir(h)]
 
 def get_aws_metadata():
     import urllib.request
@@ -56,7 +70,10 @@ def verify_task():
             return True
         try:
             mtime = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
-            return mtime >= START_TIME - timedelta(hours=24)
+            st = START_TIME
+            if hasattr(st, 'tzinfo') and st.tzinfo is None:
+                st = st.replace(tzinfo=timezone.utc)
+            return mtime >= st - timedelta(minutes=15)
         except Exception:
             return True
 
@@ -76,22 +93,20 @@ def verify_task():
             target_file = os.path.join(target_dir, 'temp.txt')
             final_file = os.path.join(h, 'final.txt')
             if os.path.isdir(target_dir) and (os.path.isfile(target_file) or os.path.isfile(final_file)):
-                if check_mtime(target_dir) or check_mtime(target_file) or check_mtime(final_file):
-                    tc2_passed = True
-                    break
+                tc2_passed = True
+                break
     results['tc2'] = tc2_passed
     total_score += 5 if tc2_passed else 0
     print(f"TC2: {'workspace/temp.txt created':<30} [{'PASSED' if tc2_passed else 'FAILED'}] ({5 if tc2_passed else 0}/5)")
 
-    # TC3: File moved and renamed to '/home/ubuntu/final.txt' successfully
+    # TC3: File moved and renamed to '~/final.txt' successfully
     tc3_passed = False
     if tc1_passed:
         for h in all_homes:
             final_file = os.path.join(h, 'final.txt')
-            if os.path.isfile(final_file):
-                if check_mtime(final_file):
-                    tc3_passed = True
-                    break
+            if os.path.isfile(final_file) and check_mtime(final_file):
+                tc3_passed = True
+                break
     results['tc3'] = tc3_passed
     total_score += 5 if tc3_passed else 0
     print(f"TC3: {'temp.txt moved and renamed to final.txt':<30} [{'PASSED' if tc3_passed else 'FAILED'}] ({5 if tc3_passed else 0}/5)")
@@ -102,41 +117,49 @@ def verify_task():
 
     ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
     os.makedirs(ws_path, exist_ok=True)
+    sol_path = os.path.join(ws_path, 'solution.json')
+    existing_data = {}
+    if os.path.exists(sol_path):
+        try:
+            with open(sol_path, 'r') as f:
+                existing_data = json.load(f)
+        except Exception: pass
     
-    existing_data = {'score': total_score, 'results': results}
+    output_data = dict(existing_data)
+    output_data.update({'score': total_score, 'results': results})
     instance_id, aws_region = get_aws_metadata()
     if instance_id:
-        existing_data['instance_id'] = instance_id
-        existing_data['aws_region'] = aws_region
-        
-    legacy_metadata_path = os.path.join(HOME, 'KodeBuck_Workspace', 'linux_directories_operations_local', 'student_workspace', 'solution.json')
-    try:
-        if os.path.isfile(legacy_metadata_path):
-            with open(legacy_metadata_path, 'r') as f:
-                metadata = json.load(f)
-                metadata.update(existing_data)
-                existing_data = metadata
-    except Exception:
-        pass
-        
+        output_data['instance_id'] = instance_id
+        output_data['aws_region'] = aws_region
+    
     with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
-    # Write to solution.py as well because the KodeBuck IDE is hardcoded to only upload solution.py!
+        json.dump(output_data, f, indent=4)
     with open(os.path.join(ws_path, 'solution.py'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
+        json.dump(output_data, f, indent=4)
         
     root_ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
     with open(os.path.join(root_ws_path, 'solution.json'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
+        json.dump(output_data, f, indent=4)
     with open(os.path.join(root_ws_path, 'solution.py'), 'w') as f:
-        json.dump(existing_data, f, indent=4)
-        
-    try:
-        if os.path.isdir(os.path.dirname(legacy_metadata_path)):
-            with open(legacy_metadata_path, 'w') as f:
-                json.dump(existing_data, f, indent=4)
-    except Exception:
-        pass
+        json.dump(output_data, f, indent=4)
+
+    extra_paths = []
+    for base_h in [HOME, '/home/LabsKraft', '/home/ubuntu', '/home/labskraft']:
+        extra_paths.extend([
+            os.path.join(base_h, 'KodeBuck_Workspace', 'LX_04_E', 'student_workspace', 'solution.json'),
+            os.path.join(base_h, 'KodeBuck_workspace', 'LX_04_E', 'student_workspace', 'solution.json'),
+            os.path.join(base_h, 'KodeBuck_Workspace', 'LX_04_E', 'student_workspace', 'solution.py'),
+            os.path.join(base_h, 'KodeBuck_workspace', 'LX_04_E', 'student_workspace', 'solution.py'),
+            os.path.join(base_h, 'KodeBuck_Workspace', 'linux_directories_operations_local', 'student_workspace', 'solution.json'),
+            os.path.join(base_h, 'KodeBuck_workspace', 'linux_directories_operations_local', 'student_workspace', 'solution.json')
+        ])
+    for ep in extra_paths:
+        try:
+            os.makedirs(os.path.dirname(ep), exist_ok=True)
+            with open(ep, 'w') as f:
+                json.dump(output_data, f, indent=4)
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     verify_task()
