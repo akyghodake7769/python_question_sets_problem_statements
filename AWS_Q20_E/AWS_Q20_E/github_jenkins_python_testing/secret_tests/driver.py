@@ -12,9 +12,11 @@ exam_code = sys.argv[3] if len(sys.argv) > 3 else 'UNKNOWN'
 
 def find_jenkins_instances():
     import boto3
+    from botocore.config import Config
     from concurrent.futures import ThreadPoolExecutor, as_completed
     import urllib.request
 
+    fast_config = Config(connect_timeout=2, read_timeout=2, retries={'max_attempts': 0})
     priority_regions = []
     
     # 1. Environment variables
@@ -23,32 +25,25 @@ def find_jenkins_instances():
         if val and val not in priority_regions:
             priority_regions.append(val)
             
-    # 2. Local EC2 IMDS metadata
+    # 2. Local EC2 IMDS metadata (fast 0.5s timeout)
     try:
         token_req = urllib.request.Request(
             "http://169.254.169.254/latest/api/token",
             headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
             method="PUT"
         )
-        with urllib.request.urlopen(token_req, timeout=1) as token_file:
+        with urllib.request.urlopen(token_req, timeout=0.5) as token_file:
             token = token_file.read().decode('utf-8')
         req = urllib.request.Request(
             "http://169.254.169.254/latest/meta-data/placement/region",
             headers={"X-aws-ec2-metadata-token": token}
         )
-        with urllib.request.urlopen(req, timeout=1) as region_file:
+        with urllib.request.urlopen(req, timeout=0.5) as region_file:
             imds_reg = region_file.read().decode('utf-8').strip()
             if imds_reg and imds_reg not in priority_regions:
                 priority_regions.append(imds_reg)
     except Exception:
-        try:
-            req = urllib.request.Request("http://169.254.169.254/latest/meta-data/placement/region")
-            with urllib.request.urlopen(req, timeout=1) as region_file:
-                imds_reg = region_file.read().decode('utf-8').strip()
-                if imds_reg and imds_reg not in priority_regions:
-                    priority_regions.append(imds_reg)
-        except Exception:
-            pass
+        pass
 
     # 3. Default Boto3 session region
     try:
@@ -58,37 +53,18 @@ def find_jenkins_instances():
     except Exception:
         pass
 
-    # 4. Standard active AWS regions (dynamically checked)
+    # 4. Standard active AWS regions (curated major regions only to avoid slow opt-in regions)
     common_regions = [
         'eu-west-1', 'us-east-1', 'us-east-2', 'us-west-2',
-        'eu-central-1', 'eu-west-2', 'eu-west-3', 'eu-north-1',
-        'ap-south-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1',
-        'sa-east-1', 'ca-central-1', 'us-west-1'
+        'eu-central-1', 'eu-west-2', 'ap-south-1', 'us-west-1'
     ]
     for cr in common_regions:
         if cr not in priority_regions:
             priority_regions.append(cr)
 
-    # 5. Query enabled regions for this AWS account if possible
-    try:
-        base_client = boto3.client('ec2', region_name=priority_regions[0] if priority_regions else 'us-east-1')
-        described = base_client.describe_regions(AllRegions=False).get('Regions', [])
-        for r in described:
-            r_name = r.get('RegionName')
-            if r_name and r_name not in priority_regions:
-                priority_regions.append(r_name)
-    except Exception:
-        try:
-            available = boto3.session.Session().get_available_regions('ec2')
-            for r_name in available:
-                if r_name not in priority_regions:
-                    priority_regions.append(r_name)
-        except Exception:
-            pass
-
     def check_region(region):
         try:
-            client = boto3.client('ec2', region_name=region)
+            client = boto3.client('ec2', region_name=region, config=fast_config)
             res = client.describe_instances(
                 Filters=[
                     {'Name': 'tag:Name', 'Values': ['jenkins-master', 'jenkins-agent']},
@@ -123,7 +99,7 @@ def find_jenkins_instances():
             pass
         return None
 
-    # Check regions concurrently for rapid detection
+    # Check regions concurrently with short timeouts for ultra-fast resolution
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = {executor.submit(check_region, reg): reg for reg in priority_regions}
         partial_match = None
@@ -163,7 +139,7 @@ def find_jenkins_instances():
         'agent_private_ip': None,
         'master_public_ip': None,
         'agent_public_ip': None,
-        'client': boto3.client('ec2', region_name=def_region)
+        'client': boto3.client('ec2', region_name=def_region, config=fast_config)
     }
 
 def get_aws_client(service):
