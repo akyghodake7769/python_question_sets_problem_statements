@@ -5,9 +5,11 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 # Capture Assessment Start Time
-START_TIME_STR = os.getenv('KODEARENA_START_TIME')
+START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else "LOCAL_USER"
+import sys
+    exam_code = sys.argv[3] if len(sys.argv) > 3 else 'UNKNOWN'
 
 def get_aws_client(service):
     import boto3
@@ -41,7 +43,7 @@ def verify_task():
     start_time = START_TIME_STR
     
     print("\n" + "-"*70)
-    print(f"{'KODEARENA REAL-TIME JENKINS MASTER-AGENT AUDIT':^70}")
+    print(f"{'KODEBUCK REAL-TIME JENKINS MASTER-AGENT AUDIT':^70}")
     print("-"*70)
 
     total_score = 0
