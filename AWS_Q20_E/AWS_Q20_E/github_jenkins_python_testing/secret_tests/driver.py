@@ -38,6 +38,7 @@ def get_aws_client(service):
         return boto3.client(service, region_name=aws_region)
 
 def verify_task():
+    global START_TIME
     user_prefix = USER_PREFIX
     start_time = START_TIME_STR
     
