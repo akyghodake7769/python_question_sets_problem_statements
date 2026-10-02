@@ -17,7 +17,7 @@ STEP 1: AWS CONSOLE LOGIN
 STEP 2: CREATE EC2 INSTANCE (PASSES TC1)
 - Navigate to the EC2 Dashboard -> Click "Launch Instance".
 - Enter the exact Instance Name: `labskraft-ubuntu-ec2-<your-labskraft-username>`.
-- Select Ubuntu Server 22.04 LTS AMI.
+- Select Ubuntu Server 24.04 LTS AMI.
 - Select t2.micro Instance Type.
 
 STEP 3: CREATE & ATTACH EBS VOLUME (PASSES TC2)
