@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 START_TIME_STR = os.getenv('KODEBUCK_START_TIME')
 START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else os.getenv('LABSKRAFT_USERNAME', 'LOCAL_USER')
-exam_code = sys.argv[3] if len(sys.argv) > 3 else (os.getenv('KODEBUCK_EXAM_CODE') or os.getenv('EXAM_CODE') or 'UNKNOWN')
+exam_code = sys.argv[3] if len(sys.argv) > 3 else 'UNKNOWN'
 
 def get_ec2_client(region_name='eu-west-2'):
     import boto3
@@ -46,33 +46,8 @@ def resolve_username(default_prefix):
 
 def verify_task():
     username = resolve_username(USER_PREFIX)
+    target_instance = f"{username}-{exam_code}"
     region = 'eu-west-2'
-    
-    resolved_exam_code = exam_code
-    if resolved_exam_code == 'UNKNOWN':
-        try:
-            ec2 = get_ec2_client(region)
-            resp = ec2.describe_instances(Filters=[
-                {'Name': 'tag:Name', 'Values': [f"{username}-*"]},
-                {'Name': 'instance-state-name', 'Values': ['running']}
-            ])
-            for res in resp.get('Reservations', []):
-                for inst in res.get('Instances', []):
-                    for tag in inst.get('Tags', []):
-                        if tag['Key'] == 'Name':
-                            val = tag['Value']
-                            suffix = val.replace(f"{username}-", "").strip()
-                            if suffix:
-                                resolved_exam_code = suffix
-                                break
-                if resolved_exam_code != 'UNKNOWN':
-                    break
-        except Exception as e:
-            print(f"[DEBUG] Dynamic resolution error: {e}")
-
-    print(f"[DEBUG] Username resolved: {username}")
-    print(f"[DEBUG] Exam code resolved: {resolved_exam_code}")
-    target_instance = f"{username}-{resolved_exam_code}"
     start_time = START_TIME_STR
 
     print("\n" + "-" * 60)
@@ -90,11 +65,10 @@ def verify_task():
 
         now = datetime.now(timezone.utc)
         elapsed_minutes = (now - session_start).total_seconds() / 60
-        max_duration_env = os.getenv('KODEBUCK_ASSESSMENT_DURATION') or os.getenv('KODEARENA_ASSESSMENT_DURATION')
-        max_duration = int(max_duration_env) if max_duration_env else 180  # Fallback to 180 Min if not set
+        max_duration_env = os.getenv('KODEBUCK_ASSESSMENT_DURATION') or os.getenv('KODEBUCK_ASSESSMENT_DURATION')
+        max_duration = int(max_duration_env) if max_duration_env else 30  # Fallback to 30 Min if not set
 
-        is_trial = 'demo' in username.lower() or 'trial' in username.lower() or 'local' in username.lower()
-        if elapsed_minutes > max_duration + 10 and not is_trial:
+        if elapsed_minutes > max_duration + 10:
             print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
             raise Exception("Time Limit Exceeded")
 
@@ -112,22 +86,6 @@ def verify_task():
                 {'Name': 'instance-state-name', 'Values': ['running']}
             ])
             instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
-            
-            # Robust fallback for name mismatch (exam_code vs UNKNOWN vs AWS_Q23_E)
-            if not instances:
-                for alt_exam_code in ['UNKNOWN', 'AWS_Q23_E', 'AWS_Q23_E_test', '1123']:
-                    alt_instance = f"{username}-{alt_exam_code}"
-                    if alt_instance != target_instance:
-                        resp = ec2.describe_instances(Filters=[
-                            {'Name': 'tag:Name', 'Values': [alt_instance]},
-                            {'Name': 'instance-state-name', 'Values': ['running']}
-                        ])
-                        alt_instances = [i for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
-                        if alt_instances:
-                            target_instance = alt_instance
-                            instances = alt_instances
-                            break
-                            
             if instances:
                 inst = instances[0]
                 launch_time = inst['LaunchTime']
@@ -320,4 +278,3 @@ def verify_task():
 
 if __name__ == "__main__":
     verify_task()
-
