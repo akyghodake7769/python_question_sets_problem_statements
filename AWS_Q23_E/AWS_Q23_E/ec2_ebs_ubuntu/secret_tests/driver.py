@@ -302,7 +302,12 @@ def verify_task():
     except Exception as e:
         print(f"[ERROR] Could not write solution.json: {e}")
 
-def verify_aws_on_server(candidate_email, question_id, labskraft_user=None, start_time=None, solution_data=None):
+def verify_aws_on_server(candidate_email=None, question_id='AWS_Q23_E', labskraft_username=None, labskraft_user=None, assessment_start_time=None, start_time=None, solution_data=None, exam_code_arg="UNKNOWN", solution_path=None, **kwargs):
+    raw_user = labskraft_username or labskraft_user or candidate_email
+    if raw_user and '@' in raw_user:
+        raw_user = raw_user.split('@')[0]
+    if raw_user and '_' in raw_user:
+        raw_user = raw_user.split('_')[0]
     return verify_task()
 
 if __name__ == "__main__":
