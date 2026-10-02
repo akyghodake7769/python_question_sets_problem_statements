@@ -13,7 +13,7 @@ Perform the following actions in the AWS environment:
 ### 1. Create EC2 Instance (Ubuntu Linux)
 
 - **Instance Name:** `<your-labskraft-username>-<your-exam-code>` (replace `<your-labskraft-username>-<your-exam-code>` with your actual LabsKraft username, e.g. `labs-kraft-demo106`)
-- **AMI (Operating System):** Ubuntu Server (e.g., 22.04 LTS)
+- **AMI (Operating System):** Ubuntu Server 24.04 LTS
 - **Instance Type:** `t2.micro`
 - **Region:** `eu-west-2` (Europe - London)
 
@@ -36,11 +36,11 @@ Once you have performed the tasks, you can run the verification script to check 
 
 Your performance will be evaluated based on the following test cases:
 
-| Test Case | Requirement                                                                          | Marks   |
-| --------- | ------------------------------------------------------------------------------------ | ------- |
-| **TC1**   | EC2 Instance Existence (`t2.micro`, Ubuntu, named `<username>-<exam_code>`) | 5 Marks |
-| **TC2**   | EBS Volume Created (10 GB, `gp3`) and Attached to EC2                                | 5 Marks |
-| **TC3**   | EBS Volume Mounted at `/mnt/data-store` (`ext4`)                                     | 5 Marks |
+| Test Case     | Requirement                                                                     | Marks   |
+| ------------- | ------------------------------------------------------------------------------- | ------- |
+| **TC1** | EC2 Instance Existence (`t2.micro`, Ubuntu, named `<username>-<exam_code>`) | 5 Marks |
+| **TC2** | EBS Volume Created (10 GB,`gp3`) and Attached to EC2                          | 5 Marks |
+| **TC3** | EBS Volume Mounted at`/mnt/data-store` (`ext4`)                             | 5 Marks |
 
 **Total Score: 15 Marks**
 
