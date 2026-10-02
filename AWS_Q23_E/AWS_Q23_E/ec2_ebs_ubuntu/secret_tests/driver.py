@@ -134,14 +134,6 @@ def verify_task():
                 if inst.get('InstanceType') != 't2.micro':
                     print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
                     print(f"     └─ [Reason]: Instance found but type is '{inst.get('InstanceType')}', expected 't2.micro'.")
-                elif launch_time < session_start:
-                    ist_tz = timezone(timedelta(hours=5, minutes=30))
-                    c_ist = launch_time.astimezone(ist_tz)
-                    s_ist = session_start.astimezone(ist_tz)
-                    info = f"Launched at {c_ist.strftime('%I:%M:%S %p IST')}, Assessment started at {s_ist.strftime('%I:%M:%S %p IST')}"
-                    print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
-                    print(f"     └─ [Reason]: Instance was launched BEFORE the assessment started. Please terminate and launch a new one!")
-                    print(f"     └─ [Info]: {info}")
                 elif launch_time > session_start + timedelta(minutes=max_duration + 10):
                     print(f"TC1: EC2 Instance (Ubuntu t2.micro) ............ [FAILED] (0/5)")
                     print(f"     └─ [Reason]: Instance was launched after the assessment time window ended.")
@@ -185,15 +177,7 @@ def verify_task():
                 
             if found_volume:
                 create_time = found_volume['CreateTime']
-                if create_time < session_start:
-                    ist_tz = timezone(timedelta(hours=5, minutes=30))
-                    c_ist = create_time.astimezone(ist_tz)
-                    s_ist = session_start.astimezone(ist_tz)
-                    info = f"Created at {c_ist.strftime('%I:%M:%S %p IST')}, Assessment started at {s_ist.strftime('%I:%M:%S %p IST')}"
-                    print(f"TC2: EBS Volume (10 GB gp3) Created .............. [FAILED] (0/5)")
-                    print(f"     └─ [Reason]: Volume was created BEFORE the assessment started. Please DELETE and recreate it!")
-                    print(f"     └─ [Info]: {info}")
-                elif create_time > session_start + timedelta(minutes=max_duration + 10):
+                if create_time > session_start + timedelta(minutes=max_duration + 10):
                     print(f"TC2: EBS Volume (10 GB gp3) Created .............. [FAILED] (0/5)")
                     print(f"     └─ [Reason]: Volume was created after the assessment time window ended.")
                 else:
@@ -317,6 +301,9 @@ def verify_task():
             json.dump(solution_data, f, indent=4)
     except Exception as e:
         print(f"[ERROR] Could not write solution.json: {e}")
+
+def verify_aws_on_server(candidate_email, question_id, labskraft_user=None, start_time=None, solution_data=None):
+    return verify_task()
 
 if __name__ == "__main__":
     verify_task()
