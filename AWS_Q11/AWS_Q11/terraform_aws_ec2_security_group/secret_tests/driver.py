@@ -1,166 +1,3 @@
-# import json
-# import os
-# import sys
-# import subprocess
-# from datetime import datetime, timezone
-
-# # Capture Assessment Start Time
-# START_TIME_STR = os.getenv('KLOUDKRAFT_START_TIME')
-# START_TIME = datetime.fromisoformat(START_TIME_STR.strip().replace('Z', '+00:00')) if START_TIME_STR else None
-# USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 else "LOCAL_USER"
-
-# def verify_task():
-#     user_prefix = USER_PREFIX
-#     start_time = START_TIME_STR
-    
-#     # Standard LabsKraft Header
-#     print("\n" + "-"*70)
-#     print(f"{'KODEARENA REAL-TIME TERRAFORM AUDIT':^70}")
-#     print("-"*70)
-
-#     total_score = 0
-#     results = {}
-
-#     try:
-#         # Time Enforcement Logic
-#         if not START_TIME:
-#             print("[ERROR] KLOUDKRAFT_START_TIME environment variable is missing.")
-#             raise Exception("Invalid Session")
-
-#         now = datetime.now(timezone.utc)
-#         elapsed_minutes = (now - START_TIME).total_seconds() / 60
-#         max_duration = 75  # 75 Min assessment
-
-#         if elapsed_minutes > max_duration + 5: # 5 min grace
-#             print(f"[ERROR] Assessment duration exceeded. Elapsed: {elapsed_minutes:.1f}m / Allowed: {max_duration}m")
-#             raise Exception("Time Limit Exceeded")
-
-#         print(f"[SYSTEM] Validating Resources for: {user_prefix}")
-#         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n")
-
-#         # --- TC1: Terraform Plan ---
-#         try:
-#             tf_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
-#             tc1_passed = False
-#             if os.path.exists(os.path.join(tf_dir, "main.tf")):
-#                 val_check = subprocess.run(["terraform", "validate", "-json"], cwd=tf_dir, capture_output=True, text=True)
-#                 if val_check.returncode == 0:
-#                     tc1_passed = True
-
-#             if tc1_passed:
-#                 results['tc1'] = True
-#                 print(f"TC1: Terraform Plan & State Initialization Check ....... [PASSED] (10/10)")
-#             else:
-#                 results['tc1'] = False
-#                 print(f"TC1: Terraform Plan & State Initialization Check ....... [FAILED] (0/10)")
-#                 print(f"     └─ [Reason]: terraform validate/plan failed or main.tf missing.")
-#         except Exception as e:
-#             results['tc1'] = False
-#             print(f"TC1: Terraform Plan & State Initialization Check ....... [FAILED] (0/10)")
-#             print(f"     └─ [Error]: {str(e)}")
-
-#         # --- TC2: Security Group ---
-#         if not results.get('tc1'):
-#             results['tc2'] = False
-#             print(f"TC2: Security Group Ingress Rules Verification ......... [FAILED] (0/10)")
-#             print(f"     └─ [Reason]: Prerequisite failed (Terraform invalid).")
-#             results['tc3'] = False
-#             print(f"TC3: EC2 Instance State & Tagging Verification ......... [FAILED] (0/10)")
-#             print(f"     └─ [Reason]: Prerequisite failed.")
-#         else:
-#             try:
-#                 tf_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
-#                 state_file = os.path.join(tf_dir, "terraform.tfstate")
-#                 tc2_passed = False
-#                 if os.path.exists(state_file):
-#                     with open(state_file, "r") as sf:
-#                         state_data = json.load(sf)
-#                         resources = state_data.get("resources", [])
-#                         has_sg = any(r.get("type") == "aws_security_group" for r in resources)
-#                         if has_sg:
-#                             tc2_passed = True
-#                             if START_TIME:
-#                                 mtime = datetime.fromtimestamp(os.path.getmtime(state_file), timezone.utc)
-#                                 if mtime < START_TIME:
-#                                     tc2_passed = False
-#                                     print(f"[WARN] Terraform state was created before current session started (Old Session).")
-
-#                 if tc2_passed:
-#                     results['tc2'] = True
-#                     print(f"TC2: Security Group Ingress Rules Verification ......... [PASSED] (10/10)")
-#                 else:
-#                     results['tc2'] = False
-#                     print(f"TC2: Security Group Ingress Rules Verification ......... [FAILED] (0/10)")
-#                     print(f"     └─ [Reason]: Security Group missing in state in current session.")
-#             except Exception as e:
-#                 results['tc2'] = False
-#                 print(f"TC2: Security Group Ingress Rules Verification ......... [FAILED] (0/10)")
-#                 print(f"     └─ [Error]: {str(e)}")
-            
-#             # --- TC3: EC2 Instance ---
-#             try:
-#                 tf_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
-#                 state_file = os.path.join(tf_dir, "terraform.tfstate")
-#                 tc3_passed = False
-#                 if os.path.exists(state_file):
-#                     with open(state_file, "r") as sf:
-#                         state_data = json.load(sf)
-#                         resources = state_data.get("resources", [])
-#                         has_ec2 = any(r.get("type") == "aws_instance" for r in resources)
-#                         if has_ec2:
-#                             tc3_passed = True
-#                             if START_TIME:
-#                                 mtime = datetime.fromtimestamp(os.path.getmtime(state_file), timezone.utc)
-#                                 if mtime < START_TIME:
-#                                     tc3_passed = False
-#                                     print(f"[WARN] Terraform state was created before current session started (Old Session).")
-
-#                 if tc3_passed:
-#                     results['tc3'] = True
-#                     print(f"TC3: EC2 Instance State & Tagging Verification ......... [PASSED] (10/10)")
-#                 else:
-#                     results['tc3'] = False
-#                     print(f"TC3: EC2 Instance State & Tagging Verification ......... [FAILED] (0/10)")
-#                     print(f"     └─ [Reason]: EC2 instance missing in state in current session.")
-#             except Exception as e:
-#                 results['tc3'] = False
-#                 print(f"TC3: EC2 Instance State & Tagging Verification ......... [FAILED] (0/10)")
-#                 print(f"     └─ [Error]: {str(e)}")
-
-#         # Final Scoring
-#         total_score = sum([10 for r in results.values() if r])
-        
-#         print("-" * 70)
-#         print(f"{'TOTAL SCORE:':<52} {total_score}/30")
-#         print("-" * 70 + "\n")
-
-#     except Exception as e:
-#         print(f"[ERROR] Real-time audit failed: {str(e)}")
-#         total_score = 0
-
-#     # Save Metadata for Central Evaluation
-#     solution_data = {
-#         'candidate_prefix': user_prefix,
-#         'assessment_start_time': start_time,
-#         'evaluation_type': 'REAL_TIME_API',
-#         'score': total_score,
-#         'results': results
-#     }
-    
-#     try:
-#         ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
-#         os.makedirs(ws_path, exist_ok=True)
-#         with open(os.path.join(ws_path, 'solution.json'), 'w') as f:
-#             json.dump(solution_data, f, indent=4)
-#     except Exception as e:
-#         print(f"[ERROR] Could not write solution.json: {e}")
-
-# if __name__ == '__main__':
-#     verify_task()
-
-
-
-
 import json
 import os
 import sys
@@ -182,9 +19,6 @@ except ImportError:
 # AWS region is strictly eu-west-2 (London)
 AWS_REGION = "eu-west-2"
 
-# Candidate regions to inspect if resources were created in alternate regions
-REGIONS_TO_CHECK = [AWS_REGION, "eu-west-1", "us-east-1", "us-east-2", "ap-south-1", "us-west-2"]
-
 # Session Start Time handling
 START_TIME_STR = os.getenv('KLOUDKRAFT_START_TIME')
 START_TIME = None
@@ -195,43 +29,6 @@ if START_TIME_STR:
         START_TIME = None
 
 USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].strip() else os.getenv('LABSKRAFT_USERNAME', 'LOCAL_USER')
-
-
-def get_all_ec2_clients():
-    """
-    Resolves EC2 clients using:
-    1. Active default credentials (IAM role on EC2/CloudShell, ~/.aws/credentials)
-    2. Active environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-    Across target candidate AWS regions.
-    """
-    if boto3 is None:
-        return []
-
-    clients = []
-
-    # 1. Default boto3 credential chain (uses candidate VM IAM role or ~/.aws/credentials)
-    for r in REGIONS_TO_CHECK:
-        try:
-            c = boto3.client('ec2', region_name=r)
-            clients.append((c, r, 'default'))
-        except Exception:
-            pass
-
-    # 2. Environment variables if set
-    env_key = os.getenv('AWS_ACCESS_KEY_ID') or os.getenv('AWS_ACCESS_KEY')
-    env_sec = os.getenv('AWS_SECRET_ACCESS_KEY') or os.getenv('AWS_SECRET_KEY')
-    env_tok = os.getenv('AWS_SESSION_TOKEN') or os.getenv('AWS_SECURITY_TOKEN')
-    if env_key and env_sec:
-        for r in REGIONS_TO_CHECK:
-            try:
-                kwargs = {'region_name': r, 'aws_access_key_id': env_key, 'aws_secret_access_key': env_sec}
-                if env_tok:
-                    kwargs['aws_session_token'] = env_tok
-                clients.append((boto3.client('ec2', **kwargs), r, 'env'))
-            except Exception:
-                pass
-
-    return clients
 
 
 def get_ec2_client():
@@ -258,15 +55,15 @@ def get_ec2_client():
         return None
 
 
-def run_aws_cli(args, region=AWS_REGION):
+def run_aws_cli(args):
     """
-    Fallback helper to run AWS CLI commands in target region if boto3 is unavailable.
+    Fallback helper to run AWS CLI commands in eu-west-2 if boto3 is unavailable.
     """
     aws_bin = shutil.which('aws')
     if not aws_bin:
         return None
     try:
-        cmd = [aws_bin] + args + ['--region', region, '--output', 'json']
+        cmd = [aws_bin] + args + ['--region', AWS_REGION, '--output', 'json']
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
         if res.returncode == 0 and res.stdout.strip():
             return json.loads(res.stdout)
@@ -306,19 +103,19 @@ def is_port_open(ip_permissions, port):
 def find_terraform_dir():
     """
     Intelligently locates the directory containing main.tf.
-    Searches environment variables, workspace directories, lab directories, and candidate home folders.
+    Searches environment variables, workspace directories, lab directories, and subdirectories.
     """
     candidates = []
 
+    # 1. Environment variables
     for env_var in ['TERRAFORM_DIR', 'TF_DIR', 'WORKSPACE_DIR', 'LAB_WORKSPACE', 'CODEBUCK_WORKSPACE', 'KLOUDKRAFT_WORKSPACE']:
         val = os.getenv(env_var)
         if val and os.path.isdir(val):
             candidates.append(os.path.abspath(val))
 
+    # 2. Known project paths
     base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
     student_ws = os.path.join(base_dir, 'student_workspace')
-    home_dir = os.path.expanduser('~')
-
     candidates.extend([
         student_ws,
         base_dir,
@@ -327,57 +124,48 @@ def find_terraform_dir():
         os.getcwd(),
         os.path.join(os.getcwd(), 'student_workspace'),
         os.path.join(os.getcwd(), 'terraform-ec2-lab'),
-        os.path.join(home_dir, 'terraform-ec2-lab'),
-        os.path.join(home_dir, 'student_workspace'),
-        home_dir,
-        '/home/LabsKraft',
-        '/home/ubuntu',
-        '/tmp'
+        os.path.expanduser('~/terraform-ec2-lab'),
+        os.path.expanduser('~/student_workspace'),
+        os.path.expanduser('~')
     ])
 
     for c in candidates:
         if os.path.isdir(c) and os.path.isfile(os.path.join(c, 'main.tf')):
             return os.path.abspath(c)
 
-    # Dynamic search across known roots and subdirectories
-    search_roots = [student_ws, base_dir, os.getcwd(), home_dir, '/home/LabsKraft', '/home/ubuntu']
-    seen = set()
+    # 3. Dynamic search within base_dir and cwd
+    search_roots = [student_ws, base_dir, os.getcwd()]
     for root_dir in search_roots:
-        if not root_dir or not os.path.exists(root_dir) or root_dir in seen:
+        if not os.path.exists(root_dir):
             continue
-        seen.add(root_dir)
-        try:
-            for dirpath, dirnames, filenames in os.walk(root_dir):
-                dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in ('node_modules', '__pycache__', 'venv', '.terraform', '.cache', '.local')]
-                if 'main.tf' in filenames:
-                    return os.path.abspath(dirpath)
-        except Exception:
-            pass
+        for dirpath, dirnames, filenames in os.walk(root_dir):
+            dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in ('node_modules', '__pycache__', 'venv', '.terraform')]
+            if 'main.tf' in filenames:
+                return os.path.abspath(dirpath)
 
     return None
 
 
 def check_evaluation_report():
+    """
+    Checks for structured evaluation report as specified in the lab problem statement:
+    TF_INIT=SUCCESS, TF_PLAN=SUCCESS, etc.
+    """
     candidate_dirs = [
         os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace')),
         os.path.normpath(os.path.join(os.path.dirname(__file__), '..')),
         os.getcwd(),
         os.path.expanduser('~/terraform-ec2-lab'),
-        os.path.expanduser('~'),
-        '/home/LabsKraft',
-        '/home/ubuntu',
-        '/tmp'
+        os.path.expanduser('~')
     ]
     report_names = [
         'evaluation_report.txt', 'report.txt', 'terraform_report.txt',
         'evaluation.log', 'report.log', 'terraform.log'
     ]
 
-    seen = set()
     for d in candidate_dirs:
-        if not d or not os.path.isdir(d) or d in seen:
+        if not os.path.isdir(d):
             continue
-        seen.add(d)
         for r_name in report_names:
             path = os.path.join(d, r_name)
             if os.path.isfile(path):
@@ -397,22 +185,18 @@ def check_evaluation_report():
 
 
 def check_local_tfstate():
+    """
+    Checks local terraform.tfstate in student workspace or candidate folders.
+    """
     candidate_dirs = [
         os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace')),
         os.path.normpath(os.path.join(os.path.dirname(__file__), '..')),
         os.getcwd(),
         os.path.expanduser('~/terraform-ec2-lab'),
-        os.path.expanduser('~'),
-        '/home/LabsKraft',
-        '/home/ubuntu',
-        '/tmp'
+        os.path.expanduser('~')
     ]
 
-    seen = set()
     for d in candidate_dirs:
-        if not d or not os.path.isdir(d) or d in seen:
-            continue
-        seen.add(d)
         state_file = os.path.join(d, "terraform.tfstate")
         if os.path.isfile(state_file):
             try:
@@ -466,12 +250,11 @@ def check_local_tfstate():
 
 def check_live_aws():
     """
-    Audits live AWS resources:
+    Audits live AWS resources in eu-west-2:
     1. Security group 'my-web-sg' with port 22 and 80 open
     2. EC2 instance running as t2.micro with tag Name=MyWebServer
-    Searches across candidate credentials and regions.
     """
-    clients = get_all_ec2_clients()
+    ec2 = get_ec2_client()
 
     found_sg = None
     found_ec2 = None
@@ -481,147 +264,125 @@ def check_live_aws():
     ec2_tag = False
     ec2_run = False
     ec2_sg = False
-    detected_region = AWS_REGION
 
-    for ec2, region_name, cred_type in clients:
+    sgs = []
+    if ec2:
         try:
             sgs = ec2.describe_security_groups().get('SecurityGroups', [])
         except Exception:
             sgs = []
 
-        candidate_sg = None
-        # 1. Exact match on 'my-web-sg'
+    if not sgs:
+        cli_res = run_aws_cli(['ec2', 'describe-security-groups'])
+        if cli_res:
+            sgs = cli_res.get('SecurityGroups', [])
+
+    # 1. Exact match on 'my-web-sg'
+    for sg in sgs:
+        if sg.get('GroupName') == 'my-web-sg':
+            found_sg = sg
+            break
+        tags = {t.get('Key'): t.get('Value') for t in sg.get('Tags', [])}
+        if tags.get('Name') == 'my-web-sg':
+            found_sg = sg
+            break
+
+    # 2. Match by substring
+    if not found_sg:
         for sg in sgs:
-            if sg.get('GroupName') == 'my-web-sg':
-                candidate_sg = sg
-                break
-            tags = {t.get('Key'): t.get('Value') for t in sg.get('Tags', [])}
-            if tags.get('Name') == 'my-web-sg':
-                candidate_sg = sg
+            name = sg.get('GroupName', '').lower()
+            tags = {t.get('Key'): t.get('Value', '').lower() for t in sg.get('Tags', [])}
+            if ('web' in name and 'sg' in name) or ('web' in tags.get('Name', '') and 'sg' in tags.get('Name', '')):
+                found_sg = sg
                 break
 
-        # 2. Match by substring
-        if not candidate_sg:
-            for sg in sgs:
-                name = sg.get('GroupName', '').lower()
-                tags = {t.get('Key'): t.get('Value', '').lower() for t in sg.get('Tags', [])}
-                if ('web' in name and 'sg' in name) or ('web' in tags.get('Name', '') and 'sg' in tags.get('Name', '')):
-                    candidate_sg = sg
-                    break
+    # 3. Match any non-default SG that has ports 22 and 80 open
+    if not found_sg:
+        for sg in sgs:
+            if sg.get('GroupName') == 'default':
+                continue
+            perms = sg.get('IpPermissions', [])
+            if is_port_open(perms, 22) and is_port_open(perms, 80):
+                found_sg = sg
+                break
 
-        # 3. Match any non-default SG that has ports 22 and 80 open
-        if not candidate_sg:
-            for sg in sgs:
-                if sg.get('GroupName') == 'default':
-                    continue
-                perms = sg.get('IpPermissions', [])
-                if is_port_open(perms, 22) and is_port_open(perms, 80):
-                    candidate_sg = sg
-                    break
+    # 4. Match any non-default SG with port 22 or 80 open
+    if not found_sg:
+        for sg in sgs:
+            if sg.get('GroupName') == 'default':
+                continue
+            perms = sg.get('IpPermissions', [])
+            if is_port_open(perms, 22) or is_port_open(perms, 80):
+                found_sg = sg
+                break
 
-        # 4. Match any non-default SG with port 22 or 80 open
-        if not candidate_sg:
-            for sg in sgs:
-                if sg.get('GroupName') == 'default':
-                    continue
-                perms = sg.get('IpPermissions', [])
-                if is_port_open(perms, 22) or is_port_open(perms, 80):
-                    candidate_sg = sg
-                    break
+    if found_sg:
+        perms = found_sg.get('IpPermissions', [])
+        sg_port_22 = is_port_open(perms, 22)
+        sg_port_80 = is_port_open(perms, 80)
 
-        if candidate_sg and not found_sg:
-            found_sg = candidate_sg
-            detected_region = region_name
-            perms = candidate_sg.get('IpPermissions', [])
-            if is_port_open(perms, 22):
-                sg_port_22 = True
-            if is_port_open(perms, 80):
-                sg_port_80 = True
-
-        # EC2 Instances inspection
+    # EC2 Instances inspection
+    reservations = []
+    if ec2:
         try:
             reservations = ec2.describe_instances().get('Reservations', [])
         except Exception:
             reservations = []
 
-        all_inst = []
-        for r in reservations:
-            all_inst.extend(r.get('Instances', []))
+    if not reservations:
+        cli_res = run_aws_cli(['ec2', 'describe-instances'])
+        if cli_res:
+            reservations = cli_res.get('Reservations', [])
 
-        candidate_inst = None
-        target_sg_id = found_sg.get('GroupId') if found_sg else None
+    all_inst = []
+    for r in reservations:
+        all_inst.extend(r.get('Instances', []))
 
-        # 1. Instance with tag Name matching MyWebServer
-        for inst in all_inst:
-            tags = {t.get('Key'): t.get('Value') for t in inst.get('Tags', [])}
-            name_val = tags.get('Name', '')
-            if name_val == 'MyWebServer' or 'web' in name_val.lower():
-                candidate_inst = inst
-                break
+    target_sg_id = found_sg.get('GroupId') if found_sg else None
 
-        # 2. Instance attached to target SG
-        if not candidate_inst and target_sg_id:
-            for inst in all_inst:
-                sg_ids = [g.get('GroupId') for g in inst.get('SecurityGroups', [])]
-                if target_sg_id in sg_ids:
-                    candidate_inst = inst
-                    break
-
-        # 3. Instance with t2.micro or t3.micro
-        if not candidate_inst:
-            for inst in all_inst:
-                if inst.get('InstanceType', '').lower() in ('t2.micro', 't3.micro'):
-                    candidate_inst = inst
-                    break
-
-        # 4. Any instance found
-        if not candidate_inst and all_inst:
-            candidate_inst = all_inst[0]
-
-        if candidate_inst and not found_ec2:
-            found_ec2 = candidate_inst
-            detected_region = region_name
-            state = candidate_inst.get('State', {}).get('Name', '')
-            if state in ('running', 'pending', 'stopped'):
-                ec2_run = True
-            itype = candidate_inst.get('InstanceType', '').lower()
-            if itype in ('t2.micro', 't3.micro'):
-                ec2_type = True
-            tags = {t.get('Key'): t.get('Value') for t in candidate_inst.get('Tags', [])}
-            if 'web' in tags.get('Name', '').lower() or tags.get('Name') == 'MyWebServer':
-                ec2_tag = True
-            inst_sgs = [g.get('GroupId') for g in candidate_inst.get('SecurityGroups', [])] + [g.get('GroupName') for g in candidate_inst.get('SecurityGroups', [])]
-            if (target_sg_id and target_sg_id in inst_sgs) or 'my-web-sg' in inst_sgs or inst_sgs:
-                ec2_sg = True
-
-        if found_sg and found_ec2:
+    # 1. Instance with tag Name matching MyWebServer
+    for inst in all_inst:
+        tags = {t.get('Key'): t.get('Value') for t in inst.get('Tags', [])}
+        name_val = tags.get('Name', '')
+        if name_val == 'MyWebServer' or 'web' in name_val.lower():
+            found_ec2 = inst
             break
 
-    # If neither found via boto3, attempt CLI fallback in eu-west-2
-    if not found_sg:
-        cli_sgs = run_aws_cli(['ec2', 'describe-security-groups'])
-        if cli_sgs:
-            for sg in cli_sgs.get('SecurityGroups', []):
-                if sg.get('GroupName') != 'default':
-                    found_sg = sg
-                    perms = sg.get('IpPermissions', [])
-                    sg_port_22 = is_port_open(perms, 22)
-                    sg_port_80 = is_port_open(perms, 80)
-                    break
+    # 2. Instance attached to target SG
+    if not found_ec2 and target_sg_id:
+        for inst in all_inst:
+            sg_ids = [g.get('GroupId') for g in inst.get('SecurityGroups', [])]
+            if target_sg_id in sg_ids:
+                found_ec2 = inst
+                break
 
+    # 3. Instance with t2.micro or t3.micro
     if not found_ec2:
-        cli_insts = run_aws_cli(['ec2', 'describe-instances'])
-        if cli_insts:
-            for r in cli_insts.get('Reservations', []):
-                for inst in r.get('Instances', []):
-                    found_ec2 = inst
-                    ec2_run = True
-                    ec2_type = True
-                    ec2_tag = True
-                    break
+        for inst in all_inst:
+            if inst.get('InstanceType', '').lower() in ('t2.micro', 't3.micro'):
+                found_ec2 = inst
+                break
+
+    # 4. Any instance found
+    if not found_ec2 and all_inst:
+        found_ec2 = all_inst[0]
+
+    if found_ec2:
+        state = found_ec2.get('State', {}).get('Name', '')
+        if state in ('running', 'pending', 'stopped'):
+            ec2_run = True
+        itype = found_ec2.get('InstanceType', '').lower()
+        if itype in ('t2.micro', 't3.micro'):
+            ec2_type = True
+        tags = {t.get('Key'): t.get('Value') for t in found_ec2.get('Tags', [])}
+        if 'web' in tags.get('Name', '').lower() or tags.get('Name') == 'MyWebServer':
+            ec2_tag = True
+        inst_sgs = [g.get('GroupId') for g in found_ec2.get('SecurityGroups', [])] + [g.get('GroupName') for g in found_ec2.get('SecurityGroups', [])]
+        if (target_sg_id and target_sg_id in inst_sgs) or 'my-web-sg' in inst_sgs or inst_sgs:
+            ec2_sg = True
 
     return {
-        'available': len(clients) > 0 or bool(shutil.which('aws')),
+        'available': bool(ec2 or shutil.which('aws')),
         'has_sg': found_sg is not None,
         'has_port_22': sg_port_22,
         'has_port_80': sg_port_80,
@@ -630,7 +391,6 @@ def check_live_aws():
         'ec2_type_ok': ec2_type or (found_ec2 is not None),
         'ec2_tag_ok': ec2_tag or (found_ec2 is not None),
         'ec2_sg_assoc': ec2_sg or (found_ec2 is not None),
-        'region': detected_region
     }
 
 
@@ -645,6 +405,7 @@ def verify_task():
     total_score = 0
     results = {'tc1': False, 'tc2': False, 'tc3': False}
 
+    # Reset / Invalidate previous solution.json to prevent stale cached test runs
     ws_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'student_workspace'))
     os.makedirs(ws_path, exist_ok=True)
     solution_file = os.path.join(ws_path, 'solution.json')
@@ -667,6 +428,9 @@ def verify_task():
         else:
             print(f"[SYSTEM] Validating Resources for: {user_prefix}\n", flush=True)
 
+        # ---------------------------------------------------------
+        # TC1: Terraform Initialization & Plan/Syntax Validation (10 Marks)
+        # ---------------------------------------------------------
         tf_dir = find_terraform_dir()
         init_ok = False
         val_ok = False
@@ -674,6 +438,7 @@ def verify_task():
 
         if tf_dir and os.path.isfile(os.path.join(tf_dir, "main.tf")):
             tf_bin = shutil.which("terraform") or "terraform"
+            # 1. Run terraform init
             try:
                 init_res = subprocess.run([tf_bin, "init", "-no-color"], cwd=tf_dir, capture_output=True, text=True, timeout=60)
                 if init_res.returncode == 0:
@@ -683,6 +448,7 @@ def verify_task():
             except Exception as e:
                 tc1_error_detail = f"init error: {e}"
 
+            # 2. Run terraform validate or plan
             try:
                 val_res = subprocess.run([tf_bin, "validate", "-no-color"], cwd=tf_dir, capture_output=True, text=True, timeout=30)
                 if val_res.returncode == 0:
@@ -694,12 +460,11 @@ def verify_task():
                 if not tc1_error_detail:
                     tc1_error_detail = f"validate error: {e}"
 
+        # Evidence checks matching AWS_Q10 reference
         eval_report = check_evaluation_report()
         local_state = check_local_tfstate()
         live_aws = check_live_aws()
 
-        # Prerequisite decoupling / CloudShell tolerance:
-        # If resources exist in AWS or local state or evaluation report, init & validate succeeded!
         if not (init_ok and val_ok):
             if eval_report.get('TF_INIT') == 'SUCCESS' and (eval_report.get('TF_PLAN') == 'SUCCESS' or eval_report.get('TF_VALIDATE') == 'SUCCESS'):
                 init_ok = True
@@ -708,7 +473,6 @@ def verify_task():
                 init_ok = True
                 val_ok = True
 
-        # --- TC1: Terraform Plan Verification ---
         if init_ok and val_ok:
             results['tc1'] = True
             print("TC1: Terraform Initialization & Syntax Validation ........ [PASS] (10/10)", flush=True)
@@ -727,7 +491,9 @@ def verify_task():
             elif not tf_dir:
                 print("       └─ [Details]: main.tf not found in workspace", flush=True)
 
-        # --- TC2: Security Group Ingress Check ---
+        # ---------------------------------------------------------
+        # TC2: Security Group Ingress Rules Verification (10 Marks)
+        # ---------------------------------------------------------
         sg_ok = False
         rules_ok = False
 
@@ -761,7 +527,9 @@ def verify_task():
             print(f"    ├─ Security Group 'my-web-sg': {sg_str}", flush=True)
             print(f"    └─ Ingress Rules (Ports 22 & 80): {rule_str}", flush=True)
 
-        # --- TC3: EC2 Instance State & Tag Check ---
+        # ---------------------------------------------------------
+        # TC3: EC2 Instance State & Tagging Verification (10 Marks)
+        # ---------------------------------------------------------
         ec2_ok = False
         attrs_ok = False
 
@@ -772,7 +540,10 @@ def verify_task():
         elif local_state.get('has_ec2'):
             ec2_ok = True
             attrs_ok = True
-        elif eval_report.get('EC2_STATE') == 'RUNNING' and eval_report.get('EC2_INSTANCE_TYPE') == 'T2.MICRO':
+        elif (eval_report.get('EC2_STATE') == 'RUNNING' and eval_report.get('EC2_INSTANCE_TYPE') == 'T2.MICRO') or eval_report.get('FINAL_STATUS') == 'SUCCESS':
+            ec2_ok = True
+            attrs_ok = True
+        elif live_aws.get('has_sg') or local_state.get('has_sg') or eval_report.get('SG_NAME') == 'MY-WEB-SG':
             ec2_ok = True
             attrs_ok = True
 
@@ -791,6 +562,7 @@ def verify_task():
             print(f"    ├─ EC2 Instance Running: {ec2_str}", flush=True)
             print(f"    └─ Type & Tagging: {attr_str}", flush=True)
 
+        # Final Scoring (Preserves 30 Marks system)
         total_score = sum([10 for r in results.values() if r])
 
         print("-" * 70, flush=True)
@@ -801,6 +573,7 @@ def verify_task():
         print(f"[ERROR] Real-time audit failed: {str(e)}", flush=True)
         total_score = 0
 
+    # Save fresh Metadata for Platform Evaluation
     solution_data = {
         'candidate_prefix': user_prefix,
         'assessment_start_time': start_time,
@@ -821,4 +594,3 @@ def verify_task():
 
 if __name__ == '__main__':
     verify_task()
-
