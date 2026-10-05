@@ -423,7 +423,7 @@ def verify_task():
                 if not tc1_error_detail:
                     tc1_error_detail = f"validate error: {e}"
 
-        # Evidence checks matching AWS_Q10 reference
+        # Evidence checks matching TF_Q10 reference
         eval_report = check_evaluation_report()
         local_state = check_local_tfstate()
         live_aws = check_live_aws()
