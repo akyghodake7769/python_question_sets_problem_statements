@@ -1,9 +1,9 @@
 ================================================================================
-               KODEARENA AWS_Q20_E LAB: STEP-BY-STEP TESTING GUIDE
+               KODEARENA GJEN_Q20_E LAB: STEP-BY-STEP TESTING GUIDE
 ================================================================================
 
 This guide outlines the exact workflow required to successfully complete and test 
-the AWS_Q20_E (AWS Distributed Jenkins CI/CD Architecture) lab in KodeArena on your 
+the GJEN_Q20_E (AWS Distributed Jenkins CI/CD Architecture) lab in KodeArena on your 
 Ubuntu EC2 instances. Following these steps ensures 100% compliance with the 
 real-time driver audit.
 
