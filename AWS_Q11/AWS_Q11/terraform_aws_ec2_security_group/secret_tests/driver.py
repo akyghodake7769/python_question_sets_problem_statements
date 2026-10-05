@@ -75,7 +75,7 @@ def run_aws_cli(args):
 def is_port_open(ip_permissions, port):
     """
     Checks if a specific TCP port is allowed in IpPermissions.
-    Accepts 0.0.0.0/0, ::/0, or any IP CIDR.
+    Accepts 0.0.0.0/0, ::/0, or any open IP CIDR.
     """
     for perm in ip_permissions:
         protocol = str(perm.get('IpProtocol', ''))
@@ -250,21 +250,13 @@ def check_local_tfstate():
 
 def check_live_aws():
     """
-    Audits live AWS resources in eu-west-2:
-    1. Security group 'my-web-sg' with port 22 and 80 open
+    Audits live AWS resources in region eu-west-2:
+    1. Specifically looks for Security Group 'my-web-sg' with port 22 and 80 open
     2. EC2 instance running as t2.micro with tag Name=MyWebServer
     """
     ec2 = get_ec2_client()
 
-    found_sg = None
-    found_ec2 = None
-    sg_port_22 = False
-    sg_port_80 = False
-    ec2_type = False
-    ec2_tag = False
-    ec2_run = False
-    ec2_sg = False
-
+    target_sg = None
     sgs = []
     if ec2:
         try:
@@ -277,49 +269,33 @@ def check_live_aws():
         if cli_res:
             sgs = cli_res.get('SecurityGroups', [])
 
-    # 1. Exact match on 'my-web-sg'
+    # Strictly look for SG named 'my-web-sg' (or tag Name=my-web-sg)
     for sg in sgs:
         if sg.get('GroupName') == 'my-web-sg':
-            found_sg = sg
+            target_sg = sg
             break
         tags = {t.get('Key'): t.get('Value') for t in sg.get('Tags', [])}
         if tags.get('Name') == 'my-web-sg':
-            found_sg = sg
+            target_sg = sg
             break
 
-    # 2. Match by substring
-    if not found_sg:
-        for sg in sgs:
-            name = sg.get('GroupName', '').lower()
-            tags = {t.get('Key'): t.get('Value', '').lower() for t in sg.get('Tags', [])}
-            if ('web' in name and 'sg' in name) or ('web' in tags.get('Name', '') and 'sg' in tags.get('Name', '')):
-                found_sg = sg
-                break
+    if not target_sg:
+        return {
+            'available': bool(ec2 or shutil.which('aws')),
+            'has_sg': False,
+            'has_port_22': False,
+            'has_port_80': False,
+            'has_ec2': False,
+            'ec2_running': False,
+            'ec2_type_ok': False,
+            'ec2_tag_ok': False,
+            'ec2_sg_assoc': False
+        }
 
-    # 3. Match any non-default SG that has ports 22 and 80 open
-    if not found_sg:
-        for sg in sgs:
-            if sg.get('GroupName') == 'default':
-                continue
-            perms = sg.get('IpPermissions', [])
-            if is_port_open(perms, 22) and is_port_open(perms, 80):
-                found_sg = sg
-                break
-
-    # 4. Match any non-default SG with port 22 or 80 open
-    if not found_sg:
-        for sg in sgs:
-            if sg.get('GroupName') == 'default':
-                continue
-            perms = sg.get('IpPermissions', [])
-            if is_port_open(perms, 22) or is_port_open(perms, 80):
-                found_sg = sg
-                break
-
-    if found_sg:
-        perms = found_sg.get('IpPermissions', [])
-        sg_port_22 = is_port_open(perms, 22)
-        sg_port_80 = is_port_open(perms, 80)
+    sg_id = target_sg.get('GroupId')
+    perms = target_sg.get('IpPermissions', [])
+    has_port_22 = is_port_open(perms, 22)
+    has_port_80 = is_port_open(perms, 80)
 
     # EC2 Instances inspection
     reservations = []
@@ -338,59 +314,46 @@ def check_live_aws():
     for r in reservations:
         all_inst.extend(r.get('Instances', []))
 
-    target_sg_id = found_sg.get('GroupId') if found_sg else None
-
-    # 1. Instance with tag Name matching MyWebServer
+    target_ec2 = None
+    # Match instance with tag Name=MyWebServer or attached to target_sg
     for inst in all_inst:
         tags = {t.get('Key'): t.get('Value') for t in inst.get('Tags', [])}
-        name_val = tags.get('Name', '')
-        if name_val == 'MyWebServer' or 'web' in name_val.lower():
-            found_ec2 = inst
+        inst_sg_ids = [g.get('GroupId') for g in inst.get('SecurityGroups', [])]
+        if tags.get('Name') == 'MyWebServer' or (sg_id and sg_id in inst_sg_ids):
+            target_ec2 = inst
             break
 
-    # 2. Instance attached to target SG
-    if not found_ec2 and target_sg_id:
-        for inst in all_inst:
-            sg_ids = [g.get('GroupId') for g in inst.get('SecurityGroups', [])]
-            if target_sg_id in sg_ids:
-                found_ec2 = inst
-                break
+    if not target_ec2:
+        return {
+            'available': True,
+            'has_sg': True,
+            'has_port_22': has_port_22,
+            'has_port_80': has_port_80,
+            'has_ec2': False,
+            'ec2_running': False,
+            'ec2_type_ok': False,
+            'ec2_tag_ok': False,
+            'ec2_sg_assoc': False
+        }
 
-    # 3. Instance with t2.micro or t3.micro
-    if not found_ec2:
-        for inst in all_inst:
-            if inst.get('InstanceType', '').lower() in ('t2.micro', 't3.micro'):
-                found_ec2 = inst
-                break
-
-    # 4. Any instance found
-    if not found_ec2 and all_inst:
-        found_ec2 = all_inst[0]
-
-    if found_ec2:
-        state = found_ec2.get('State', {}).get('Name', '')
-        if state in ('running', 'pending', 'stopped'):
-            ec2_run = True
-        itype = found_ec2.get('InstanceType', '').lower()
-        if itype in ('t2.micro', 't3.micro'):
-            ec2_type = True
-        tags = {t.get('Key'): t.get('Value') for t in found_ec2.get('Tags', [])}
-        if 'web' in tags.get('Name', '').lower() or tags.get('Name') == 'MyWebServer':
-            ec2_tag = True
-        inst_sgs = [g.get('GroupId') for g in found_ec2.get('SecurityGroups', [])] + [g.get('GroupName') for g in found_ec2.get('SecurityGroups', [])]
-        if (target_sg_id and target_sg_id in inst_sgs) or 'my-web-sg' in inst_sgs or inst_sgs:
-            ec2_sg = True
+    state = target_ec2.get('State', {}).get('Name', '').lower()
+    ec2_running = state in ('running', 'pending')
+    ec2_type_ok = target_ec2.get('InstanceType', '').lower() == 't2.micro'
+    ec2_tags = {t.get('Key'): t.get('Value') for t in target_ec2.get('Tags', [])}
+    ec2_tag_ok = ec2_tags.get('Name') == 'MyWebServer'
+    inst_sg_ids = [g.get('GroupId') for g in target_ec2.get('SecurityGroups', [])]
+    ec2_sg_assoc = (sg_id and sg_id in inst_sg_ids)
 
     return {
-        'available': bool(ec2 or shutil.which('aws')),
-        'has_sg': found_sg is not None,
-        'has_port_22': sg_port_22,
-        'has_port_80': sg_port_80,
-        'has_ec2': found_ec2 is not None,
-        'ec2_running': ec2_run,
-        'ec2_type_ok': ec2_type or (found_ec2 is not None),
-        'ec2_tag_ok': ec2_tag or (found_ec2 is not None),
-        'ec2_sg_assoc': ec2_sg or (found_ec2 is not None),
+        'available': True,
+        'has_sg': True,
+        'has_port_22': has_port_22,
+        'has_port_80': has_port_80,
+        'has_ec2': True,
+        'ec2_running': ec2_running,
+        'ec2_type_ok': ec2_type_ok,
+        'ec2_tag_ok': ec2_tag_ok,
+        'ec2_sg_assoc': ec2_sg_assoc
     }
 
 
@@ -429,7 +392,7 @@ def verify_task():
             print(f"[SYSTEM] Validating Resources for: {user_prefix}\n", flush=True)
 
         # ---------------------------------------------------------
-        # TC1: Terraform Initialization & Plan/Syntax Validation (10 Marks)
+        # TC1: Terraform Initialization & Plan/Validate Check (10 Marks)
         # ---------------------------------------------------------
         tf_dir = find_terraform_dir()
         init_ok = False
@@ -469,7 +432,7 @@ def verify_task():
             if eval_report.get('TF_INIT') == 'SUCCESS' and (eval_report.get('TF_PLAN') == 'SUCCESS' or eval_report.get('TF_VALIDATE') == 'SUCCESS'):
                 init_ok = True
                 val_ok = True
-            elif live_aws.get('has_sg') or live_aws.get('has_ec2') or local_state.get('has_sg') or local_state.get('has_ec2'):
+            elif (live_aws.get('has_sg') and live_aws.get('has_ec2')) or (local_state.get('has_sg') and local_state.get('has_ec2')):
                 init_ok = True
                 val_ok = True
 
@@ -501,17 +464,14 @@ def verify_task():
             sg_ok = True
             if live_aws.get('has_port_22') and live_aws.get('has_port_80'):
                 rules_ok = True
-            elif live_aws.get('has_port_22') or live_aws.get('has_port_80') or live_aws.get('has_sg'):
-                rules_ok = True
         elif local_state.get('has_sg'):
             sg_ok = True
             if local_state.get('has_port_22') and local_state.get('has_port_80'):
                 rules_ok = True
-            elif local_state.get('has_port_22') or local_state.get('has_port_80') or local_state.get('has_sg'):
-                rules_ok = True
-        elif eval_report.get('SG_NAME') == 'MY-WEB-SG' or eval_report.get('INGRESS_22_OPEN') == 'TRUE':
+        elif eval_report.get('SG_NAME') == 'MY-WEB-SG':
             sg_ok = True
-            rules_ok = True
+            if eval_report.get('INGRESS_22_OPEN') == 'TRUE' and eval_report.get('INGRESS_80_OPEN') == 'TRUE':
+                rules_ok = True
 
         if sg_ok and rules_ok:
             results['tc2'] = True
@@ -523,7 +483,7 @@ def verify_task():
             results['tc2'] = False
             print("TC2: Security Group Ingress Rules Verification ......... [FAILED] (0/10)", flush=True)
             sg_str = "PASS" if sg_ok else "FAILED (Security Group 'my-web-sg' not found in eu-west-2)"
-            rule_str = "PASS" if rules_ok else "FAILED (Ports 22 or 80 not open to 0.0.0.0/0)"
+            rule_str = "PASS" if rules_ok else "FAILED (Ports 22 and 80 must both be open to 0.0.0.0/0)"
             print(f"    ├─ Security Group 'my-web-sg': {sg_str}", flush=True)
             print(f"    └─ Ingress Rules (Ports 22 & 80): {rule_str}", flush=True)
 
@@ -535,17 +495,15 @@ def verify_task():
 
         if live_aws.get('has_ec2'):
             ec2_ok = True
-            if live_aws.get('ec2_type_ok') or live_aws.get('ec2_running') or live_aws.get('ec2_tag_ok'):
+            if (live_aws.get('ec2_type_ok') and live_aws.get('ec2_tag_ok')) or live_aws.get('ec2_running'):
                 attrs_ok = True
         elif local_state.get('has_ec2'):
             ec2_ok = True
             attrs_ok = True
-        elif (eval_report.get('EC2_STATE') == 'RUNNING' and eval_report.get('EC2_INSTANCE_TYPE') == 'T2.MICRO') or eval_report.get('FINAL_STATUS') == 'SUCCESS':
+        elif eval_report.get('EC2_STATE') == 'RUNNING' and eval_report.get('EC2_INSTANCE_TYPE') == 'T2.MICRO':
             ec2_ok = True
-            attrs_ok = True
-        elif live_aws.get('has_sg') or local_state.get('has_sg') or eval_report.get('SG_NAME') == 'MY-WEB-SG':
-            ec2_ok = True
-            attrs_ok = True
+            if eval_report.get('TAG_NAME') == 'MYWEBSERVER' or eval_report.get('FINAL_STATUS') == 'SUCCESS':
+                attrs_ok = True
 
         if ec2_ok and attrs_ok:
             results['tc3'] = True
