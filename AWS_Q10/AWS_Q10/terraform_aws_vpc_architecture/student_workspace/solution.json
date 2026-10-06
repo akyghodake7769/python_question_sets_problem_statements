@@ -1,0 +1,12 @@
+{
+    "candidate_prefix": "LOCAL_USER",
+    "assessment_start_time": null,
+    "evaluation_type": "REAL_TIME_API",
+    "score": 0,
+    "results": {
+        "tc1": false,
+        "tc2": false,
+        "tc3": false
+    },
+    "timestamp": "2026-10-06T07:28:50.328765+00:00"
+}
