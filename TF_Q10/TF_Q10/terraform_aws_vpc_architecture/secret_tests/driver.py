@@ -176,9 +176,11 @@ for p in [os.path.expanduser('~/.local/bin'), '/usr/local/bin', '/usr/bin', '/bi
 
 try:
     import boto3
+    from botocore.config import Config
     from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
     boto3 = None
+    Config = None
 
 # AWS region is strictly eu-west-2 (London)
 AWS_REGION = "eu-west-2"
@@ -198,24 +200,28 @@ USER_PREFIX = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].strip() else os.g
 def get_ec2_client():
     """
     Creates an EC2 client for eu-west-2 using active credentials.
+    Avoids IMDS hanging by checking credentials and setting strict connect timeouts.
     """
     if boto3 is None:
         return None
     try:
+        cfg = Config(connect_timeout=3, read_timeout=5, retries={'max_attempts': 1}) if Config else None
         access_key = os.getenv('AWS_ACCESS_KEY_ID') or os.getenv('AWS_ACCESS_KEY')
         secret_key = os.getenv('AWS_SECRET_ACCESS_KEY') or os.getenv('AWS_SECRET_KEY')
         session_token = os.getenv('AWS_SESSION_TOKEN') or os.getenv('AWS_SECURITY_TOKEN')
 
+        kwargs = {'region_name': AWS_REGION}
+        if cfg:
+            kwargs['config'] = cfg
         if access_key and secret_key:
-            kwargs = {
-                'region_name': AWS_REGION,
-                'aws_access_key_id': access_key,
-                'aws_secret_access_key': secret_key
-            }
+            kwargs['aws_access_key_id'] = access_key
+            kwargs['aws_secret_access_key'] = secret_key
             if session_token:
                 kwargs['aws_session_token'] = session_token
             return boto3.client('ec2', **kwargs)
-        return boto3.client('ec2', region_name=AWS_REGION)
+        if os.path.isfile(os.path.expanduser('~/.aws/credentials')) or os.path.isfile(os.path.expanduser('~/.aws/config')):
+            return boto3.client('ec2', **kwargs)
+        return None
     except Exception:
         return None
 
