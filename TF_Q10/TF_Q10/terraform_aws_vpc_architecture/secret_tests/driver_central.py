@@ -1,8 +1,6 @@
 import sys
 import json
 import os
-import subprocess
-import shutil
 from datetime import datetime, timezone, timedelta
 
 # AWS region requirement
@@ -86,44 +84,6 @@ def check_live_aws_central():
         return {'has_vpc': False, 'has_subnet': False, 'has_igw': False, 'has_rt': False}
 
 
-def load_candidate_solution_data(solution_path):
-    """
-    Extracts evaluation results from solution.py or solution.json.
-    """
-    if not solution_path or not os.path.exists(solution_path):
-        return None
-
-    # 1. If path is solution.json or directory containing solution.json
-    json_candidates = [
-        solution_path if solution_path.endswith('.json') else None,
-        os.path.join(os.path.dirname(solution_path), 'solution.json') if os.path.isfile(solution_path) else None,
-        os.path.join(solution_path, 'solution.json') if os.path.isdir(solution_path) else None
-    ]
-    for j_path in json_candidates:
-        if j_path and os.path.isfile(j_path):
-            try:
-                with open(j_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    if isinstance(data, dict) and 'results' in data:
-                        return data
-            except Exception:
-                pass
-
-    # 2. If solution.py has embedded # KODEBUCK_RESULTS= metadata
-    py_path = solution_path if solution_path.endswith('.py') else None
-    if py_path and os.path.isfile(py_path):
-        try:
-            with open(py_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.startswith('# KODEBUCK_RESULTS='):
-                        payload = line.split('=', 1)[1].strip()
-                        return json.loads(payload)
-        except Exception:
-            pass
-
-    return None
-
-
 def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNKNOWN', labskraft_username=None, assessment_start_time=None, solution_data=None):
     """
     Central Server Auditor: Verifies Terraform AWS VPC Architecture directly.
@@ -135,9 +95,31 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
     else:
         question_id = 'TF_Q10'
 
-    # Load solution data from submitted file if not passed directly
-    if not solution_data and solution_path:
-        solution_data = load_candidate_solution_data(solution_path)
+    loaded_solution = {}
+    if solution_path and os.path.exists(solution_path):
+        json_path = solution_path if solution_path.endswith('.json') else os.path.join(os.path.dirname(solution_path), 'solution.json')
+        if os.path.isfile(json_path):
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    loaded_solution = json.load(f)
+            except Exception:
+                pass
+
+        if not loaded_solution and os.path.isfile(solution_path):
+            try:
+                with open(solution_path, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                    for line in content.splitlines():
+                        if line.startswith('# KODEBUCK_RESULTS='):
+                            loaded_solution = json.loads(line.split('=', 1)[1].strip())
+                            break
+                    if not loaded_solution and content.startswith('{') and content.endswith('}'):
+                        loaded_solution = json.loads(content)
+            except Exception:
+                pass
+
+    if loaded_solution and not solution_data:
+        solution_data = loaded_solution
 
     # Resolve exam_code
     if exam_code_arg and exam_code_arg not in ('TF_Q10', 'AWS_Q10', 'UNKNOWN', ''):
@@ -159,10 +141,6 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
     if not username:
         username = candidate_email.split('@')[0] if '@' in candidate_email else candidate_email
 
-    # Determine execution results
-    local_results = solution_data.get('results', {}) if solution_data and isinstance(solution_data, dict) else {}
-    local_score = solution_data.get('score', 0) if solution_data and isinstance(solution_data, dict) else 0
-
     results = {
         'tc1': False,
         'tc2': False,
@@ -171,28 +149,12 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
 
     # Audit live AWS in eu-west-2
     live_aws = check_live_aws_central()
-
-    # If local test passed (score > 0 or tc1 == True), or if live AWS matches
-    tc1_ok = bool(local_results.get('tc1', False)) or (local_score > 0)
-    
-    if tc1_ok:
+    if live_aws.get('has_vpc'):
         results['tc1'] = True
-        # TC2: VPC & Subnet
-        if live_aws.get('has_vpc') and live_aws.get('has_subnet'):
+        if live_aws.get('has_subnet'):
             results['tc2'] = True
-        elif local_results.get('tc2', False):
-            results['tc2'] = True
-
-        # TC3: IGW & Route Table
         if live_aws.get('has_igw') and live_aws.get('has_rt'):
             results['tc3'] = True
-        elif local_results.get('tc3', False):
-            results['tc3'] = True
-    else:
-        # Candidate has not passed local TC1 verification / empty workspace
-        results['tc1'] = False
-        results['tc2'] = False
-        results['tc3'] = False
 
     tc1_passed = bool(results.get('tc1', False))
     tc2_passed = bool(results.get('tc2', False))
@@ -223,7 +185,7 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
     else:
         failed_items.append("TC3 [IGW & Route Table Association Verification]")
 
-    # 8-Column CSV Format for Taxila LMS matching reference
+    # 8-Column CSV Format for Taxila LMS
     ist_offset = timezone(timedelta(hours=5, minutes=30))
     date_str = datetime.now(ist_offset).strftime("%d-%m-%Y")
     time_str = datetime.now(ist_offset).strftime("%Y%m%d_%H%M%S")
@@ -263,7 +225,7 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
         report_path = os.path.join(report_base, f"{candidate_email}_{timestamp}.txt")
         with open(report_path, "w", encoding="utf-8") as f:
             f.write("\n".join(file_results) + "\n")
-    except Exception as e:
+    except Exception:
         pass
 
     print(f"\n[REPORT_CSV]{csv_line}", flush=True)
