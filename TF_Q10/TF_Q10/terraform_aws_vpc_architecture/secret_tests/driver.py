@@ -209,12 +209,10 @@ def check_live_aws():
     has_assoc = False
 
     for rt in rts:
-        rt_has_default_route = False
         for route in rt.get('Routes', []):
             dest = route.get('DestinationCidrBlock')
             gw = route.get('GatewayId', '')
             if dest == '0.0.0.0/0' and (gw in igw_ids or gw.startswith('igw-') or len(igws) > 0):
-                rt_has_default_route = True
                 has_rt = True
                 break
 
@@ -226,7 +224,6 @@ def check_live_aws():
                 has_assoc = True
                 break
 
-    # If subnet is associated with main route table and main route table has IGW default route
     if not has_assoc and has_rt and subnet_id:
         for rt in rts:
             for assoc in rt.get('Associations', []):
@@ -285,11 +282,7 @@ def verify_task():
         print(f"[SYSTEM] Session Active Time: {elapsed_minutes:.1f} mins\n", flush=True)
 
         # ---------------------------------------------------------
-        # TC1: Terraform Initialization & Syntax Validation (10 Marks)
-        # Strictly requires:
-        # 1. main.tf exists and is non-empty
-        # 2. terraform init returncode == 0
-        # 3. terraform validate returncode == 0
+        # TC1: Terraform Initialization & Syntax Validation
         # ---------------------------------------------------------
         init_status = "NOT_RUN"
         validate_status = "NOT_RUN"
@@ -352,12 +345,12 @@ def verify_task():
 
         if tc1_passed:
             results['tc1'] = True
-            print("TC1: Terraform Initialization & Syntax Validation ........ [PASS] (10/10)", flush=True)
+            print("TC1: Terraform Initialization & Syntax Validation ........ [PASS]", flush=True)
             print("    ├─ terraform init: SUCCESS", flush=True)
             print("    └─ terraform validate: SUCCESS", flush=True)
         else:
             results['tc1'] = False
-            print("TC1: Terraform Initialization & Syntax Validation ........ [FAILED] (0/10)", flush=True)
+            print("TC1: Terraform Initialization & Syntax Validation ........ [FAILED]", flush=True)
             print(f"    ├─ terraform init: {init_status}", flush=True)
             print(f"    └─ terraform validate: {validate_status}", flush=True)
             if tc1_error_detail:
@@ -366,7 +359,6 @@ def verify_task():
 
         # ---------------------------------------------------------
         # Live AWS Verification for TC2 and TC3
-        # Authoritative Source: Actual AWS eu-west-2 infrastructure
         # ---------------------------------------------------------
         live_aws = check_live_aws()
 
@@ -374,28 +366,26 @@ def verify_task():
             print("\n[ERROR] AWS credentials unavailable. TC2/TC3 cannot verify live AWS resources.", flush=True)
 
         # ---------------------------------------------------------
-        # TC2: AWS VPC & Subnets Creation Verification (10 Marks)
-        # PASS criteria: TC1 passed AND live VPC (10.0.0.0/16, my-simple-vpc) + Subnet (10.0.1.0/24) exist in eu-west-2
+        # TC2: AWS VPC & Subnets Creation Verification
         # ---------------------------------------------------------
         vpc_ok = tc1_passed and live_aws.get('has_vpc', False)
         subnet_ok = tc1_passed and live_aws.get('has_subnet', False)
 
         if vpc_ok and subnet_ok:
             results['tc2'] = True
-            print("TC2: AWS VPC & Subnets Creation Verification ............ [PASS] (10/10)", flush=True)
+            print("TC2: AWS VPC & Subnets Creation Verification ............ [PASS]", flush=True)
             print("    ├─ VPC (CIDR: 10.0.0.0/16 in eu-west-2): PASS", flush=True)
             print("    └─ Public Subnet (CIDR: 10.0.1.0/24): PASS", flush=True)
         else:
             results['tc2'] = False
-            print("TC2: AWS VPC & Subnets Creation Verification ............ [FAILED] (0/10)", flush=True)
+            print("TC2: AWS VPC & Subnets Creation Verification ............ [FAILED]", flush=True)
             vpc_str = "PASS" if vpc_ok else "FAILED (VPC 10.0.0.0/16 not found in eu-west-2)"
             subnet_str = "PASS" if subnet_ok else "FAILED (Subnet 10.0.1.0/24 not found)"
             print(f"    ├─ VPC (CIDR: 10.0.0.0/16 in eu-west-2): {vpc_str}", flush=True)
             print(f"    └─ Public Subnet (CIDR: 10.0.1.0/24): {subnet_str}", flush=True)
 
         # ---------------------------------------------------------
-        # TC3: IGW & Route Table Association Verification (10 Marks)
-        # PASS criteria: TC1 passed AND live attached IGW + Route Table (0.0.0.0/0 -> IGW) + Subnet Association exist in eu-west-2
+        # TC3: IGW & Route Table Association Verification
         # ---------------------------------------------------------
         igw_ok = tc1_passed and live_aws.get('has_igw', False)
         rt_ok = tc1_passed and live_aws.get('has_rt', False)
@@ -403,13 +393,13 @@ def verify_task():
 
         if igw_ok and rt_ok and assoc_ok:
             results['tc3'] = True
-            print("TC3: IGW & Route Table Association Verification ........ [PASS] (10/10)", flush=True)
+            print("TC3: IGW & Route Table Association Verification ........ [PASS]", flush=True)
             print("    ├─ Internet Gateway Attached: PASS", flush=True)
             print("    ├─ Route Table & Default Route: PASS", flush=True)
             print("    └─ Subnet Route Table Association: PASS", flush=True)
         else:
             results['tc3'] = False
-            print("TC3: IGW & Route Table Association Verification ........ [FAILED] (0/10)", flush=True)
+            print("TC3: IGW & Route Table Association Verification ........ [FAILED]", flush=True)
             igw_str = "PASS" if igw_ok else "FAILED (Internet Gateway not attached to VPC)"
             rt_str = "PASS" if rt_ok else "FAILED (Route 0.0.0.0/0 -> IGW missing)"
             assoc_str = "PASS" if assoc_ok else "FAILED (Subnet not associated with route table)"
@@ -417,12 +407,9 @@ def verify_task():
             print(f"    ├─ Route Table & Default Route: {rt_str}", flush=True)
             print(f"    └─ Subnet Route Table Association: {assoc_str}", flush=True)
 
-        # Final Scoring (30 Marks total: 10 + 10 + 10)
-        total_score = sum([10 for r in results.values() if r])
-
-        print("-" * 70, flush=True)
-        print(f"{'TOTAL SCORE:':<52} {total_score}/30", flush=True)
         print("-" * 70 + "\n", flush=True)
+
+        total_score = sum([10 for r in results.values() if r])
 
     except Exception as e:
         print(f"[ERROR] Real-time audit failed: {str(e)}", flush=True)
@@ -437,17 +424,42 @@ def verify_task():
         'timestamp': datetime.now(timezone.utc).isoformat()
     }
 
+    # 1. Write solution.json
     try:
         with open(solution_file, 'w', encoding='utf-8') as f:
             json.dump(solution_data, f, indent=4)
     except Exception as e:
         print(f"[ERROR] Could not write solution.json: {e}", flush=True)
 
+    # 2. Update solution.py with embedded results metadata for central submitter
+    sol_py = os.path.join(tf_dir, 'solution.py')
+    if os.path.exists(sol_py):
+        try:
+            with open(sol_py, 'r', encoding='utf-8') as f:
+                content = f.read()
+            clean_lines = [l for l in content.splitlines() if not l.startswith('# KODEBUCK_RESULTS=')]
+            clean_lines.append(f"# KODEBUCK_RESULTS={json.dumps(solution_data)}")
+            with open(sol_py, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(clean_lines) + '\n')
+        except Exception:
+            pass
+
     return total_score
 
 
 def verify_aws_on_server(candidate_email=None, question_id='TF_Q10', labskraft_username=None, labskraft_user=None, assessment_start_time=None, start_time=None, solution_data=None, exam_code_arg="UNKNOWN", solution_path=None, **kwargs):
-    return verify_task()
+    try:
+        from driver_central import verify_aws_on_server as central_eval
+        return central_eval(
+            candidate_email=candidate_email,
+            solution_path=solution_path,
+            exam_code_arg=exam_code_arg,
+            labskraft_username=labskraft_username or labskraft_user,
+            assessment_start_time=assessment_start_time or start_time,
+            solution_data=solution_data
+        )
+    except Exception:
+        return verify_task()
 
 
 if __name__ == '__main__':

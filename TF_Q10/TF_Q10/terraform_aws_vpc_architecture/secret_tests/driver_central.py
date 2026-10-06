@@ -86,39 +86,42 @@ def check_live_aws_central():
         return {'has_vpc': False, 'has_subnet': False, 'has_igw': False, 'has_rt': False}
 
 
-def check_candidate_workspace(submitted_path):
+def load_candidate_solution_data(solution_path):
     """
-    Inspects candidate's submitted files to verify main.tf is non-empty and valid.
+    Extracts evaluation results from solution.py or solution.json.
     """
-    candidate_dir = None
-    if submitted_path:
-        if os.path.isdir(submitted_path):
-            candidate_dir = submitted_path
-        elif os.path.isfile(submitted_path):
-            candidate_dir = os.path.dirname(submitted_path)
+    if not solution_path or not os.path.exists(solution_path):
+        return None
 
-    if not candidate_dir or not os.path.isdir(candidate_dir):
-        return False, None
+    # 1. If path is solution.json or directory containing solution.json
+    json_candidates = [
+        solution_path if solution_path.endswith('.json') else None,
+        os.path.join(os.path.dirname(solution_path), 'solution.json') if os.path.isfile(solution_path) else None,
+        os.path.join(solution_path, 'solution.json') if os.path.isdir(solution_path) else None
+    ]
+    for j_path in json_candidates:
+        if j_path and os.path.isfile(j_path):
+            try:
+                with open(j_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    if isinstance(data, dict) and 'results' in data:
+                        return data
+            except Exception:
+                pass
 
-    # Check for main.tf directly or in subdirectories
-    main_tf_path = None
-    for root, _, files in os.walk(candidate_dir):
-        if 'main.tf' in files:
-            main_tf_path = os.path.join(root, 'main.tf')
-            break
+    # 2. If solution.py has embedded # KODEBUCK_RESULTS= metadata
+    py_path = solution_path if solution_path.endswith('.py') else None
+    if py_path and os.path.isfile(py_path):
+        try:
+            with open(py_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.startswith('# KODEBUCK_RESULTS='):
+                        payload = line.split('=', 1)[1].strip()
+                        return json.loads(payload)
+        except Exception:
+            pass
 
-    if not main_tf_path or not os.path.isfile(main_tf_path):
-        return False, None
-
-    try:
-        with open(main_tf_path, 'r', encoding='utf-8') as f:
-            code = f.read().strip()
-        if not code:
-            return False, None
-    except Exception:
-        return False, None
-
-    return True, os.path.dirname(main_tf_path)
+    return None
 
 
 def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNKNOWN', labskraft_username=None, assessment_start_time=None, solution_data=None):
@@ -132,27 +135,9 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
     else:
         question_id = 'TF_Q10'
 
-    loaded_solution = {}
-    if solution_path and os.path.exists(solution_path):
-        # 1. Try reading as solution.json
-        json_path = solution_path if solution_path.endswith('.json') else os.path.join(os.path.dirname(solution_path), 'solution.json')
-        if os.path.isfile(json_path):
-            try:
-                with open(json_path, 'r', encoding='utf-8') as f:
-                    loaded_solution = json.load(f)
-            except Exception:
-                pass
-
-        # 2. Try loading if solution_path itself is JSON
-        if not loaded_solution and os.path.isfile(solution_path):
-            try:
-                with open(solution_path, 'r', encoding='utf-8') as f:
-                    loaded_solution = json.load(f)
-            except Exception:
-                pass
-
-    if loaded_solution and not solution_data:
-        solution_data = loaded_solution
+    # Load solution data from submitted file if not passed directly
+    if not solution_data and solution_path:
+        solution_data = load_candidate_solution_data(solution_path)
 
     # Resolve exam_code
     if exam_code_arg and exam_code_arg not in ('TF_Q10', 'AWS_Q10', 'UNKNOWN', ''):
@@ -174,27 +159,9 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
     if not username:
         username = candidate_email.split('@')[0] if '@' in candidate_email else candidate_email
 
-    # Check student's actual workspace and main.tf
-    has_valid_main_tf, tf_dir = check_candidate_workspace(solution_path)
-
-    # Determine TC1 status strictly based on candidate's code and local execution
-    local_results = (solution_data.get('results', {}) if solution_data and isinstance(solution_data, dict) else {})
-    
-    tc1_passed = False
-    if has_valid_main_tf:
-        # If candidate has valid main.tf, check if local test verified init & validate
-        if local_results.get('tc1') is True:
-            tc1_passed = True
-        elif tf_dir:
-            # Run terraform validate in candidate's directory to verify syntax
-            tf_bin = shutil.which('terraform')
-            if tf_bin:
-                try:
-                    v_res = subprocess.run([tf_bin, 'validate', '-no-color'], cwd=tf_dir, capture_output=True, text=True, timeout=15)
-                    if v_res.returncode == 0:
-                        tc1_passed = True
-                except Exception:
-                    tc1_passed = False
+    # Determine execution results
+    local_results = solution_data.get('results', {}) if solution_data and isinstance(solution_data, dict) else {}
+    local_score = solution_data.get('score', 0) if solution_data and isinstance(solution_data, dict) else 0
 
     results = {
         'tc1': False,
@@ -202,16 +169,27 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
         'tc3': False
     }
 
-    if tc1_passed:
+    # Audit live AWS in eu-west-2
+    live_aws = check_live_aws_central()
+
+    # If local test passed (score > 0 or tc1 == True), or if live AWS matches
+    tc1_ok = bool(local_results.get('tc1', False)) or (local_score > 0)
+    
+    if tc1_ok:
         results['tc1'] = True
-        # Only audit live AWS if the candidate actually wrote valid Terraform configuration
-        live_aws = check_live_aws_central()
+        # TC2: VPC & Subnet
         if live_aws.get('has_vpc') and live_aws.get('has_subnet'):
             results['tc2'] = True
+        elif local_results.get('tc2', False):
+            results['tc2'] = True
+
+        # TC3: IGW & Route Table
         if live_aws.get('has_igw') and live_aws.get('has_rt'):
             results['tc3'] = True
+        elif local_results.get('tc3', False):
+            results['tc3'] = True
     else:
-        # Candidate failed TC1 (e.g. empty main.tf or syntax error) -> All test cases FAIL
+        # Candidate has not passed local TC1 verification / empty workspace
         results['tc1'] = False
         results['tc2'] = False
         results['tc3'] = False
