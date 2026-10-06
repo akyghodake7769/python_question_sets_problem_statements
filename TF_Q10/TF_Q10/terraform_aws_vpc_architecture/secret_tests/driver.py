@@ -405,8 +405,35 @@ def check_local_tfstate():
                 with open(state_file, "r", encoding='utf-8') as sf:
                     state_data = json.load(sf)
                     resources = state_data.get("resources", [])
-                    has_vpc = any(r.get("type") == "aws_vpc" for r in resources)
-                    has_subnet = any(r.get("type") == "aws_subnet" for r in resources)
+
+                    def vpc_matches(r):
+                        if r.get("type") != "aws_vpc":
+                            return False
+                        instances = r.get("instances", [])
+                        if not instances:
+                            return True
+                        for inst in instances:
+                            attrs = inst.get("attributes", {})
+                            cidr = attrs.get("cidr_block")
+                            if cidr and cidr == "10.0.0.0/16":
+                                return True
+                        return False
+
+                    def subnet_matches(r):
+                        if r.get("type") != "aws_subnet":
+                            return False
+                        instances = r.get("instances", [])
+                        if not instances:
+                            return True
+                        for inst in instances:
+                            attrs = inst.get("attributes", {})
+                            cidr = attrs.get("cidr_block")
+                            if cidr and cidr == "10.0.1.0/24":
+                                return True
+                        return False
+
+                    has_vpc = any(vpc_matches(r) for r in resources)
+                    has_subnet = any(subnet_matches(r) for r in resources)
                     has_igw = any(r.get("type") == "aws_internet_gateway" for r in resources)
                     has_rt = any(r.get("type") == "aws_route_table" for r in resources)
                     has_assoc = any(r.get("type") == "aws_route_table_association" for r in resources)
