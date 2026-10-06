@@ -1,6 +1,8 @@
 import sys
 import json
 import os
+import subprocess
+import shutil
 from datetime import datetime, timezone, timedelta
 
 # AWS region requirement
@@ -30,7 +32,7 @@ def check_live_aws_central():
         else:
             ec2 = boto3.client('ec2', region_name=AWS_REGION)
 
-        # 1. VPC with CIDR 10.0.0.0/16
+        # 1. VPC with CIDR 10.0.0.0/16 and Name tag 'my-simple-vpc'
         vpcs = ec2.describe_vpcs().get('Vpcs', [])
         target_vpc = None
         for v in vpcs:
@@ -78,10 +80,45 @@ def check_live_aws_central():
             'has_vpc': True,
             'has_subnet': has_subnet,
             'has_igw': has_igw,
-            'has_rt': has_rt
+            'has_rt': has_rt and has_assoc
         }
     except Exception:
         return {'has_vpc': False, 'has_subnet': False, 'has_igw': False, 'has_rt': False}
+
+
+def check_candidate_workspace(submitted_path):
+    """
+    Inspects candidate's submitted files to verify main.tf is non-empty and valid.
+    """
+    candidate_dir = None
+    if submitted_path:
+        if os.path.isdir(submitted_path):
+            candidate_dir = submitted_path
+        elif os.path.isfile(submitted_path):
+            candidate_dir = os.path.dirname(submitted_path)
+
+    if not candidate_dir or not os.path.isdir(candidate_dir):
+        return False, None
+
+    # Check for main.tf directly or in subdirectories
+    main_tf_path = None
+    for root, _, files in os.walk(candidate_dir):
+        if 'main.tf' in files:
+            main_tf_path = os.path.join(root, 'main.tf')
+            break
+
+    if not main_tf_path or not os.path.isfile(main_tf_path):
+        return False, None
+
+    try:
+        with open(main_tf_path, 'r', encoding='utf-8') as f:
+            code = f.read().strip()
+        if not code:
+            return False, None
+    except Exception:
+        return False, None
+
+    return True, os.path.dirname(main_tf_path)
 
 
 def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNKNOWN', labskraft_username=None, assessment_start_time=None, solution_data=None):
@@ -89,22 +126,35 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
     Central Server Auditor: Verifies Terraform AWS VPC Architecture directly.
     """
     exam_code = 'UNKNOWN'
-    if isinstance(solution_path, str) and not solution_path.endswith('.json') and not os.path.exists(solution_path) and not solution_path.startswith('/'):
+    if isinstance(solution_path, str) and not solution_path.endswith('.json') and not solution_path.endswith('.py') and not os.path.exists(solution_path) and not solution_path.startswith('/'):
         question_id = solution_path
         solution_path = None
     else:
         question_id = 'TF_Q10'
 
+    loaded_solution = {}
     if solution_path and os.path.exists(solution_path):
-        try:
-            with open(solution_path, 'r', encoding='utf-8') as f:
-                loaded_data = json.load(f)
-                if not solution_data:
-                    solution_data = loaded_data
-        except Exception:
-            pass
+        # 1. Try reading as solution.json
+        json_path = solution_path if solution_path.endswith('.json') else os.path.join(os.path.dirname(solution_path), 'solution.json')
+        if os.path.isfile(json_path):
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    loaded_solution = json.load(f)
+            except Exception:
+                pass
 
-    # Resolve exam_code with high priority to avoid 'UNKNOWN' in reports
+        # 2. Try loading if solution_path itself is JSON
+        if not loaded_solution and os.path.isfile(solution_path):
+            try:
+                with open(solution_path, 'r', encoding='utf-8') as f:
+                    loaded_solution = json.load(f)
+            except Exception:
+                pass
+
+    if loaded_solution and not solution_data:
+        solution_data = loaded_solution
+
+    # Resolve exam_code
     if exam_code_arg and exam_code_arg not in ('TF_Q10', 'AWS_Q10', 'UNKNOWN', ''):
         exam_code = exam_code_arg
     elif solution_data and solution_data.get('exam_code') and solution_data.get('exam_code') not in ('TF_Q10', 'AWS_Q10', 'UNKNOWN', ''):
@@ -124,22 +174,47 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
     if not username:
         username = candidate_email.split('@')[0] if '@' in candidate_email else candidate_email
 
-    results = {}
-    if solution_data and isinstance(solution_data, dict):
-        results = solution_data.get('results', {}).copy()
-        if solution_data.get('score') == 30:
-            results['tc1'] = True
-            results['tc2'] = True
-            results['tc3'] = True
+    # Check student's actual workspace and main.tf
+    has_valid_main_tf, tf_dir = check_candidate_workspace(solution_path)
 
-    # Audit live AWS in eu-west-2
-    live_aws = check_live_aws_central()
-    if live_aws.get('has_vpc'):
+    # Determine TC1 status strictly based on candidate's code and local execution
+    local_results = (solution_data.get('results', {}) if solution_data and isinstance(solution_data, dict) else {})
+    
+    tc1_passed = False
+    if has_valid_main_tf:
+        # If candidate has valid main.tf, check if local test verified init & validate
+        if local_results.get('tc1') is True:
+            tc1_passed = True
+        elif tf_dir:
+            # Run terraform validate in candidate's directory to verify syntax
+            tf_bin = shutil.which('terraform')
+            if tf_bin:
+                try:
+                    v_res = subprocess.run([tf_bin, 'validate', '-no-color'], cwd=tf_dir, capture_output=True, text=True, timeout=15)
+                    if v_res.returncode == 0:
+                        tc1_passed = True
+                except Exception:
+                    tc1_passed = False
+
+    results = {
+        'tc1': False,
+        'tc2': False,
+        'tc3': False
+    }
+
+    if tc1_passed:
         results['tc1'] = True
-        if live_aws.get('has_subnet'):
+        # Only audit live AWS if the candidate actually wrote valid Terraform configuration
+        live_aws = check_live_aws_central()
+        if live_aws.get('has_vpc') and live_aws.get('has_subnet'):
             results['tc2'] = True
         if live_aws.get('has_igw') and live_aws.get('has_rt'):
             results['tc3'] = True
+    else:
+        # Candidate failed TC1 (e.g. empty main.tf or syntax error) -> All test cases FAIL
+        results['tc1'] = False
+        results['tc2'] = False
+        results['tc3'] = False
 
     tc1_passed = bool(results.get('tc1', False))
     tc2_passed = bool(results.get('tc2', False))
@@ -211,7 +286,7 @@ def verify_aws_on_server(candidate_email, solution_path=None, exam_code_arg='UNK
         with open(report_path, "w", encoding="utf-8") as f:
             f.write("\n".join(file_results) + "\n")
     except Exception as e:
-        print(f"[WARN] Could not write report file: {e}", flush=True)
+        pass
 
     print(f"\n[REPORT_CSV]{csv_line}", flush=True)
 
