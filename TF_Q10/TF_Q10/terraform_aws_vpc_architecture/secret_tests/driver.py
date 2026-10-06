@@ -207,13 +207,14 @@ def get_ec2_client():
         session_token = os.getenv('AWS_SESSION_TOKEN') or os.getenv('AWS_SECURITY_TOKEN')
 
         if access_key and secret_key:
-            return boto3.client(
-                'ec2',
-                region_name=AWS_REGION,
-                aws_access_key_id=access_key,
-                aws_secret_access_key=secret_key,
-                aws_session_token=session_token
-            )
+            kwargs = {
+                'region_name': AWS_REGION,
+                'aws_access_key_id': access_key,
+                'aws_secret_access_key': secret_key
+            }
+            if session_token:
+                kwargs['aws_session_token'] = session_token
+            return boto3.client('ec2', **kwargs)
         return boto3.client('ec2', region_name=AWS_REGION)
     except Exception:
         return None
@@ -647,16 +648,16 @@ def verify_task():
         local_state = check_local_tfstate()
         live_aws = check_live_aws()
 
+        # Fallback only if main.tf has code or structured evaluation report is present
         if not (init_ok and val_ok):
             if eval_report.get('TF_INIT') == 'SUCCESS' and eval_report.get('TF_VALIDATE') == 'SUCCESS' and (eval_report.get('VPC_CIDR') or eval_report.get('VPC_NAME')):
                 init_ok = True
                 val_ok = True
-            elif (live_aws.get('has_vpc') and live_aws.get('has_subnet')) or (local_state.get('has_vpc') and local_state.get('has_subnet')):
-                # When resources have already been applied, init and validate were successfully completed
+            elif has_code and ((live_aws.get('has_vpc') and live_aws.get('has_subnet')) or (local_state.get('has_vpc') and local_state.get('has_subnet'))):
                 init_ok = True
                 val_ok = True
 
-        if init_ok and val_ok:
+        if has_code and init_ok and val_ok:
             results['tc1'] = True
             print("TC1: Terraform Initialization & Syntax Validation ........ [PASS] (10/10)", flush=True)
             print("    ├─ terraform init: PASS", flush=True)
