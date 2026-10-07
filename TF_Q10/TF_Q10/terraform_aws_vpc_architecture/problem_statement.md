@@ -12,7 +12,7 @@ A cloud engineer needs to set up the foundational networking for a new AWS cloud
 The learner must:
 
 - Access the provided environment with Terraform installed and AWS credentials configured.
-- Create a simple Terraform configuration (`main.tf`) that provisions:
+- Create a simple Terraform configuration (`main.tf`) in student_workspace directory.
   - An AWS VPC (`aws_vpc`) named `my-simple-vpc` with CIDR block `10.0.0.0/16`
   - A Public Subnet (`aws_subnet`) with CIDR block `10.0.1.0/24`
   - An Internet Gateway (`aws_internet_gateway`) attached to the VPC
